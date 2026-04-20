@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Routes, Route, NavLink, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './lib/hooks/useAuth';
+import { triggerHaptic } from './lib/hooks/useMobile';
 
 // Critical path — eagerly loaded
 import Dashboard from './pages/Dashboard';
@@ -153,11 +154,12 @@ const SEARCH_INDEX = [
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchHighlight, setSearchHighlight] = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [fabOpen, setFabOpen] = useState(false);
 
   const NOTIFICATIONS = [
     { id: 1, icon: '🌧️', title: 'Heavy Rain Alert — Hubli', time: '10 min ago', type: 'warning', read: false },
@@ -220,8 +222,11 @@ export default function App() {
 
   return (
     <div className="app-layout">
+      {/* Mobile sidebar overlay */}
+      <div className={`sidebar-overlay${sidebarOpen ? ' visible' : ''}`} onClick={() => setSidebarOpen(false)} />
+
       {/* Sidebar */}
-      <nav className={`sidebar${sidebarOpen ? '' : ' collapsed'}`}>
+      <nav className={`sidebar${sidebarOpen ? ' open' : ''}`}>
         <div className="sidebar-logo">
           <div className="sidebar-logo-icon">🌾</div>
           <div>
@@ -242,6 +247,7 @@ export default function App() {
                   className={({ isActive }) =>
                     `nav-item${isActive ? ' active' : ''}${item.highlight ? ' nav-ai' : ''}`
                   }
+                  onClick={() => { setSidebarOpen(false); triggerHaptic(); }}
                 >
                   <span className="icon">{item.icon}</span>
                   {item.label}
@@ -385,6 +391,40 @@ export default function App() {
         </Routes>
         </Suspense>
       </main>
+
+      {/* Bottom Navigation — Mobile */}
+      <nav className="bottom-nav">
+        <div className="bottom-nav-items">
+          {[
+            { path: '/', icon: '🏠', label: 'Home' },
+            { path: '/weather', icon: '🌤️', label: 'Weather' },
+            { path: '/market-prices', icon: '💰', label: 'Prices' },
+            { path: '/ai', icon: '🤖', label: 'AI' },
+            { path: '/settings', icon: '👤', label: 'Profile' },
+          ].map(tab => (
+            <NavLink
+              key={tab.path}
+              to={tab.path}
+              end={tab.path === '/'}
+              className={({ isActive }) => `bottom-nav-item${isActive ? ' active' : ''}`}
+              onClick={() => triggerHaptic()}
+            >
+              <span className="bnav-icon">{tab.icon}</span>
+              {tab.label}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
+
+      {/* FAB Menu — Mobile */}
+      <div className={`fab-menu${fabOpen ? ' open' : ''}`}>
+        <div className="fab-menu-item" onClick={() => { navigate('/expenses'); setFabOpen(false); triggerHaptic(); }}>💸 Add Expense</div>
+        <div className="fab-menu-item" onClick={() => { navigate('/ai'); setFabOpen(false); triggerHaptic(); }}>🤖 Ask AI</div>
+        <div className="fab-menu-item" onClick={() => { navigate('/market-prices'); setFabOpen(false); triggerHaptic(); }}>📊 Check Prices</div>
+      </div>
+      <button className="fab" onClick={() => { setFabOpen(!fabOpen); triggerHaptic(); }}>
+        {fabOpen ? '✕' : '⚡'}
+      </button>
     </div>
   );
 }

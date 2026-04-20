@@ -629,3 +629,221 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   transform: translateY(0);
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHASE 10B — Mobile Polish (PWA Enhancements)
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Bottom Navigation Bar (Mobile Only) ───────────────────────────── */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  z-index: 200;
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.bottom-nav-items {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 600;
+  transition: color 0.2s;
+  min-width: 56px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav-item .bnav-icon { font-size: 1.3rem; }
+.bottom-nav-item.active { color: var(--green-primary); }
+.bottom-nav-item:active { transform: scale(0.92); }
+
+@media (max-width: 768px) {
+  .bottom-nav { display: block; }
+  .main-content { padding-bottom: 80px !important; }
+}
+
+/* ── Floating Action Button (FAB) ──────────────────────────────────── */
+.fab {
+  display: none;
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green-primary), var(--green-dark));
+  color: #000;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(34,197,94,0.4);
+  z-index: 199;
+  transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fab:active { transform: scale(0.9); }
+.fab:hover { box-shadow: 0 6px 28px rgba(34,197,94,0.6); transform: translateY(-2px); }
+
+.fab-menu {
+  position: fixed;
+  bottom: 145px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 198;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+}
+
+.fab-menu.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+.fab-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 768px) {
+  .fab { display: flex; align-items: center; justify-content: center; }
+}
+
+/* ── Pull to Refresh ───────────────────────────────────────────────── */
+.pull-indicator {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(-60px);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 2px solid var(--green-primary);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+
+.pull-indicator.pulling { transform: translateX(-50%) translateY(20px); }
+.pull-indicator.refreshing { animation: spin 0.8s linear infinite; }
+
+@keyframes spin {
+  from { transform: translateX(-50%) translateY(20px) rotate(0deg); }
+  to   { transform: translateX(-50%) translateY(20px) rotate(360deg); }
+}
+
+/* ── Touch-Friendly Targets (44px minimum) ─────────────────────────── */
+@media (max-width: 768px) {
+  .nav-item { min-height: 44px; padding: 10px 14px; }
+  .btn, .filter-btn, .action-btn { min-height: 44px; }
+  .header-btn { min-height: 44px; padding: 10px 16px; }
+  td, th { padding: 14px 12px; }
+  
+  /* Larger tap targets for interactive elements */
+  input, select, textarea { min-height: 44px; font-size: 16px !important; /* prevents iOS zoom */ }
+  
+  /* Touch feedback */
+  .card:active { transform: scale(0.98); transition: transform 0.1s; }
+  .stat-card:active { transform: scale(0.96); }
+  .btn:active { transform: scale(0.95); }
+}
+
+/* ── Horizontal Scroll for Charts on Mobile ────────────────────────── */
+@media (max-width: 768px) {
+  .charts-grid { overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+  .charts-grid > * { scroll-snap-align: start; min-width: 85vw; }
+  
+  /* Scroll indicator dots */
+  .scroll-indicator {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 0;
+  }
+  .scroll-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    opacity: 0.4;
+  }
+  .scroll-dot.active { opacity: 1; background: var(--green-primary); }
+}
+
+/* ── Swipe Gesture Hints ───────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .swipe-hint {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    padding: 6px;
+    opacity: 0.6;
+  }
+  .swipe-hint::before { content: '← '; }
+  .swipe-hint::after { content: ' →'; }
+}
+
+/* ── Mobile Sidebar Overlay ────────────────────────────────────────── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 99;
+  backdrop-filter: blur(4px);
+}
+
+@media (max-width: 768px) {
+  .sidebar-overlay.visible { display: block; }
+  .sidebar.open { left: 0 !important; }
+}
+
+/* ── Safe Area Insets for Notched Devices ──────────────────────────── */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .header { padding-top: env(safe-area-inset-top, 0px); }
+  .main-content { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+}
+
+/* ── Haptic Visual Feedback ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .haptic-pulse { animation: hapticPulse 0.15s ease; }
+  @keyframes hapticPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+  }
+}
