@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#0f1923"/>
+  <rect x="16" y="16" width="480" height="480" rx="52" fill="#10b981" opacity="0.15"/>
+  <g transform="translate(256,240)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Wheat stalk -->
+    <line x1="0" y1="80" x2="0" y2="-100" stroke="#10b981" stroke-width="8"/>
+    <!-- Grains left -->
+    <ellipse cx="-25" cy="-60" rx="12" ry="22" fill="#f59e0b" transform="rotate(-20,-25,-60)"/>
+    <ellipse cx="-22" cy="-20" rx="11" ry="20" fill="#f59e0b" transform="rotate(-15,-22,-20)"/>
+    <ellipse cx="-18" cy="20" rx="10" ry="18" fill="#f59e0b" transform="rotate(-10,-18,20)"/>
+    <!-- Grains right -->
+    <ellipse cx="25" cy="-60" rx="12" ry="22" fill="#f59e0b" transform="rotate(20,25,-60)"/>
+    <ellipse cx="22" cy="-20" rx="11" ry="20" fill="#f59e0b" transform="rotate(15,22,-20)"/>
+    <ellipse cx="18" cy="20" rx="10" ry="18" fill="#f59e0b" transform="rotate(10,18,20)"/>
+    <!-- Top grain -->
+    <ellipse cx="0" cy="-90" rx="10" ry="20" fill="#fbbf24"/>
+    <!-- Circuit dots -->
+    <circle cx="-60" cy="60" r="6" fill="#3b82f6"/>
+    <circle cx="60" cy="60" r="6" fill="#3b82f6"/>
+    <circle cx="-80" cy="20" r="4" fill="#3b82f6" opacity="0.6"/>
+    <circle cx="80" cy="20" r="4" fill="#3b82f6" opacity="0.6"/>
+    <!-- Circuit lines -->
+    <line x1="-60" y1="60" x2="-80" y2="20" stroke="#3b82f6" stroke-width="2" opacity="0.4"/>
+    <line x1="60" y1="60" x2="80" y2="20" stroke="#3b82f6" stroke-width="2" opacity="0.4"/>
+  </g>
+  <!-- 360 text -->
+  <text x="256" y="420" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="48" fill="#e0e7f1">360</text>
+</svg>
