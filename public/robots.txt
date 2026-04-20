@@ -1,0 +1,37 @@
+# AgriConnect 360 — www.agriconnect360.in
+# Smart Farming Platform for Andhra Pradesh
+
+User-agent: *
+Allow: /home
+Allow: /features
+Allow: /about
+Allow: /pricing
+Allow: /contact-us
+Allow: /landing
+Allow: /login
+Disallow: /api/
+Disallow: /settings
+Disallow: /farmers
+Disallow: /fields
+Disallow: /crops
+Disallow: /expenses
+Disallow: /sales
+Disallow: /wallet
+Disallow: /insurance
+Disallow: /labour
+Disallow: /transport
+Disallow: /suppliers
+Disallow: /equipment
+Disallow: /disputes
+Disallow: /drones
+Disallow: /contact
+Disallow: /ai
+Disallow: /soil
+Disallow: /schemes
+Disallow: /knowledge
+Disallow: /qa
+Disallow: /network
+Disallow: /weather
+Disallow: /market-prices
+
+Sitemap: https://www.agriconnect360.in/sitemap.xml
