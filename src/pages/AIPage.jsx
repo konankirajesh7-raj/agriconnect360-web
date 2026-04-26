@@ -8,12 +8,14 @@ const GROQ_URL   = 'https://api.groq.com/openai/v1/chat/completions';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 
 const TOOLS = [
-  { id: 'crop',  icon: '🌱', label: 'Crop Recommender',     desc: 'Top 3 crops based on soil, climate & market data' },
+  { id: 'crop',  icon: '🌱', label: 'Crop Recommender',      desc: 'Top 3 crops based on soil, climate & market data' },
   { id: 'pest',  icon: '🐛', label: 'Pest & Disease Detector', desc: 'Diagnose pests and diseases from symptoms' },
-  { id: 'soil',  icon: '🧪', label: 'Soil Advisor',          desc: 'Fertilizer plan from NPK soil test results' },
-  { id: 'price', icon: '💰', label: 'Price Forecaster',      desc: 'Best time to sell based on market data' },
-  { id: 'ask',   icon: '💬', label: 'Ask AI (Q&A)',          desc: 'Any farming question in Telugu, Hindi, English' },
+  { id: 'soil',  icon: '🧪', label: 'Soil Advisor',           desc: 'Fertilizer plan from NPK soil test results' },
+  { id: 'price', icon: '💰', label: 'Price Forecaster',       desc: 'Best time to sell based on market data' },
 ];
+
+// Detect Telugu script automatically
+const isTeluguText = (str) => /[\u0C00-\u0C7F]/.test(str);
 
 const LANGS = [
   { value: 'en', label: '🇬🇧 English' },
@@ -231,12 +233,15 @@ export default function AIPage() {
     setMessages(prev => [...prev, userMsg]);
     setChatInput('');
     setLoading(true);
+    // Auto-detect Telugu script in the question
+    const useTelugu = isTeluguText(question) || lang === 'te';
+    const replyLang = useTelugu ? 'Telugu' : lang === 'hi' ? 'Hindi' : 'English';
     try {
       const prompt = `You are an expert agricultural advisor for Andhra Pradesh, India. Answer this farmer question concisely and practically.
 
 Question: "${question}"
 
-Respond in ${lang==='te'?'Telugu':lang==='hi'?'Hindi':'English'}. Be specific, include local AP context, quantities, and timing. Keep response under 200 words.`;
+IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, quantities, and timing. Keep response under 200 words.`;
       let text;
       try {
         if (GROQ_API_KEY) text = await callGroq(prompt);
@@ -245,16 +250,21 @@ Respond in ${lang==='te'?'Telugu':lang==='hi'?'Hindi':'English'}. Be specific, i
       } catch {
         // Demo mode — smart mock responses
         const q2 = question.toLowerCase();
-        if (q2.includes('fertilizer')||q2.includes('urea')||q2.includes('ఎరువు')) {
-          text = lang==='te'
-            ? 'పద్ది వరి పైరు వృద్ధి దశలో: మొలకెత్తిన 21 రోజులకు హెక్టారుకు 50 కిలోల యూరియా వేయండి. 45 రోజులకు మరో 50 కిలోలు వేయండి. DAP ని నాటే సమయంలో హెక్టారుకు 100 కిలోలు వేయాలి. మట్టి పరీక్ష ఆధారంగా పొటాష్ 60 కిలోలు కలపండి.'
-            : 'For paddy in vegetative stage: Apply 50 kg/ha Urea at 21 DAT, another 50 kg/ha at 45 DAT. Apply DAP 100 kg/ha at transplanting. Add 60 kg/ha MOP based on soil test. Avoid over-application — yellowing of leaves indicates nitrogen toxicity.';
-        } else if (q2.includes('cotton')||q2.includes('పత్తి')) {
-          text = 'For cotton in Guntur district: Apply 20 kg N/ha as basal dose. Top-dress 30 kg N/ha at squaring stage (45-50 DAS). Use Karate 2.5% EC for bollworm. Current Guntur APMC price: ₹7,150/quintal — prices expected to rise by 8-12% in 3 weeks.';
-        } else if (q2.includes('harvest')||q2.includes('when to sell')) {
-          text = 'For Kharif paddy in Guntur: Harvest when 80% of grains are golden-yellow (around 130-135 DAS). Current MSP is ₹2,183/quintal. Post-harvest: dry to 14% moisture. Best time to sell: October-November when arrivals are low and prices peak.';
+        const isTe = useTelugu;
+        if (q2.includes('fertilizer')||q2.includes('urea')||/ఎరువు|యూరియా|డీఏపీ/.test(question)) {
+          text = isTe
+            ? 'పద్ది వరి పైరు వృద్ధి దశలో:\n• నాట్లు వేసిన 21 రోజులకు: హెక్టారుకు 50 కిలోల యూరియా వేయండి\n• 45 రోజులకు: మరో 50 కిలోల యూరియా వేయండి\n• నాట్లు వేసే సమయంలో: DAP 100 కిలోలు + పొటాష్ 60 కిలోలు వేయాలి\n• అధిక నత్రజని వేస్తే ఆకులు పసుపు రంగులోకి మారతాయి — జాగ్రత్తగా ఉండండి'
+            : 'For paddy vegetative stage: Apply 50 kg/ha Urea at 21 DAT, another 50 kg/ha at 45 DAT. Apply DAP 100 kg/ha at transplanting. Add 60 kg/ha MOP based on soil test.';
+        } else if (q2.includes('cotton')||/పత్తి|పత్తికి/.test(question)) {
+          text = isTe
+            ? 'గుంటూరు జిల్లాలో పత్తి పంటకు:\n• నాట్లు వేసే సమయంలో: హెక్టారుకు 20 కిలోల నత్రజని వేయండి\n• 45-50 రోజులకు (squaring దశలో): మరో 30 కిలోల నత్రజని వేయండి\n• బొల్‌వర్మ్ నియంత్రణకు: Karate 2.5% EC స్ప్రే చేయండి\n• గుంటూరు APMC ధర: ₹7,150/క్వింటాల్ — 3 వారాల్లో 8-12% పెరగవచ్చు'
+            : 'For cotton in Guntur: Apply 20 kg N/ha basal, 30 kg N/ha at squaring (45-50 DAS). Use Karate 2.5% EC for bollworm. Guntur APMC: ₹7,150/quintal.';
+        } else if (/వారం|ఈ వారం|ఏమి చేయాలి/.test(question)) {
+          text = 'పద్ది వరి వృద్ధి దశలో ఈ వారం చేయవలసిన పనులు:\n• పొలంలో నీటి మట్టం 5 సెంటీమీటర్లు నిర్వహించండి\n• ఆకుపచ్చ పురుగుల కోసం పొలాన్ని తనిఖీ చేయండి\n• అవసరమైతే 50 కిలోల యూరియా వేయండి\n• కలుపు మొక్కలు తొలగించండి';
         } else {
-          text = `Based on your question about "${question}", here's my advice for AP farmers: Follow integrated crop management practices, check with your nearest KVK (Krishi Vigyan Kendra) in Guntur, and apply for YSR Rythu Bharosa scheme for financial support. For urgent queries call Kisan Call Centre: 1800-180-1551 (free helpline).`;
+          text = isTe
+            ? `మీ ప్రశ్నకు సమాధానం: AP రైతులకు సమగ్ర పంట నిర్వహణ పద్ధతులు పాటించమని సూచిస్తున్నాను. గుంటూరులోని KVK (కృషి విజ్ఞాన కేంద్రం)ని సంప్రదించండి. YSR రైతు భరోసా పథకానికి దరఖాస్తు చేసుకోండి. అత్యవసర సందర్భంలో కిసాన్ కాల్ సెంటర్: 1800-180-1551 (ఉచిత helpline) కి కాల్ చేయండి.`
+            : `For your question about "${question}": Follow integrated crop management, consult your nearest KVK in Guntur, and apply for YSR Rythu Bharosa scheme. Kisan Call Centre: 1800-180-1551 (free).`;
         }
       }
       const id = Date.now()+1;
@@ -262,18 +272,33 @@ Respond in ${lang==='te'?'Telugu':lang==='hi'?'Hindi':'English'}. Be specific, i
     } finally { setLoading(false); }
   };
 
-  const handleMic = () => {
-    if (!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)) {
-      setChatInput('Voice input not supported in this browser. Please type your question.');
+  const handleMic = async () => {
+    if (recording) { setRecording(false); return; }
+    // Request mic permission explicitly first
+    try {
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      setChatInput('Microphone permission denied. Please allow mic access in browser settings and try again.');
       return;
     }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) {
+      setChatInput('Voice input works in Chrome/Edge only. Please type your question.');
+      return;
+    }
     const rec = new SR();
     rec.lang = lang==='te'?'te-IN':lang==='hi'?'hi-IN':'en-IN';
-    rec.interimResults = false;
+    rec.interimResults = true;
+    rec.continuous = false;
     setRecording(true);
-    rec.onresult = e => { setChatInput(e.results[0][0].transcript); setRecording(false); };
-    rec.onerror = () => setRecording(false);
+    rec.onresult = e => {
+      const transcript = Array.from(e.results).map(r=>r[0].transcript).join('');
+      setChatInput(transcript);
+    };
+    rec.onerror = (e) => {
+      setRecording(false);
+      if (e.error === 'not-allowed') setChatInput('Mic blocked. Allow microphone in browser address bar.');
+    };
     rec.onend = () => setRecording(false);
     rec.start();
   };
@@ -342,7 +367,7 @@ Respond in ${lang==='te'?'Telugu':lang==='hi'?'Hindi':'English'}. Be specific, i
       </div>
 
       {/* Tab selector */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginBottom: 24 }}>
         {allTabs.map(t => (
           <button key={t.id} onClick={() => { setActiveTool(t.id); setResult(null); setError(''); }}
             style={{
