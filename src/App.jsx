@@ -195,18 +195,22 @@ const PUBLIC_PREFIXES = ['/', '/home', '/features', '/about', '/pricing', '/cont
 // Loading skeleton for Suspense fallback
 function PageSkeleton() {
   return (
-    <div style={{ padding: '32px', animation: 'fadeIn 0.3s ease' }}>
-      <div style={{ height: 28, width: 200, background: 'var(--bg-card)', borderRadius: 8, marginBottom: 24 }} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16, marginBottom: 24 }}>
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} style={{ height: 120, background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', animation: 'pulse 1.5s infinite' }} />
-        ))}
-      </div>
-      <div style={{ height: 300, background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', animation: 'pulse 1.5s infinite' }} />
+    <div style={{ padding: '28px 32px', animation: 'skFadeIn 0.25s ease' }}>
       <style>{`
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes skFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        @keyframes skShimmer { 0% { background-position: -600px 0; } 100% { background-position: 600px 0; } }
+        .sk { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+              background-size: 600px 100%; animation: skShimmer 1.4s infinite; border-radius: 10px; }
       `}</style>
+      <div className="sk" style={{ height: 26, width: 180, marginBottom: 24 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14, marginBottom: 20 }}>
+        {[1,2,3,4].map(i => <div key={i} className="sk" style={{ height: 110 }} />)}
+      </div>
+      <div className="sk" style={{ height: 220, marginBottom: 14 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div className="sk" style={{ height: 160 }} />
+        <div className="sk" style={{ height: 160 }} />
+      </div>
     </div>
   );
 }
