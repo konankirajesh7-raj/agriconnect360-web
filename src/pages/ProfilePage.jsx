@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Phase 11B — Farmer Profile Page (10 tasks)
  * - Profile photo upload (Cloudinary)
  * - Edit profile info
@@ -565,110 +565,130 @@ export default function ProfilePage() {
     }
   };
 
-  const TABS = [
-    { id: 'overview', label: 'Overview', icon: '📊' },
-    { id: 'farm', label: 'Farm', icon: '🌾' },
-    { id: 'badges', label: 'Badges', icon: '🏆' },
-    { id: 'timeline', label: 'History', icon: '📅' },
-  ];
+    const role = farmerProfile?.role || 'farmer';
+  const isFarmer = !['industrial','supplier','broker','labour'].includes(role);
+  const ROLE_COLOR={farmer:'#22c55e',fpo:'#06b6d4',industrial:'#3b82f6',supplier:'#8b5cf6',broker:'#f59e0b',labour:'#ef4444'};
+  const rc=ROLE_COLOR[role]||'#22c55e';
+  const ROLE_LABEL={farmer:'Farmer',fpo:'FPO Manager',industrial:'Industrial Buyer',supplier:'Input Supplier',broker:'Broker/Trader',labour:'Farm Labour'};
+  const SCORE_METRICS={
+    industrial:[{l:'Procurement',s:87,i:'📦'},{l:'Quality Rate',s:94,i:'🧪'},{l:'Payment Speed',s:82,i:'💳'},{l:'Farmer Relations',s:91,i:'🤝'},{l:'On-Time',s:94,i:'🚚'}],
+    supplier:[{l:'Stock Health',s:78,i:'📊'},{l:'Customer Rating',s:90,i:'⭐'},{l:'Order Fulfillment',s:85,i:'🛒'},{l:'Revenue Growth',s:72,i:'📈'},{l:'Delivery',s:88,i:'🚚'}],
+    broker:[{l:'Deal Success',s:83,i:'🤝'},{l:'Network',s:76,i:'🌐'},{l:'Margin',s:88,i:'💰'},{l:'Farmer Trust',s:92,i:'👨‍🌾'},{l:'Market Coverage',s:79,i:'📍'}],
+    labour:[{l:'Attendance',s:95,i:'📅'},{l:'Skill Score',s:80,i:'🎯'},{l:'Employer Rating',s:90,i:'⭐'},{l:'Earnings Growth',s:74,i:'📈'},{l:'Certifications',s:66,i:'📜'}],
+    farmer:[{l:'Soil Health',s:82,i:'🧪'},{l:'Crop Diversity',s:70,i:'🌱'},{l:'Water Usage',s:65,i:'💧'},{l:'Income Stability',s:85,i:'💰'},{l:'Tech Adoption',s:88,i:'📱'}],
+  };
+  const sm=SCORE_METRICS[role]||SCORE_METRICS.farmer;
+  const healthScore=Math.round(sm.reduce((a,m)=>a+m.s,0)/sm.length);
+  const scoreLabel={farmer:'Farm Health',fpo:'FPO Health',industrial:'Business Score',supplier:'Shop Score',broker:'Deal Score',labour:'Work Score'}[role]||'Score';
+
+  const ROLE_OVERVIEW={
+    industrial:{stats:[{v:'₹4.82Cr',l:'Procurement FY26'},{v:'847',l:'Farmer Partners'},{v:'87%',l:'Grade A Rate'}],groups:[{t:'Procurement Targets',i:'📦',items:['Cotton: 3,200/5,000 Q (64%)','Sugarcane: 14,500/20,000 T (72%)','Paddy: 7,100/8,000 Q (89%)']},{t:'Payment Summary',i:'💳',items:['Confirmed: ₹2,17,600','Processing: ₹6,63,700','Total: ₹8,81,300']},{t:'Factory Info',i:'🏭',items:['Sri Venkateshwara Cotton Inds.','Guntur, Andhra Pradesh','ISO 9001 · FSSAI · BIS']}]},
+    supplier:{stats:[{v:'₹2.45L',l:'Revenue MTD'},{v:'5',l:'Products Listed'},{v:'⭐4.5',l:'Rating'}],groups:[{t:'Inventory',i:'📦',items:['Cotton Seeds: 340 pkts ✅','DAP 50kg: 120 bags ✅','Neem Oil: 85 bottles ⚠️']},{t:'Recent Orders',i:'🛒',items:['ORD-501: Ramaiah Naidu ₹3,498','ORD-502: Lakshmi Devi ₹4,250','ORD-503: Suresh Kumar ₹5,760']},{t:'Shop Info',i:'🏪',items:['Sri Sai Agri Centre, Guntur','Delivery: 25 km radius','Hours: 8 AM – 7 PM']}]},
+    broker:{stats:[{v:'₹6.1L',l:'Commission MTD'},{v:'4',l:'Active Deals'},{v:'⭐4.7',l:'Rating'}],groups:[{t:'Active Deals',i:'🤝',items:['Cotton 80Q → Deccan Foods','Paddy 150Q → AP Rice Mills','Chilli 30Q → Guntur Traders']},{t:'Network',i:'🌐',items:['23 Farmers','11 Buyers','8 Mandis covered']},{t:'Transport',i:'🚛',items:['Guntur→Hyderabad (En Route)','Vijayawada→Chennai (Booked)','Kurnool→Bangalore (Available)']}]},
+    labour:{stats:[{v:'₹25.1K',l:'Earnings MTD'},{v:'18',l:'Days Worked'},{v:'⭐4.8',l:'Rating'}],groups:[{t:'This Week',i:'💼',items:['Apr 25: Paddy Harvesting','Apr 26: Field Ploughing','Apr 27: Sugarcane Cutting']},{t:'Top Skills',i:'🎯',items:['Paddy Harvesting (90%)','Ploughing (85%)','Pesticide Spraying (75%)']},{t:'Welfare',i:'🏛️',items:['PM Shram Yogi: Enrolled','BOCW Fund: Active','e-Shram ID: UW-AP-123456']}]},
+  };
+  const ro=ROLE_OVERVIEW[role];
+
+  const ROLE_BADGES={
+    industrial:[{id:'b1',icon:'🏭',label:'First Procurement',desc:'Completed first deal',earned:true},{id:'b2',icon:'📦',label:'Bulk Buyer',desc:'Procured 10,000+ Q',earned:true},{id:'b3',icon:'🧪',label:'Quality Champion',desc:'90%+ acceptance',earned:false},{id:'b4',icon:'👨‍🌾',label:'Farmer Friend',desc:'500+ farmer partners',earned:true},{id:'b5',icon:'✅',label:'On-Time Payer',desc:'100% on-time payments',earned:false},{id:'b6',icon:'🏆',label:'Top Buyer',desc:'₹5Cr+ procurement',earned:true}],
+    supplier:[{id:'b1',icon:'🏪',label:'First Sale',desc:'Made first sale',earned:true},{id:'b2',icon:'⭐',label:'Top Rated',desc:'4.5+ rating',earned:true},{id:'b3',icon:'🚚',label:'Fast Delivery',desc:'Same-day 20+ times',earned:false},{id:'b4',icon:'📊',label:'Stock Master',desc:'Zero stockouts 90d',earned:false},{id:'b5',icon:'📣',label:'Campaign King',desc:'Reached 500+ farmers',earned:true},{id:'b6',icon:'📄',label:'Invoice Pro',desc:'50+ GST invoices',earned:false}],
+    broker:[{id:'b1',icon:'🤝',label:'First Deal',desc:'Closed first deal',earned:true},{id:'b2',icon:'💰',label:'Deal Maker',desc:'10+ deals closed',earned:true},{id:'b3',icon:'📈',label:'Price Guru',desc:'100+ price alerts',earned:false},{id:'b4',icon:'🌐',label:'Network Star',desc:'100+ farmers',earned:false},{id:'b5',icon:'⭐',label:'Reliable Broker',desc:'4.5+ trust rating',earned:true},{id:'b6',icon:'🚛',label:'Logistics King',desc:'50+ transports',earned:false}],
+    labour:[{id:'b1',icon:'💼',label:'First Job',desc:'Completed first job',earned:true},{id:'b2',icon:'📅',label:'Consistent',desc:'20+ days in month',earned:true},{id:'b3',icon:'🎯',label:'Skill Master',desc:'5+ skills at 80%+',earned:false},{id:'b4',icon:'⭐',label:'Top Rated',desc:'4.8+ rating',earned:true},{id:'b5',icon:'📜',label:'Certified',desc:'3+ certifications',earned:false},{id:'b6',icon:'🏛️',label:'Welfare Enrolled',desc:'2+ schemes active',earned:true}],
+  };
+  const activeBadges=ROLE_BADGES[role]||BADGES;
+
+  const ROLE_TIMELINE={
+    industrial:[{date:'2026-04-23',icon:'📦',title:'Procured Cotton 3,200Q from 18 farmers'},{date:'2026-04-20',icon:'💳',title:'Payment ₹2,17,600 to Ramaiah Naidu (UPI)'},{date:'2026-04-18',icon:'🧪',title:'Quality Inspection QI-003 Paddy — Grade A'},{date:'2026-04-15',icon:'🤝',title:'New contract: Suresh Kumar — 500T Sugarcane'},{date:'2026-04-10',icon:'🏭',title:'Joined AgriConnect 360 as Industrial Buyer'}],
+    supplier:[{date:'2026-04-23',icon:'🛒',title:'New Order ORD-501: Ramaiah Naidu — ₹3,498'},{date:'2026-04-22',icon:'🚚',title:'Shipped ORD-502: Lakshmi Devi — Cotton Seeds'},{date:'2026-04-20',icon:'✅',title:'Delivered ORD-503: Suresh Kumar — Drip Kit'},{date:'2026-04-18',icon:'📣',title:'SMS Campaign sent to 847 farmers'},{date:'2026-04-15',icon:'🏪',title:'Joined AgriConnect 360 as Supplier'}],
+    broker:[{date:'2026-04-23',icon:'🤝',title:'Deal D-201: Cotton 80Q → Deccan Foods'},{date:'2026-04-22',icon:'✅',title:'Deal D-202 confirmed: Paddy 150Q → AP Rice Mills'},{date:'2026-04-20',icon:'🚛',title:'Transport: Guntur → Hyderabad — Cotton'},{date:'2026-04-18',icon:'💰',title:'Commission received: ₹24,000'},{date:'2026-04-15',icon:'🤝',title:'Joined AgriConnect 360 as Broker'}],
+    labour:[{date:'2026-04-25',icon:'💼',title:'Job J-301: Paddy Harvesting (3 days)'},{date:'2026-04-24',icon:'✅',title:'Completed: Pesticide Spraying — ₹550'},{date:'2026-04-22',icon:'📜',title:'Certification: Safe Pesticide Handling'},{date:'2026-04-20',icon:'🏛️',title:'Enrolled in PM Shram Yogi Maan-Dhan'},{date:'2026-04-15',icon:'👷',title:'Joined AgriConnect 360 as Farm Labour'}],
+  };
+  const activeTimeline=ROLE_TIMELINE[role]||TIMELINE_EVENTS;
+
+  const ROLE_EDIT_FIELDS={
+    industrial:[{label:'Full Name',key:'name',type:'text'},{label:'Mobile',key:'mobile',type:'tel'},{label:'Email',key:'email',type:'email'},{label:'Company Name',key:'business_name',type:'text'},{label:'GSTIN',key:'kisan_id',type:'text'},{label:'Location',key:'district',type:'text'},{label:'Payment Terms',key:'irrigation_type',type:'text'}],
+    supplier:[{label:'Full Name',key:'name',type:'text'},{label:'Mobile',key:'mobile',type:'tel'},{label:'Email',key:'email',type:'email'},{label:'Shop Name',key:'business_name',type:'text'},{label:'GSTIN',key:'kisan_id',type:'text'},{label:'Location',key:'village',type:'text'},{label:'Business Hours',key:'irrigation_type',type:'text'}],
+    broker:[{label:'Full Name',key:'name',type:'text'},{label:'Mobile',key:'mobile',type:'tel'},{label:'Email',key:'email',type:'email'},{label:'Firm Name',key:'business_name',type:'text'},{label:'Primary Mandi',key:'village',type:'text'},{label:'District',key:'district',type:'text'},{label:'Experience (yrs)',key:'age',type:'number'}],
+    labour:[{label:'Full Name',key:'name',type:'text'},{label:'Mobile',key:'mobile',type:'tel'},{label:'Email',key:'email',type:'email'},{label:'Primary Skill',key:'business_type',type:'text'},{label:'Daily Rate (₹)',key:'num_fields',type:'number'},{label:'District',key:'district',type:'text'},{label:'e-Shram ID',key:'kisan_id',type:'text'}],
+  };
+  const editFields=ROLE_EDIT_FIELDS[role]||[{label:'Full Name',key:'name',type:'text'},{label:'Mobile',key:'mobile',type:'tel'},{label:'Email',key:'email',type:'email'},{label:'Village',key:'village',type:'text'},{label:'Mandal',key:'mandal',type:'text'},{label:'District',key:'district',type:'text'},{label:'Age',key:'age',type:'number'},{label:'Farm Area (Acres)',key:'farm_area_acres',type:'number'},{label:'Soil Type',key:'soil_type',type:'text'},{label:'Irrigation',key:'irrigation_type',type:'text'}];
+
+  const TABS=isFarmer
+    ?[{id:'overview',label:'Overview',icon:'📊'},{id:'farm',label:'Farm',icon:'🌾'},{id:'badges',label:'Badges',icon:'🏆'},{id:'timeline',label:'History',icon:'📅'}]
+    :[{id:'overview',label:'Overview',icon:'📊'},{id:'details',label:'Details',icon:'✏️'},{id:'badges',label:'Badges',icon:'🏆'},{id:'timeline',label:'History',icon:'📅'}];
+
+  const G={glass:{background:'rgba(255,255,255,0.03)',backdropFilter:'blur(20px)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:14}};
 
   return (
     <div className="animated profile-page">
       {viewingMember && (
-        <div className="card" style={{ marginBottom: 16, border: '1px solid rgba(59,130,246,0.35)', background: 'rgba(59,130,246,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-          <div style={{ fontSize: '0.86rem', color: 'var(--text-primary)' }}>
-            👥 Viewing FPO member profile from FPO Mode
-          </div>
-          <button className="btn btn-outline" onClick={handleReturnToOwnProfile}>
-            Back to My Profile
-          </button>
+        <div className="card" style={{marginBottom:16,border:'1px solid rgba(59,130,246,0.35)',background:'rgba(59,130,246,0.08)',display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}}>
+          <div style={{fontSize:'0.86rem',color:'var(--text-primary)'}}>👥 Viewing FPO member profile from FPO Mode</div>
+          <button className="btn btn-outline" onClick={handleReturnToOwnProfile}>Back to My Profile</button>
         </div>
       )}
-
-      {(photoError || idCardError || saveError) && (
-        <div className="card" style={{ marginBottom: 16, border: '1px solid rgba(239,68,68,0.35)', background: 'rgba(239,68,68,0.08)', color: '#fda4af', fontSize: '0.8rem' }}>
-          {photoError || idCardError || saveError}
-        </div>
+      {(photoError||idCardError||saveError)&&(
+        <div className="card" style={{marginBottom:16,border:'1px solid rgba(239,68,68,0.35)',background:'rgba(239,68,68,0.08)',color:'#fda4af',fontSize:'0.8rem'}}>{photoError||idCardError||saveError}</div>
       )}
 
-      {/* Hero Section */}
+      {/* Hero */}
       <div className="prof-hero">
-        <div className="prof-hero-bg" />
+        <div className="prof-hero-bg"/>
         <div className="prof-hero-content">
-          <div className="prof-avatar-wrap" onClick={() => !viewingMember && fileInputRef.current?.click()}>
-            {profilePhoto ? (
-              <img src={profilePhoto} alt="Profile" className="prof-avatar-img" />
-            ) : (
-              <div className="prof-avatar-placeholder">
-                {form.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div className="prof-avatar-overlay">
-              {viewingMember ? '👁️' : (photoUploading ? '⏳' : '📷')}
-            </div>
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} style={{ display: 'none' }} disabled={viewingMember} />
+          <div className="prof-avatar-wrap" onClick={()=>!viewingMember&&fileInputRef.current?.click()}>
+            {profilePhoto?<img src={profilePhoto} alt="Profile" className="prof-avatar-img"/>:<div className="prof-avatar-placeholder">{form.name.charAt(0).toUpperCase()}</div>}
+            <div className="prof-avatar-overlay">{viewingMember?'👁️':(photoUploading?'⏳':'📷')}</div>
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} style={{display:'none'}} disabled={viewingMember}/>
           </div>
           <div className="prof-hero-info">
             <h2 className="prof-hero-name">{form.name}</h2>
-            <p className="prof-hero-loc">📍 {form.village || form.mandal || form.district}, {form.state}</p>
+            <p className="prof-hero-loc">📍 {form.village||form.mandal||form.district}, {form.state}</p>
             <div className="prof-hero-tags">
-              <span className="prof-tag green">🌾 {form.farm_area_acres} Acres</span>
-              <span className="prof-tag blue">💧 {form.irrigation_type}</span>
-              <span className="prof-tag amber">🧪 {form.soil_type}</span>
+              <span className="prof-tag" style={{background:rc+'22',color:rc,border:'1px solid '+rc+'44'}}>{ROLE_LABEL[role]||role}</span>
+              <span className="prof-tag blue">📍 {form.district}</span>
+              {isFarmer&&<span className="prof-tag green">🌾 {form.farm_area_acres} Acres</span>}
+              {!isFarmer&&form.business_name&&<span className="prof-tag amber">🏢 {form.business_name}</span>}
             </div>
           </div>
           <div className="prof-hero-actions">
-            {!viewingMember && (
-              <button className="btn btn-primary" onClick={() => editing ? handleSaveProfile() : setEditing(true)}>
-                {editing ? '💾 Save' : '✏️ Edit Profile'}
-              </button>
-            )}
-            <button className="btn btn-outline" onClick={downloadIDCard} disabled={idCardGenerating}>
-              {idCardGenerating ? '⏳ Generating PDF...' : '🪪 Download ID (PDF + QR)'}
-            </button>
+            {!viewingMember&&<button className="btn btn-primary" onClick={()=>editing?handleSaveProfile():setEditing(true)}>{editing?'💾 Save':'✏️ Edit Profile'}</button>}
+            <button className="btn btn-outline" onClick={downloadIDCard} disabled={idCardGenerating}>{idCardGenerating?'⏳ Generating...':'🪪 Download ID Card'}</button>
           </div>
         </div>
       </div>
 
-      {/* Farm Health Score */}
+      {/* Score Ring */}
       <div className="prof-health-section">
         <div className="prof-health-score-card">
           <div className="prof-health-ring">
             <svg viewBox="0 0 120 120" className="prof-health-svg">
-              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-              <circle cx="60" cy="60" r="52" fill="none" stroke={farmHealthScore >= 70 ? '#22c55e' : farmHealthScore >= 40 ? '#f59e0b' : '#ef4444'} strokeWidth="8" strokeDasharray={`${farmHealthScore * 3.27} 327`} strokeLinecap="round" transform="rotate(-90 60 60)" style={{ transition: 'stroke-dasharray 1s ease' }} />
+              <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8"/>
+              <circle cx="60" cy="60" r="52" fill="none" stroke={rc} strokeWidth="8" strokeDasharray={`${healthScore*3.27} 327`} strokeLinecap="round" transform="rotate(-90 60 60)" style={{transition:'stroke-dasharray 1s ease'}}/>
             </svg>
-            <div className="prof-health-value">{farmHealthScore}</div>
-            <div className="prof-health-label">Farm Health</div>
+            <div className="prof-health-value">{healthScore}</div>
+            <div className="prof-health-label">{scoreLabel}</div>
           </div>
           <div className="prof-health-metrics">
-            {healthMetrics.map(m => (
-              <div key={m.label} className="prof-metric-row">
-                <span className="prof-metric-icon">{m.icon}</span>
-                <span className="prof-metric-label">{m.label}</span>
-                <div className="prof-metric-bar">
-                  <div className="prof-metric-fill" style={{ width: `${m.score}%`, background: m.score >= 70 ? '#22c55e' : m.score >= 40 ? '#f59e0b' : '#ef4444' }} />
-                </div>
-                <span className="prof-metric-score">{m.score}</span>
+            {sm.map(m=>(
+              <div key={m.l} className="prof-metric-row">
+                <span className="prof-metric-icon">{m.i}</span>
+                <span className="prof-metric-label">{m.l}</span>
+                <div className="prof-metric-bar"><div className="prof-metric-fill" style={{width:`${m.s}%`,background:m.s>=70?rc:m.s>=40?'#f59e0b':'#ef4444'}}/></div>
+                <span className="prof-metric-score">{m.s}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Tab Navigation */}
+      {/* Tabs */}
       <div className="prof-tabs">
-        {TABS.map(t => (
-          <button key={t.id} className={`prof-tab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
-            {t.icon} {t.label}
-          </button>
-        ))}
+        {TABS.map(t=><button key={t.id} className={`prof-tab ${tab===t.id?'active':''}`} onClick={()=>setTab(t.id)}>{t.icon} {t.label}</button>)}
       </div>
 
-      {/* Tab Content */}
-      {tab === 'overview' && (
+      {/* Overview Tab */}
+      {tab==='overview'&&isFarmer&&(
         <div className="prof-grid">
-          {/* Farm Summary Card */}
           <div className="card prof-summary-card">
             <h4>🌾 Farm Summary</h4>
             <div className="prof-summary-stats">
@@ -677,152 +697,108 @@ export default function ProfilePage() {
               <div className="prof-sstat"><span className="prof-sstat-val">{farmSummary.activeCrops}</span><span className="prof-sstat-label">Crops</span></div>
             </div>
           </div>
-
-          {/* Crop Portfolio Pie Chart */}
           <div className="card prof-pie-card">
             <h4>🥧 Crop Portfolio</h4>
             <div className="prof-pie-wrap">
               <svg viewBox="0 0 200 200" className="prof-pie-svg">
-                {(() => {
-                  let offset = 0;
-                  return cropPortfolio.map((c, i) => {
-                    const dashLen = c.pct * 5.65;
-                    const dashGap = 565 - dashLen;
-                    const el = (
-                      <circle key={c.name} cx="100" cy="100" r="80" fill="none" stroke={PIE_COLORS[i]} strokeWidth="30"
-                        strokeDasharray={`${dashLen} ${dashGap}`} strokeDashoffset={-offset} transform="rotate(-90 100 100)" />
-                    );
-                    offset += dashLen;
-                    return el;
-                  });
-                })()}
+                {(()=>{let offset=0;return cropPortfolio.map((c,i)=>{const dashLen=c.pct*5.65;const dashGap=565-dashLen;const el=<circle key={c.name} cx="100" cy="100" r="80" fill="none" stroke={PIE_COLORS[i]} strokeWidth="30" strokeDasharray={`${dashLen} ${dashGap}`} strokeDashoffset={-offset} transform="rotate(-90 100 100)"/>;offset+=dashLen;return el;});})()}
               </svg>
               <div className="prof-pie-legend">
-                {cropPortfolio.map((c, i) => (
-                  <div key={c.name} className="prof-pie-item">
-                    <span className="prof-pie-dot" style={{ background: PIE_COLORS[i] }} />
-                    <span>{c.name}</span>
-                    <span className="prof-pie-pct">{c.acres}ac ({c.pct}%)</span>
-                  </div>
-                ))}
+                {cropPortfolio.map((c,i)=><div key={c.name} className="prof-pie-item"><span className="prof-pie-dot" style={{background:PIE_COLORS[i]}}/><span>{c.name}</span><span className="prof-pie-pct">{c.acres}ac ({c.pct}%)</span></div>)}
               </div>
             </div>
           </div>
-
-          {/* Income vs Expense Mini Dashboard */}
           <div className="card prof-income-card">
             <h4>💰 Income vs Expense (6 Months)</h4>
             <div className="prof-income-summary">
-              <div className="prof-income-box green"><span>₹{(farmSummary.totalIncome / 1000).toFixed(0)}K</span><small>Income</small></div>
-              <div className="prof-income-box red"><span>₹{(farmSummary.totalExpenses / 1000).toFixed(0)}K</span><small>Expenses</small></div>
-              <div className="prof-income-box blue"><span>₹{(farmSummary.profit / 1000).toFixed(0)}K</span><small>Profit</small></div>
+              <div className="prof-income-box green"><span>₹{(farmSummary.totalIncome/1000).toFixed(0)}K</span><small>Income</small></div>
+              <div className="prof-income-box red"><span>₹{(farmSummary.totalExpenses/1000).toFixed(0)}K</span><small>Expenses</small></div>
+              <div className="prof-income-box blue"><span>₹{(farmSummary.profit/1000).toFixed(0)}K</span><small>Profit</small></div>
             </div>
             <div className="prof-chart-bars">
-              {monthlyData.map(d => (
-                <div key={d.month} className="prof-chart-col">
-                  <div className="prof-bar-pair">
-                    <div className="prof-bar income" style={{ height: `${(d.income / maxVal) * 100}%` }} title={`Income: ₹${d.income.toLocaleString()}`} />
-                    <div className="prof-bar expense" style={{ height: `${(d.expense / maxVal) * 100}%` }} title={`Expense: ₹${d.expense.toLocaleString()}`} />
-                  </div>
-                  <span className="prof-bar-label">{d.month}</span>
-                </div>
-              ))}
+              {monthlyData.map(d=><div key={d.month} className="prof-chart-col"><div className="prof-bar-pair"><div className="prof-bar income" style={{height:`${(d.income/maxVal)*100}%`}}/><div className="prof-bar expense" style={{height:`${(d.expense/maxVal)*100}%`}}/></div><span className="prof-bar-label">{d.month}</span></div>)}
             </div>
-            <div className="prof-chart-legend">
-              <span><span className="prof-ldot" style={{ background: '#22c55e' }} /> Income</span>
-              <span><span className="prof-ldot" style={{ background: '#ef4444' }} /> Expense</span>
-            </div>
+            <div className="prof-chart-legend"><span><span className="prof-ldot" style={{background:'#22c55e'}}/> Income</span><span><span className="prof-ldot" style={{background:'#ef4444'}}/> Expense</span></div>
           </div>
-
-          {/* Linked Schemes */}
           <div className="card prof-schemes-card">
             <h4>🏛️ Linked Schemes</h4>
             <div className="prof-scheme-list">
-              {linkedSchemes.map(s => (
-                <div key={s.name} className="prof-scheme-item">
-                  <span className="prof-scheme-icon">{s.icon}</span>
-                  <div className="prof-scheme-info">
-                    <span className="prof-scheme-name">{s.name}</span>
-                    <span className="prof-scheme-amount">{s.amount}</span>
-                  </div>
-                  <span className={`badge ${s.status === 'active' ? 'badge-green' : 'badge-amber'}`}>{s.status}</span>
-                </div>
-              ))}
+              {linkedSchemes.map(s=><div key={s.name} className="prof-scheme-item"><span className="prof-scheme-icon">{s.icon}</span><div className="prof-scheme-info"><span className="prof-scheme-name">{s.name}</span><span className="prof-scheme-amount">{s.amount}</span></div><span className={`badge ${s.status==='active'?'badge-green':'badge-amber'}`}>{s.status}</span></div>)}
             </div>
           </div>
         </div>
       )}
 
-      {tab === 'farm' && (
+      {tab==='overview'&&!isFarmer&&ro&&(
+        <div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:14,marginBottom:20}}>
+            {ro.stats.map(s=><div key={s.l} style={{...G.glass,padding:20,borderRadius:14,textAlign:'center'}}>
+              <div style={{fontSize:'1.6rem',fontWeight:800,color:rc,marginBottom:4}}>{s.v}</div>
+              <div style={{fontSize:'0.75rem',color:'rgba(255,255,255,0.4)'}}>{s.l}</div>
+            </div>)}
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:14}}>
+            {ro.groups.map(g=><div key={g.t} style={{...G.glass,padding:20,borderRadius:14}}>
+              <div style={{fontWeight:700,color:'#f1f5f9',marginBottom:12,fontSize:'0.9rem'}}>{g.i} {g.t}</div>
+              {g.items.map(it=><div key={it} style={{padding:'7px 0',borderBottom:'1px solid rgba(255,255,255,0.05)',fontSize:'0.8rem',color:'rgba(255,255,255,0.6)'}}>{it}</div>)}
+            </div>)}
+          </div>
+        </div>
+      )}
+
+      {/* Farm/Details Tab */}
+      {(tab==='farm'||tab==='details')&&(
         <div className="prof-edit-section">
-          <div className="card" style={{ padding: 24 }}>
-            <h4 style={{ marginBottom: 20 }}>✏️ Edit Farm Details</h4>
+          <div className="card" style={{padding:24}}>
+            <h4 style={{marginBottom:20}}>✏️ Edit {isFarmer?'Farm':'Business'} Details</h4>
             <div className="prof-edit-grid">
-              {[
-                { label: 'Full Name', key: 'name', type: 'text' },
-                { label: 'Mobile', key: 'mobile', type: 'tel' },
-                { label: 'Email', key: 'email', type: 'email' },
-                { label: 'Village', key: 'village', type: 'text' },
-                { label: 'Mandal', key: 'mandal', type: 'text' },
-                { label: 'District', key: 'district', type: 'text' },
-                { label: 'Age', key: 'age', type: 'number' },
-                { label: 'Farm Area (Acres)', key: 'farm_area_acres', type: 'number' },
-                { label: 'Soil Type', key: 'soil_type', type: 'text' },
-                { label: 'Irrigation', key: 'irrigation_type', type: 'text' },
-              ].map(f => (
-                <div key={f.key} className="prof-edit-field">
-                  <label>{f.label}</label>
-                  <input type={f.type} value={form[f.key]} onChange={e => update(f.key, e.target.value)} disabled={!editing || viewingMember} />
-                </div>
-              ))}
+              {editFields.map(f=><div key={f.key} className="prof-edit-field">
+                <label>{f.label}</label>
+                <input type={f.type} value={form[f.key]||''} onChange={e=>update(f.key,e.target.value)} disabled={!editing||viewingMember}/>
+              </div>)}
             </div>
-            <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-              {!viewingMember && (
-                <button className="btn btn-primary" onClick={() => editing ? handleSaveProfile() : setEditing(true)}>
-                  {editing ? '💾 Save Changes' : '✏️ Edit'}
-                </button>
-              )}
-              {editing && !viewingMember && <button className="btn btn-outline" onClick={() => setEditing(false)}>Cancel</button>}
+            <div style={{display:'flex',gap:10,marginTop:20}}>
+              {!viewingMember&&<button className="btn btn-primary" onClick={()=>editing?handleSaveProfile():setEditing(true)}>{editing?'💾 Save Changes':'✏️ Edit'}</button>}
+              {editing&&!viewingMember&&<button className="btn btn-outline" onClick={()=>setEditing(false)}>Cancel</button>}
             </div>
           </div>
         </div>
       )}
 
-      {tab === 'badges' && (
+      {/* Badges Tab */}
+      {tab==='badges'&&(
         <div className="prof-badges-section">
           <div className="prof-badges-header">
             <h4>🏆 Achievement Badges</h4>
-            <span className="prof-badge-count">{BADGES.filter(b => b.earned).length}/{BADGES.length} Earned</span>
+            <span className="prof-badge-count">{activeBadges.filter(b=>b.earned).length}/{activeBadges.length} Earned</span>
           </div>
           <div className="prof-badges-grid">
-            {BADGES.map(b => (
-              <div key={b.id} className={`prof-badge-card ${b.earned ? 'earned' : 'locked'}`}>
-                <span className="prof-badge-icon">{b.icon}</span>
-                <span className="prof-badge-label">{b.label}</span>
-                <span className="prof-badge-desc">{b.desc}</span>
-                {!b.earned && <span className="prof-badge-lock">🔒</span>}
-              </div>
-            ))}
+            {activeBadges.map(b=><div key={b.id} className={`prof-badge-card ${b.earned?'earned':'locked'}`}>
+              <span className="prof-badge-icon">{b.icon}</span>
+              <span className="prof-badge-label">{b.label}</span>
+              <span className="prof-badge-desc">{b.desc}</span>
+              {!b.earned&&<span className="prof-badge-lock">🔒</span>}
+            </div>)}
           </div>
         </div>
       )}
 
-      {tab === 'timeline' && (
+      {/* Timeline Tab */}
+      {tab==='timeline'&&(
         <div className="prof-timeline-section">
-          <h4 style={{ marginBottom: 20 }}>📅 Farming History Timeline</h4>
+          <h4 style={{marginBottom:20}}>📅 {ROLE_LABEL[role]||'Activity'} History</h4>
           <div className="prof-timeline">
-            {TIMELINE_EVENTS.map((ev, i) => (
-              <div key={i} className="prof-tl-item">
-                <div className="prof-tl-dot">{ev.icon}</div>
-                <div className="prof-tl-content">
-                  <div className="prof-tl-date">{new Date(ev.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                  <div className="prof-tl-title">{ev.title}</div>
-                </div>
+            {activeTimeline.map((ev,i)=><div key={i} className="prof-tl-item">
+              <div className="prof-tl-dot">{ev.icon}</div>
+              <div className="prof-tl-content">
+                <div className="prof-tl-date">{new Date(ev.date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}</div>
+                <div className="prof-tl-title">{ev.title}</div>
               </div>
-            ))}
+            </div>)}
           </div>
         </div>
       )}
     </div>
   );
 }
+
