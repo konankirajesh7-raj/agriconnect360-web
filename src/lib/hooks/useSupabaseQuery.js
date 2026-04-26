@@ -55,7 +55,11 @@ export function useSupabaseQuery(table, options = {}, mockData = []) {
       if (limit) query = query.limit(limit);
       if (single) query = query.single();
 
-      const { data: result, error: err } = await query;
+      const TIMEOUT_MS = 5000;
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Supabase query timed out')), TIMEOUT_MS)
+      );
+      const { data: result, error: err } = await Promise.race([query, timeoutPromise]);
       if (err) throw err;
 
       setData(single ? result : (result || []));
