@@ -248,8 +248,16 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     localStorage.setItem('agri360_onboarding_complete', 'skipped');
+    // Save selected role even when skipping so dashboard shows correct portal
+    if (form.role && form.role !== 'farmer') {
+      try {
+        await updateProfile({ role: form.role, onboarding_completed: false });
+      } catch (e) {
+        console.warn('Skip role save failed:', e);
+      }
+    }
     navigate(redirectPath);
   };
 

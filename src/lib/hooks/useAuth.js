@@ -424,11 +424,27 @@ function useAuthProvider() {
 
       if (profileError) throw profileError;
 
-      const savedFarmer = (role === 'admin' || role === 'fpo')
-        ? mergedUpdates
-        : await upsertFarmerForAuthUser(user?.id, mergedUpdates, farmerProfile?.id);
+      // Non-farmer roles: skip farmers table entirely — only profiles table is updated
+      const NON_FARMER = ['admin', 'fpo', 'industrial', 'broker', 'supplier', 'labour'];
+      let savedProfile;
+      if (NON_FARMER.includes(role)) {
+        savedProfile = {
+          id: user?.id,
+          name: mergedUpdates.name || mergedUpdates.full_name || role,
+          mobile: mergedUpdates.mobile || '',
+          district: mergedUpdates.district || DEFAULT_DISTRICT,
+          state: mergedUpdates.state || DEFAULT_STATE,
+          language: mergedUpdates.language || 'te',
+          role,
+          onboarding_completed: mergedUpdates.onboarding_completed ?? true,
+        };
+      } else {
+        savedProfile = await upsertFarmerForAuthUser(user?.id, mergedUpdates, farmerProfile?.id);
+      }
 
-      const hydrated = hydrateFarmerProfile(savedFarmer || mergedUpdates, role);
+      const hydrated = NON_FARMER.includes(role)
+        ? savedProfile
+        : hydrateFarmerProfile(savedProfile || mergedUpdates, role);
       setFarmerProfile(hydrated);
       return { success: true, data: hydrated };
     } catch (e) { return { success: false, error: e.message }; }
