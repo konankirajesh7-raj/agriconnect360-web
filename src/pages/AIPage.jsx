@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 // ── AI Engine Config ─────────────────────────────────────────────────────────
 const GROQ_API_KEY   = import.meta.env.VITE_GROQ_API_KEY   || '';
@@ -157,12 +157,41 @@ const Field = ({ label, value, onChange, type = 'text', placeholder, list }) => 
   </div>
 );
 
+const SUGGESTIONS = {
+  fertilizer: ['What NPK ratio for paddy?','Best time to apply urea?','Organic fertilizer alternatives?'],
+  pest: ['How to control whitefly?','Identify yellow leaf disease','Spray schedule for cotton'],
+  weather: ['Best sowing time this week?','Rain forecast impact on harvest?'],
+  general: ['YSR scheme eligibility?','Nearest APMC to Guntur?','How to get Kisan Credit Card?'],
+};
+
+function getSuggestions(text) {
+  const t = text.toLowerCase();
+  if (t.includes('fertilizer')||t.includes('urea')||t.includes('npk')||t.includes('ఎరువు')) return SUGGESTIONS.fertilizer;
+  if (t.includes('pest')||t.includes('disease')||t.includes('insect')||t.includes('పురుగు')) return SUGGESTIONS.pest;
+  if (t.includes('weather')||t.includes('rain')||t.includes('harvest')) return SUGGESTIONS.weather;
+  return SUGGESTIONS.general;
+}
+
+const STORAGE_KEY = 'agri_ai_chat_history';
+
 export default function AIPage() {
-  const [activeTool, setActiveTool] = useState('crop');
+  const [activeTool, setActiveTool] = useState('chat');
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null); // { text, engine }
+  const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [lang, setLang] = useState('en');
+  // Chat state
+  const [messages, setMessages] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; }
+  });
+  const [chatInput, setChatInput] = useState('');
+  const [ratings, setRatings] = useState({});
+  const [speaking, setSpeaking] = useState(null);
+  const [recording, setRecording] = useState(false);
+  const chatEndRef = useRef(null);
+
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior:'smooth' }); }, [messages, loading]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-40))); }, [messages]);
 
   const [cropForm, setCropForm] = useState({
     soilType: 'Black Cotton', ph: '6.8', nitrogen: '42',
@@ -195,7 +224,74 @@ export default function AIPage() {
     }
   };
 
+  const sendChat = async (q) => {
+    const question = (q || chatInput).trim();
+    if (!question) return;
+    const userMsg = { id: Date.now(), role:'user', text: question };
+    setMessages(prev => [...prev, userMsg]);
+    setChatInput('');
+    setLoading(true);
+    try {
+      const prompt = `You are an expert agricultural advisor for Andhra Pradesh, India. Answer this farmer question concisely and practically.
+
+Question: "${question}"
+
+Respond in ${lang==='te'?'Telugu':lang==='hi'?'Hindi':'English'}. Be specific, include local AP context, quantities, and timing. Keep response under 200 words.`;
+      let text;
+      try {
+        if (GROQ_API_KEY) text = await callGroq(prompt);
+        else if (GEMINI_API_KEY) text = (await callAIEngine(prompt)).text;
+        else throw new Error('no_key');
+      } catch {
+        // Demo mode — smart mock responses
+        const q2 = question.toLowerCase();
+        if (q2.includes('fertilizer')||q2.includes('urea')||q2.includes('ఎరువు')) {
+          text = lang==='te'
+            ? 'పద్ది వరి పైరు వృద్ధి దశలో: మొలకెత్తిన 21 రోజులకు హెక్టారుకు 50 కిలోల యూరియా వేయండి. 45 రోజులకు మరో 50 కిలోలు వేయండి. DAP ని నాటే సమయంలో హెక్టారుకు 100 కిలోలు వేయాలి. మట్టి పరీక్ష ఆధారంగా పొటాష్ 60 కిలోలు కలపండి.'
+            : 'For paddy in vegetative stage: Apply 50 kg/ha Urea at 21 DAT, another 50 kg/ha at 45 DAT. Apply DAP 100 kg/ha at transplanting. Add 60 kg/ha MOP based on soil test. Avoid over-application — yellowing of leaves indicates nitrogen toxicity.';
+        } else if (q2.includes('cotton')||q2.includes('పత్తి')) {
+          text = 'For cotton in Guntur district: Apply 20 kg N/ha as basal dose. Top-dress 30 kg N/ha at squaring stage (45-50 DAS). Use Karate 2.5% EC for bollworm. Current Guntur APMC price: ₹7,150/quintal — prices expected to rise by 8-12% in 3 weeks.';
+        } else if (q2.includes('harvest')||q2.includes('when to sell')) {
+          text = 'For Kharif paddy in Guntur: Harvest when 80% of grains are golden-yellow (around 130-135 DAS). Current MSP is ₹2,183/quintal. Post-harvest: dry to 14% moisture. Best time to sell: October-November when arrivals are low and prices peak.';
+        } else {
+          text = `Based on your question about "${question}", here's my advice for AP farmers: Follow integrated crop management practices, check with your nearest KVK (Krishi Vigyan Kendra) in Guntur, and apply for YSR Rythu Bharosa scheme for financial support. For urgent queries call Kisan Call Centre: 1800-180-1551 (free helpline).`;
+        }
+      }
+      const id = Date.now()+1;
+      setMessages(prev => [...prev, { id, role:'ai', text, suggestions: getSuggestions(question) }]);
+    } finally { setLoading(false); }
+  };
+
+  const handleMic = () => {
+    if (!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)) {
+      setChatInput('Voice input not supported in this browser. Please type your question.');
+      return;
+    }
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const rec = new SR();
+    rec.lang = lang==='te'?'te-IN':lang==='hi'?'hi-IN':'en-IN';
+    rec.interimResults = false;
+    setRecording(true);
+    rec.onresult = e => { setChatInput(e.results[0][0].transcript); setRecording(false); };
+    rec.onerror = () => setRecording(false);
+    rec.onend = () => setRecording(false);
+    rec.start();
+  };
+
+  const handleTTS = (id, text) => {
+    if (speaking === id) { window.speechSynthesis.cancel(); setSpeaking(null); return; }
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = lang==='te'?'te-IN':lang==='hi'?'hi-IN':'en-IN';
+    utt.onend = () => setSpeaking(null);
+    setSpeaking(id);
+    window.speechSynthesis.speak(utt);
+  };
+
+  const rateMsg = (id, val) => setRatings(r => ({ ...r, [id]: r[id]===val ? null : val }));
+
   const activeTool_ = TOOLS.find(t => t.id === activeTool);
+  const allTabs = [{ id:'chat', icon:'💬', label:'AI Chat' }, ...TOOLS];
 
   return (
     <div className="animated">
@@ -245,24 +341,102 @@ export default function AIPage() {
         )}
       </div>
 
-      {/* Tool selector */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, marginBottom: 24 }}>
-        {TOOLS.map(t => (
+      {/* Tab selector */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8, marginBottom: 24 }}>
+        {allTabs.map(t => (
           <button key={t.id} onClick={() => { setActiveTool(t.id); setResult(null); setError(''); }}
             style={{
-              padding: '14px 10px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+              padding: '12px 8px', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
               background: activeTool === t.id ? 'rgba(139,92,246,0.12)' : 'var(--bg-card)',
               border: `2px solid ${activeTool === t.id ? '#8b5cf6' : 'var(--border)'}`,
               color: activeTool === t.id ? '#8b5cf6' : 'var(--text-secondary)',
               textAlign: 'center', transition: 'all 0.2s',
             }}>
-            <div style={{ fontSize: '1.8rem', marginBottom: 6 }}>{t.icon}</div>
-            <div style={{ fontSize: '0.72rem', fontWeight: 700 }}>{t.label}</div>
+            <div style={{ fontSize: '1.4rem', marginBottom: 4 }}>{t.icon}</div>
+            <div style={{ fontSize: '0.68rem', fontWeight: 700 }}>{t.label}</div>
           </button>
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 20 }}>
+      {/* ── CHAT TAB ── */}
+      {activeTool === 'chat' && (
+        <div className="card" style={{ display:'flex', flexDirection:'column', height:580, padding:0, overflow:'hidden' }}>
+          {/* Chat header */}
+          <div style={{ padding:'14px 20px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div>
+              <span style={{ fontWeight:700 }}>🤖 AI Farming Assistant</span>
+              <span style={{ marginLeft:10, fontSize:'0.72rem', color:'#22c55e' }}>● Online</span>
+            </div>
+            <button onClick={()=>{setMessages([]); localStorage.removeItem(STORAGE_KEY);}} style={{ background:'none', border:'1px solid var(--border)', borderRadius:6, padding:'4px 10px', cursor:'pointer', color:'var(--text-muted)', fontSize:'0.75rem' }}>🗑 Clear</button>
+          </div>
+
+          {/* Messages */}
+          <div style={{ flex:1, overflowY:'auto', padding:'16px 20px', display:'flex', flexDirection:'column', gap:14 }}>
+            {messages.length===0 && (
+              <div style={{ textAlign:'center', padding:'40px 20px', color:'var(--text-muted)' }}>
+                <div style={{ fontSize:'3rem', marginBottom:12 }}>🌾</div>
+                <div style={{ fontWeight:600, marginBottom:6 }}>Welcome to AI Farming Assistant</div>
+                <div style={{ fontSize:'0.82rem', marginBottom:16 }}>Ask anything in Telugu, Hindi or English</div>
+                <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'center' }}>
+                  {['Paddy fertilizer schedule','Cotton pest control','Market price forecast','Government schemes'].map(s=>(
+                    <button key={s} onClick={()=>sendChat(s)} style={{ padding:'6px 14px', borderRadius:20, border:'1px solid rgba(139,92,246,0.3)', background:'rgba(139,92,246,0.06)', color:'#a78bfa', cursor:'pointer', fontSize:'0.78rem' }}>{s}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {messages.map(m => (
+              <div key={m.id} style={{ display:'flex', gap:10, flexDirection: m.role==='user'?'row-reverse':'row' }}>
+                <div style={{ width:32, height:32, borderRadius:'50%', background: m.role==='user'?'#8b5cf6':'#22c55e', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1rem', flexShrink:0 }}>
+                  {m.role==='user'?'👤':'🤖'}
+                </div>
+                <div style={{ maxWidth:'75%' }}>
+                  <div style={{ background: m.role==='user'?'rgba(139,92,246,0.12)':'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:12, padding:'10px 14px', fontSize:'0.87rem', lineHeight:1.7, whiteSpace:'pre-wrap' }}>
+                    {m.text}
+                  </div>
+                  {m.role==='ai' && (
+                    <div style={{ display:'flex', gap:8, marginTop:6, flexWrap:'wrap', alignItems:'center' }}>
+                      <button onClick={()=>handleTTS(m.id, m.text)} title="Text to Speech" style={{ background:'none', border:'1px solid var(--border)', borderRadius:6, padding:'3px 8px', cursor:'pointer', fontSize:'0.75rem', color: speaking===m.id?'#8b5cf6':'var(--text-muted)' }}>
+                        {speaking===m.id?'⏹ Stop':'🔊 Play'}
+                      </button>
+                      <button onClick={()=>rateMsg(m.id,'up')} style={{ background: ratings[m.id]==='up'?'rgba(34,197,94,0.15)':'none', border:'1px solid var(--border)', borderRadius:6, padding:'3px 8px', cursor:'pointer', fontSize:'0.75rem', color: ratings[m.id]==='up'?'#22c55e':'var(--text-muted)' }}>👍</button>
+                      <button onClick={()=>rateMsg(m.id,'down')} style={{ background: ratings[m.id]==='down'?'rgba(239,68,68,0.15)':'none', border:'1px solid var(--border)', borderRadius:6, padding:'3px 8px', cursor:'pointer', fontSize:'0.75rem', color: ratings[m.id]==='down'?'#ef4444':'var(--text-muted)' }}>👎</button>
+                      {m.suggestions?.map(s=>(
+                        <button key={s} onClick={()=>sendChat(s)} style={{ padding:'3px 10px', borderRadius:20, border:'1px solid rgba(139,92,246,0.25)', background:'rgba(139,92,246,0.05)', color:'#a78bfa', cursor:'pointer', fontSize:'0.72rem' }}>{s}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+            {loading && activeTool==='chat' && (
+              <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                <div style={{ width:32, height:32, borderRadius:'50%', background:'#22c55e', display:'flex', alignItems:'center', justifyContent:'center' }}>🤖</div>
+                <div style={{ background:'var(--bg-primary)', border:'1px solid var(--border)', borderRadius:12, padding:'10px 16px', fontSize:'0.85rem', color:'var(--text-muted)' }}>
+                  <span style={{ display:'inline-flex', gap:4 }}>
+                    <span style={{ animation:'bounce 1s infinite 0ms' }}>●</span>
+                    <span style={{ animation:'bounce 1s infinite 150ms' }}>●</span>
+                    <span style={{ animation:'bounce 1s infinite 300ms' }}>●</span>
+                  </span> Typing...
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef}/>
+          </div>
+
+          {/* Input bar */}
+          <div style={{ padding:'12px 16px', borderTop:'1px solid var(--border)', display:'flex', gap:8 }}>
+            <button onClick={handleMic} title="Voice Input" style={{ background: recording?'rgba(239,68,68,0.12)':'var(--bg-primary)', border:`1px solid ${recording?'#ef4444':'var(--border)'}`, borderRadius:8, padding:'0 12px', cursor:'pointer', fontSize:'1.1rem', color: recording?'#ef4444':'var(--text-muted)', flexShrink:0 }}>
+              {recording?'🔴':'🎤'}
+            </button>
+            <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==='Enter'&&!e.shiftKey&&sendChat()}
+              placeholder="Ask in Telugu, Hindi or English... (Enter to send)"
+              style={{ flex:1, padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.88rem' }}/>
+            <button onClick={()=>sendChat()} disabled={!chatInput.trim()&&!loading} className="btn btn-primary" style={{ padding:'10px 18px', flexShrink:0 }}>Send ➤</button>
+          </div>
+        </div>
+      )}
+
+      {activeTool !== 'chat' && <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 20 }}>
         {/* Input Panel */}
         <div className="card" style={{ padding: '22px' }}>
           <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: 4 }}>
@@ -412,7 +586,7 @@ export default function AIPage() {
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
       {/* Quick Tips */}
       <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
@@ -437,7 +611,10 @@ export default function AIPage() {
         ))}
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+      `}</style>
     </div>
   );
 }
