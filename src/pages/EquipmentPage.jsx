@@ -21,7 +21,10 @@ const REVIEWS = [
   { user:'Lakshmi B.', rating:5, comment:'Very satisfied. Completed 3 acres in just 4 hours.', date:'Feb 2026' },
 ];
 
+const BK_STATUS = { confirmed:{bg:'rgba(34,197,94,0.1)',color:'#22c55e'}, pending:{bg:'rgba(245,158,11,0.1)',color:'#f59e0b'}, cancelled:{bg:'rgba(239,68,68,0.1)',color:'#ef4444'} };
+
 export default function EquipmentPage() {
+  const [tab, setTab] = useState('marketplace');
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState(null);
@@ -30,6 +33,10 @@ export default function EquipmentPage() {
   const [confirmed, setConfirmed] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [sort, setSort] = useState('rating');
+  const [bookingHistory, setBookingHistory] = useState([
+    { ref:'EQ-DEMO01', equipment:'Harvester (Custom)', type:'Harvesting', date:'2026-04-18', days:'3 acres', total:8400, payment:'upi', status:'confirmed', owner:'Vijay D.' },
+    { ref:'EQ-DEMO02', equipment:'Power Sprayer', type:'Spraying', date:'2026-04-10', days:'2d × 4h', total:3600, payment:'cash', status:'confirmed', owner:'Suresh M.' },
+  ]);
 
   let list = filter==='All' ? EQ : EQ.filter(e=>e.type===filter);
   if (search) list = list.filter(e=>e.name.toLowerCase().includes(search.toLowerCase())||e.location.toLowerCase().includes(search.toLowerCase())||e.brand.toLowerCase().includes(search.toLowerCase()));
@@ -42,7 +49,10 @@ export default function EquipmentPage() {
 
   const confirmBooking = () => {
     const ref='EQ-'+Math.random().toString(36).substring(2,8).toUpperCase();
-    setConfirmed({ ref, equipment:selected.name, date:booking.date, total:totalCost, payment:booking.payment });
+    const qty = selected.unit==='acre' ? `${booking.days} acres` : `${booking.days}d × ${booking.hours}h`;
+    const entry = { ref, equipment:selected.name, type:selected.type, date:booking.date, days:qty, total:totalCost, payment:booking.payment, status:'confirmed', owner:selected.owner };
+    setBookingHistory(h=>[entry,...h]);
+    setConfirmed(entry);
     setSelected(null);
   };
 
@@ -73,9 +83,59 @@ export default function EquipmentPage() {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid-4" style={{ marginBottom:20 }}>
-        {[
+      {/* Tabs */}
+      <div style={{ display:'flex', gap:6, marginBottom:22 }}>
+        {[['marketplace','🚜','Marketplace'],['bookings','🧾','My Bookings']].map(([id,icon,label])=>(
+          <button key={id} onClick={()=>setTab(id)} style={{ padding:'10px 22px', borderRadius:24, border:'none', cursor:'pointer', fontSize:'0.85rem', fontWeight:700, background:tab===id?'linear-gradient(135deg,#22c55e,#16a34a)':'var(--bg-card)', color:tab===id?'#fff':'var(--text-muted)', boxShadow:tab===id?'0 4px 12px rgba(34,197,94,0.3)':'none', transition:'all 0.2s', position:'relative' }}>
+            {icon} {label}
+            {id==='bookings' && bookingHistory.length>0 && <span style={{ position:'absolute', top:-4, right:-4, background:'#ef4444', color:'#fff', borderRadius:'50%', width:18, height:18, fontSize:'0.6rem', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800 }}>{bookingHistory.length}</span>}
+          </button>
+        ))}
+      </div>
+
+      {/* MY BOOKINGS TAB */}
+      {tab==='bookings' && (
+        <div className="card">
+          <div style={{ padding:'18px 22px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+            <div style={{ fontWeight:700 }}>🧾 My Equipment Bookings ({bookingHistory.length})</div>
+            <span style={{ fontSize:'0.78rem', color:'var(--text-muted)' }}>All bookings · Most recent first</span>
+          </div>
+          {bookingHistory.length===0 ? (
+            <div style={{ padding:48, textAlign:'center', color:'var(--text-muted)' }}>
+              <div style={{ fontSize:'3rem', marginBottom:12 }}>📋</div>
+              <div style={{ fontWeight:600 }}>No bookings yet</div>
+              <div style={{ fontSize:'0.82rem', marginTop:4 }}>Go to Marketplace tab and book any equipment</div>
+            </div>
+          ) : (
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead><tr><th>Booking Ref</th><th>Equipment</th><th>Type</th><th>Owner</th><th>Date</th><th>Duration</th><th>Payment</th><th>Total</th><th>Status</th></tr></thead>
+                <tbody>
+                  {bookingHistory.map(b=>(
+                    <tr key={b.ref}>
+                      <td style={{ fontWeight:800, color:'#22c55e', fontFamily:'monospace' }}>{b.ref}</td>
+                      <td style={{ fontWeight:600 }}>{b.equipment}</td>
+                      <td><span style={{ fontSize:'0.75rem', background:'rgba(34,197,94,0.08)', color:'#22c55e', padding:'2px 8px', borderRadius:8, fontWeight:600 }}>{ICONS[b.type]} {b.type}</span></td>
+                      <td style={{ color:'var(--text-muted)', fontSize:'0.82rem' }}>{b.owner}</td>
+                      <td>{b.date}</td>
+                      <td style={{ fontWeight:600 }}>{b.days}</td>
+                      <td style={{ textTransform:'uppercase', fontSize:'0.78rem', fontWeight:600 }}>{b.payment}</td>
+                      <td style={{ fontWeight:800, color:'#22c55e' }}>₹{b.total.toLocaleString()}</td>
+                      <td><span style={{ background:BK_STATUS[b.status]?.bg, color:BK_STATUS[b.status]?.color, padding:'3px 10px', borderRadius:10, fontSize:'0.72rem', fontWeight:700 }}>{b.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MARKETPLACE TAB */}
+      {tab==='marketplace' && <>
+
+        <div className="grid-4" style={{ marginBottom:20 }}>
+          {[
           { label:'Available Now', value:EQ.filter(e=>e.available).length, icon:'✅', color:'#22c55e', bg:'rgba(34,197,94,0.08)' },
           { label:'Total Equipment', value:EQ.length, icon:'🚜', color:'#3b82f6', bg:'rgba(59,130,246,0.08)' },
           { label:'Avg Rating', value:'4.5 ★', icon:'⭐', color:'#f59e0b', bg:'rgba(245,158,11,0.08)' },
@@ -87,7 +147,7 @@ export default function EquipmentPage() {
             <div style={{ fontSize:'0.72rem', color:'var(--text-muted)', fontWeight:600, marginTop:2 }}>{s.label}</div>
           </div>
         ))}
-      </div>
+        </div>
 
       {/* Search + Filter + Sort */}
       <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap', alignItems:'center' }}>
@@ -143,6 +203,7 @@ export default function EquipmentPage() {
           </div>
         ))}
       </div>
+      </> }
 
       {/* Detail Drawer */}
       {detail && (
