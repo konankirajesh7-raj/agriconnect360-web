@@ -526,6 +526,7 @@ tr:hover td { background: var(--bg-hover); }
 @media (max-width: 768px) {
   .app-layout {
     grid-template-columns: 1fr;
+    overflow-x: hidden;
   }
   .sidebar {
     position: fixed;
@@ -534,16 +535,20 @@ tr:hover td { background: var(--bg-hover); }
     z-index: 100;
     transition: left 0.3s ease;
   }
-  .sidebar:not(.collapsed) {
+  .sidebar.open {
     left: 0;
   }
-  .header { grid-column: 1; }
+  .header { grid-column: 1; padding: 0 12px; }
   .main-content { grid-column: 1; padding: 16px; }
   .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .charts-grid { grid-template-columns: 1fr; }
   .grid-4 { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .header-right { gap: 8px; }
+  .header-right { gap: 6px; }
+  .header-search-text { display: none; }
+  .header-search-kbd { display: none; }
+  .header-api-docs { display: none !important; }
+  .gam-header-chips { display: none !important; }
 }
 
 /* Mobile */

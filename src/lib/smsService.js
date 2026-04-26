@@ -57,39 +57,30 @@ export async function sendOTP(phone, language = 'en') {
   }
 
   try {
-    const response = await fetch(FAST2SMS_BASE, {
+    // Use Vercel serverless API to avoid CORS issues
+    const response = await fetch('/api/send-otp', {
       method: 'POST',
-      headers: {
-        'authorization': FAST2SMS_API_KEY,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        route: 'q', // Quick SMS (transactional)
-        message,
-        language: 'english',
-        flash: 0,
-        numbers: cleanPhone,
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: cleanPhone, message }),
     });
 
     const data = await response.json();
 
-    if (data.return === true) {
+    if (data.success) {
       console.log(`✅ OTP sent to ${cleanPhone} via Fast2SMS`);
-      // Track delivery
       logOTPDelivery(cleanPhone, 'success', data.request_id);
       return { success: true, otp, messageId: data.request_id };
     } else {
-      console.error('❌ Fast2SMS error:', data.message);
-      logOTPDelivery(cleanPhone, 'failed', null, data.message);
+      console.error('❌ Fast2SMS error:', data.error);
+      logOTPDelivery(cleanPhone, 'failed', null, data.error);
       // Fallback to mock in case of failure
-      return { success: true, otp, mock: true, message: `SMS failed: ${data.message}. Using mock OTP.` };
+      return { success: true, otp, mock: true, message: `SMS failed: ${data.error}. OTP logged to console.` };
     }
   } catch (err) {
     console.error('❌ SMS send error:', err.message);
     logOTPDelivery(cleanPhone, 'error', null, err.message);
     // Fallback to mock
-    return { success: true, otp, mock: true, message: 'Network error. Using mock OTP.' };
+    return { success: true, otp, mock: true, message: 'Network error. OTP logged to console.' };
   }
 }
 

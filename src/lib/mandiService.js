@@ -189,16 +189,17 @@ export async function checkPriceAlerts(farmerId) {
     // Get farmer's watched crops from preferences
     const { data: prefs } = await supabase
       .from('farmer_preferences')
-      .select('primary_crops, district')
+      .select('primary_crops, preferred_crops, district')
       .eq('farmer_id', farmerId)
       .single();
 
-    if (!prefs || !prefs.primary_crops) return [];
+    const watchedCrops = prefs?.primary_crops || prefs?.preferred_crops || [];
+    if (!prefs || watchedCrops.length === 0) return [];
 
     const alerts = [];
     const district = prefs.district || DEFAULT_DISTRICT;
 
-    for (const crop of prefs.primary_crops) {
+    for (const crop of watchedCrops) {
       const history = await getPriceHistory(crop, district, 7);
       if (history.length < 2) continue;
 

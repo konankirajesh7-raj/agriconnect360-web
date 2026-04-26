@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 
 const MOCK_SOIL = [
   { id: 1, field_id: 1, farmer_id: 1, soil_type: 'Black Cotton', nitrogen_level: 42, phosphorus_level: 18, potassium_level: 240, ph_level: 7.2, organic_carbon: 0.72, test_date: '2024-09-10', lab_name: 'Mysuru Soil Lab', field_name: 'Field A1' },
@@ -24,18 +25,9 @@ const SOIL_TESTING_STEPS = [
 ];
 
 export default function SoilPage() {
-  const [tests, setTests] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: tests, loading, isLive } = useSupabaseQuery('soil_tests', { orderBy: { column: 'test_date', ascending: false }, limit: 200 }, MOCK_SOIL);
   const [activeTab, setActiveTab] = useState('health-card');
   const [selectedTest, setSelectedTest] = useState(0);
-
-  useEffect(() => {
-    const token = localStorage.getItem('agri_admin_token');
-    axios.get('/api/v1/soil/tests?all=true', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => setTests(r.data.tests || r.data.data || MOCK_SOIL))
-      .catch(() => setTests(MOCK_SOIL))
-      .finally(() => setLoading(false));
-  }, []);
 
   const selected = tests[selectedTest] || tests[0];
 

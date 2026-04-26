@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 
 const MOCK_SCHEMES = [
   { _id: '1', name: 'PM-KISAN', category: 'subsidy', description: 'Direct income support of ₹6000/year to farmer families in 3 installments', amount: 6000, ministry: 'Agriculture Ministry', state: 'Central', is_active: true, documents_required: ['Aadhaar', 'Land records', 'Bank account'], deadline: null, application_url: 'pmkisan.gov.in', beneficiaries: '11.8 Cr', eligibility: ['Small & marginal farmers', 'Valid Aadhaar', 'Own cultivable land'] },
@@ -13,19 +13,10 @@ const MOCK_SCHEMES = [
 const CAT_LABELS = { subsidy: { label: 'Subsidy', color: '#22c55e', icon: '💵' }, insurance: { label: 'Insurance', color: '#3b82f6', icon: '🛡️' }, loan: { label: 'Loan', color: '#f59e0b', icon: '🏦' }, market: { label: 'Market', color: '#8b5cf6', icon: '🏪' }, other: { label: 'Other', color: '#6b7280', icon: '📋' } };
 
 export default function SchemesPage() {
-  const [schemes, setSchemes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: schemes, loading, isLive } = useSupabaseQuery('schemes', { orderBy: { column: 'name', ascending: true }, limit: 200 }, MOCK_SCHEMES);
   const [catFilter, setCatFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('browse');
   const [selectedScheme, setSelectedScheme] = useState(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem('agri_admin_token');
-    axios.get('/api/v1/schemes', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => setSchemes(r.data.schemes || r.data.data || []))
-      .catch(() => setSchemes(MOCK_SCHEMES))
-      .finally(() => setLoading(false));
-  }, []);
 
   const categories = [...new Set(schemes.map(s => s.category))];
   const filtered = catFilter === 'all' ? schemes : schemes.filter(s => s.category === catFilter);

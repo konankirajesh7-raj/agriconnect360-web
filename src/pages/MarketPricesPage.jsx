@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const MOCK_PRICES = [
-  { _id: '1', crop_type: 'Paddy', market_name: 'Mysuru APMC', price_per_quintal: 2180, min_price: 2050, max_price: 2300, district: 'Mysuru', date: new Date().toISOString(), arrivals_quintals: 4520, source: 'enam', market_type: 'apmc' },
-  { _id: '2', crop_type: 'Sugarcane', market_name: 'Belagavi Sugar Factory', price_per_quintal: 3450, min_price: 3200, max_price: 3600, district: 'Belagavi', date: new Date().toISOString(), arrivals_quintals: 12000, source: 'direct', market_type: 'factory' },
-  { _id: '3', crop_type: 'Cotton', market_name: 'Dharwad APMC', price_per_quintal: 6800, min_price: 6500, max_price: 7100, district: 'Dharwad', date: new Date().toISOString(), arrivals_quintals: 890, source: 'enam', market_type: 'apmc' },
-  { _id: '4', crop_type: 'Wheat', market_name: 'Vijayapura Mandi', price_per_quintal: 2150, min_price: 2100, max_price: 2250, district: 'Vijayapura', date: new Date().toISOString(), arrivals_quintals: 6300, source: 'enam', market_type: 'apmc' },
-  { _id: '5', crop_type: 'Maize', market_name: 'Haveri APMC', price_per_quintal: 1980, min_price: 1850, max_price: 2100, district: 'Haveri', date: new Date().toISOString(), arrivals_quintals: 2100, source: 'enam', market_type: 'apmc' },
-  { _id: '6', crop_type: 'Tomato', market_name: 'Kolar Wholesale', price_per_quintal: 1200, min_price: 900, max_price: 1500, district: 'Kolar', date: new Date().toISOString(), arrivals_quintals: 3400, source: 'direct', market_type: 'broker' },
-  { _id: '7', crop_type: 'Groundnut', market_name: 'Tumkur APMC', price_per_quintal: 5200, min_price: 5000, max_price: 5500, district: 'Tumkur', date: new Date().toISOString(), arrivals_quintals: 780, source: 'enam', market_type: 'apmc' },
+  { id: '1', crop_type: 'Paddy', market_name: 'Mysuru APMC', price_per_quintal: 2180, min_price: 2050, max_price: 2300, district: 'Mysuru', date: new Date().toISOString(), arrivals_quintals: 4520, source: 'enam', market_type: 'apmc' },
+  { id: '2', crop_type: 'Sugarcane', market_name: 'Belagavi Sugar Factory', price_per_quintal: 3450, min_price: 3200, max_price: 3600, district: 'Belagavi', date: new Date().toISOString(), arrivals_quintals: 12000, source: 'direct', market_type: 'factory' },
+  { id: '3', crop_type: 'Cotton', market_name: 'Dharwad APMC', price_per_quintal: 6800, min_price: 6500, max_price: 7100, district: 'Dharwad', date: new Date().toISOString(), arrivals_quintals: 890, source: 'enam', market_type: 'apmc' },
+  { id: '4', crop_type: 'Wheat', market_name: 'Vijayapura Mandi', price_per_quintal: 2150, min_price: 2100, max_price: 2250, district: 'Vijayapura', date: new Date().toISOString(), arrivals_quintals: 6300, source: 'enam', market_type: 'apmc' },
+  { id: '5', crop_type: 'Maize', market_name: 'Haveri APMC', price_per_quintal: 1980, min_price: 1850, max_price: 2100, district: 'Haveri', date: new Date().toISOString(), arrivals_quintals: 2100, source: 'enam', market_type: 'apmc' },
+  { id: '6', crop_type: 'Tomato', market_name: 'Kolar Wholesale', price_per_quintal: 1200, min_price: 900, max_price: 1500, district: 'Kolar', date: new Date().toISOString(), arrivals_quintals: 3400, source: 'direct', market_type: 'broker' },
+  { id: '7', crop_type: 'Groundnut', market_name: 'Tumkur APMC', price_per_quintal: 5200, min_price: 5000, max_price: 5500, district: 'Tumkur', date: new Date().toISOString(), arrivals_quintals: 780, source: 'enam', market_type: 'apmc' },
 ];
 
 const HISTORY_DATA = [
@@ -37,18 +37,9 @@ const BEST_MANDIS = [
 ];
 
 export default function MarketPricesPage() {
-  const [prices, setPrices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: prices, loading, isLive } = useSupabaseQuery('market_prices', { orderBy: { column: 'date', ascending: false }, limit: 200, realtime: true }, MOCK_PRICES);
   const [selected, setSelected] = useState(null);
   const [activeTab, setActiveTab] = useState('prices');
-
-  useEffect(() => {
-    const token = localStorage.getItem('agri_admin_token');
-    axios.get('/api/v1/prices?limit=50', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => setPrices(r.data.prices || r.data.data || []))
-      .catch(() => setPrices(MOCK_PRICES))
-      .finally(() => setLoading(false));
-  }, []);
 
   const avgPrice = prices.length ? Math.round(prices.reduce((s, p) => s + p.price_per_quintal, 0) / prices.length) : 0;
 
@@ -105,7 +96,7 @@ export default function MarketPricesPage() {
                   <thead><tr><th>Crop</th><th>Market</th><th>District</th><th>Min</th><th>Price</th><th>Max</th><th>Arrivals (Q)</th><th>Source</th></tr></thead>
                   <tbody>
                     {prices.map(p => (
-                      <tr key={p._id} onClick={() => setSelected(p)} style={{ cursor: 'pointer' }}>
+                      <tr key={p.id} onClick={() => setSelected(p)} style={{ cursor: 'pointer' }}>
                         <td style={{ fontWeight: 600 }}>{p.crop_type}</td>
                         <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{p.market_name}</td>
                         <td>{p.district}</td>

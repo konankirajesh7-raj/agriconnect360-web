@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
+import { useNavigate } from 'react-router-dom';
 
 const MOCK_CROPS = [
-  { _id: '1', farmer_id: 1, crop_type: 'Paddy', variety: 'BPT-5204', current_stage: 'vegetative', sowing_date: '2024-07-15', area_used_acres: 2.5, health_score: 85, season: 'Kharif', days_since_sow: 95, expected_harvest: '2024-12-10' },
-  { _id: '2', farmer_id: 2, crop_type: 'Sugarcane', variety: 'Co-86032', current_stage: 'flowering', sowing_date: '2024-02-10', area_used_acres: 3.0, health_score: 92, season: 'Year-round', days_since_sow: 250, expected_harvest: '2025-02-10' },
-  { _id: '3', farmer_id: 3, crop_type: 'Cotton', variety: 'NHH-44', current_stage: 'fruiting', sowing_date: '2024-06-20', area_used_acres: 1.5, health_score: 67, season: 'Kharif', days_since_sow: 120, expected_harvest: '2024-12-20' },
-  { _id: '4', farmer_id: 4, crop_type: 'Wheat', variety: 'HD-2967', current_stage: 'maturation', sowing_date: '2024-11-05', area_used_acres: 4.0, health_score: 90, season: 'Rabi', days_since_sow: 60, expected_harvest: '2025-03-15' },
-  { _id: '5', farmer_id: 5, crop_type: 'Maize', variety: 'Pioneer 30V92', current_stage: 'germination', sowing_date: '2024-06-25', area_used_acres: 2.0, health_score: 78, season: 'Kharif', days_since_sow: 15, expected_harvest: '2024-11-25' },
-  { _id: '6', farmer_id: 1, crop_type: 'Groundnut', variety: 'TMV-2', current_stage: 'harvested', sowing_date: '2024-03-15', area_used_acres: 1.0, health_score: 95, season: 'Rabi', days_since_sow: 180, expected_harvest: '2024-08-15' },
-  { _id: '7', farmer_id: 6, crop_type: 'Tomato', variety: 'Arka Rakshak', current_stage: 'fruiting', sowing_date: '2024-09-10', area_used_acres: 0.5, health_score: 73, season: 'Year-round', days_since_sow: 45, expected_harvest: '2024-12-10' },
+  { id: '1', farmer_id: 1, crop_type: 'Paddy', variety: 'BPT-5204', current_stage: 'vegetative', sowing_date: '2024-07-15', area_used_acres: 2.5, health_score: 85, season: 'Kharif', days_since_sow: 95, expected_harvest: '2024-12-10' },
+  { id: '2', farmer_id: 2, crop_type: 'Sugarcane', variety: 'Co-86032', current_stage: 'flowering', sowing_date: '2024-02-10', area_used_acres: 3.0, health_score: 92, season: 'Year-round', days_since_sow: 250, expected_harvest: '2025-02-10' },
+  { id: '3', farmer_id: 3, crop_type: 'Cotton', variety: 'NHH-44', current_stage: 'fruiting', sowing_date: '2024-06-20', area_used_acres: 1.5, health_score: 67, season: 'Kharif', days_since_sow: 120, expected_harvest: '2024-12-20' },
+  { id: '4', farmer_id: 4, crop_type: 'Wheat', variety: 'HD-2967', current_stage: 'maturation', sowing_date: '2024-11-05', area_used_acres: 4.0, health_score: 90, season: 'Rabi', days_since_sow: 60, expected_harvest: '2025-03-15' },
+  { id: '5', farmer_id: 5, crop_type: 'Maize', variety: 'Pioneer 30V92', current_stage: 'germination', sowing_date: '2024-06-25', area_used_acres: 2.0, health_score: 78, season: 'Kharif', days_since_sow: 15, expected_harvest: '2024-11-25' },
+  { id: '6', farmer_id: 1, crop_type: 'Groundnut', variety: 'TMV-2', current_stage: 'harvested', sowing_date: '2024-03-15', area_used_acres: 1.0, health_score: 95, season: 'Rabi', days_since_sow: 180, expected_harvest: '2024-08-15' },
+  { id: '7', farmer_id: 6, crop_type: 'Tomato', variety: 'Arka Rakshak', current_stage: 'fruiting', sowing_date: '2024-09-10', area_used_acres: 0.5, health_score: 73, season: 'Year-round', days_since_sow: 45, expected_harvest: '2024-12-10' },
 ];
+
 
 const STAGE_COLORS = { sowing: '#f59e0b', germination: '#84cc16', vegetative: '#22c55e', flowering: '#f97316', fruiting: '#ef4444', maturation: '#8b5cf6', harvested: '#6b7280' };
 const STAGE_ORDER = ['sowing', 'germination', 'vegetative', 'flowering', 'fruiting', 'maturation', 'harvested'];
@@ -27,19 +29,11 @@ const STAGE_TASKS = {
 };
 
 export default function CropsPage() {
-  const [crops, setCrops] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { data: crops, loading, isLive } = useSupabaseQuery('crops', { orderBy: { column: 'created_at', ascending: false }, limit: 200 }, MOCK_CROPS);
   const [stageFilter, setStageFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('tracking');
   const [selectedCrop, setSelectedCrop] = useState(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem('agri_admin_token');
-    axios.get('/api/v1/crops?all=true&limit=100', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => setCrops(r.data.crops || r.data.data || MOCK_CROPS))
-      .catch(() => setCrops(MOCK_CROPS))
-      .finally(() => setLoading(false));
-  }, []);
 
   const stages = ['all', ...STAGE_ORDER];
   const filtered = stageFilter === 'all' ? crops : crops.filter(c => c.current_stage === stageFilter);
@@ -58,7 +52,12 @@ export default function CropsPage() {
           <div className="section-title">🌱 Crop Lifecycle Management</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>Track, manage, and optimize your crop journey from sowing to market</div>
         </div>
-        <button className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>+ Record Crop</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '8px 14px' }} onClick={() => navigate('/premium?tab=disease')}>
+            📷 Camera/Upload Disease Scan
+          </button>
+          <button className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>+ Record Crop</button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -109,7 +108,7 @@ export default function CropsPage() {
                   </thead>
                   <tbody>
                     {filtered.map(c => (
-                      <tr key={c._id}>
+                      <tr key={c.id}>
                         <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>#{c.farmer_id}</td>
                         <td style={{ fontWeight: 600 }}>{c.crop_type}</td>
                         <td style={{ color: 'var(--text-muted)' }}>{c.variety || '—'}</td>
@@ -131,7 +130,12 @@ export default function CropsPage() {
                           </div>
                         </td>
                         <td><span className="badge badge-info">{c.season}</span></td>
-                        <td><button className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '0.72rem' }} onClick={() => { setSelectedCrop(c); setActiveTab('calendar'); }}>📅 Calendar</button></td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '0.72rem' }} onClick={() => { setSelectedCrop(c); setActiveTab('calendar'); }}>📅 Calendar</button>
+                            <button className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '0.72rem' }} onClick={() => navigate('/premium?tab=disease')}>🧬 Scan</button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -220,7 +224,7 @@ export default function CropsPage() {
             const stageIdx = STAGE_ORDER.indexOf(c.current_stage);
             const progress = ((stageIdx + 1) / STAGE_ORDER.length) * 100;
             return (
-              <div key={c._id} style={{ marginBottom: 16, padding: '14px 16px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)' }}>
+              <div key={c.id} style={{ marginBottom: 16, padding: '14px 16px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div>
                     <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>{c.crop_type}</span>

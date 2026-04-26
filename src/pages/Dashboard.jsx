@@ -82,9 +82,12 @@ export default function Dashboard() {
   const [isLive, setIsLive] = useState(false);
   const [recentFarmers, setRecentFarmers] = useState(MOCK_RECENT_FARMERS);
 
-  // Fetch live stats from Supabase
+  // Fetch live stats from Supabase (non-blocking, 5s timeout)
   useEffect(() => {
     setTipIndex(Math.floor(Math.random() * DAILY_TIPS.length));
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
 
     const fetchLiveStats = async () => {
       try {
@@ -117,11 +120,14 @@ export default function Dashboard() {
             status: f.is_active ? 'verified' : 'pending',
           })));
         }
-      } catch (err) {
-        console.warn('Dashboard live stats unavailable, using mock:', err.message);
+      } catch {
+        // Mock data already set — no action needed
+      } finally {
+        clearTimeout(timeout);
       }
     };
     fetchLiveStats();
+    return () => { controller.abort(); clearTimeout(timeout); };
   }, []);
 
   const currentTip = DAILY_TIPS[tipIndex];
@@ -144,7 +150,12 @@ export default function Dashboard() {
             <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>🌾 Seeds to Market — Your Farming Journey</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>Track your progress from soil preparation to market sales</div>
           </div>
-          <span className="badge badge-green">Kharif 2024-25</span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span className="badge badge-green">Kharif 2024-25</span>
+            <button className="btn btn-outline" style={{ padding: '6px 10px', fontSize: '0.72rem' }} onClick={() => navigate('/premium?tab=reports')}>
+              📄 Download PDF Reports
+            </button>
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 0, position: 'relative' }}>
           {JOURNEY_STEPS.map((step, i) => (

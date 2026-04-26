@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 
 const MOCK_EQUIPMENT = [
   { id: 1, name: 'Tractor (45HP)', type: 'Tractor', brand: 'Mahindra 575', hourly_rate: 1200, per_acre: null, is_available: true, condition: 'excellent', location: 'Dharwad', owner: 'Rajesh K.', rating: 4.7, reviews: 23, availability: 'Tomorrow 9am-1pm', image: '🚜' },
@@ -13,18 +13,9 @@ const MOCK_EQUIPMENT = [
 const CATEGORIES = ['All', 'Tractor', 'Tillage', 'Spraying', 'Sowing', 'Harvesting'];
 
 export default function EquipmentPage() {
-  const [equipment, setEquipment] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: equipment, loading, isLive } = useSupabaseQuery('equipment', { orderBy: { column: 'rating', ascending: false }, limit: 200 }, MOCK_EQUIPMENT);
   const [filter, setFilter] = useState('All');
   const [bookingId, setBookingId] = useState(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem('agri_admin_token');
-    axios.get('/api/v1/equipment?all=true', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => setEquipment(r.data.equipment || r.data.data || MOCK_EQUIPMENT))
-      .catch(() => setEquipment(MOCK_EQUIPMENT))
-      .finally(() => setLoading(false));
-  }, []);
 
   const filtered = filter === 'All' ? equipment : equipment.filter(e => e.type === filter);
 

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 
 const MOCK_TRANSPORTERS = [
   { id: 1, name: 'Raju Transport Co', business_name: 'Raju Logistics', mobile: '9876501001', district: 'Mysuru', rating: 4.3, total_trips: 234, is_available: true, is_verified: true, vehicle_type: 'Truck (10T)', price_per_km: 18 },
@@ -18,21 +18,10 @@ const STATUS_COLOR = { requested: '#f59e0b', confirmed: '#3b82f6', in_transit: '
 const STATUS_ICONS = { requested: '📋', confirmed: '✅', in_transit: '🚛', completed: '🏁', cancelled: '❌' };
 
 export default function TransportPage() {
-  const [transporters, setTransporters] = useState([]);
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: transporters, loading: loadingT } = useSupabaseQuery('transporters', { orderBy: { column: 'rating', ascending: false }, limit: 200 }, MOCK_TRANSPORTERS);
+  const { data: bookings, loading: loadingB } = useSupabaseQuery('transport_bookings', { orderBy: { column: 'booking_date', ascending: false }, limit: 200 }, MOCK_BOOKINGS);
+  const loading = loadingT || loadingB;
   const [activeTab, setActiveTab] = useState('directory');
-
-  useEffect(() => {
-    const token = localStorage.getItem('agri_admin_token');
-    Promise.allSettled([
-      axios.get('/api/v1/transport/transporters', { headers: { Authorization: `Bearer ${token}` } }),
-      axios.get('/api/v1/transport/bookings?all=true', { headers: { Authorization: `Bearer ${token}` } }),
-    ]).then(([tr, br]) => {
-      setTransporters(tr.status === 'fulfilled' ? (tr.value.data.transporters || tr.value.data.data || []) : MOCK_TRANSPORTERS);
-      setBookings(br.status === 'fulfilled' ? (br.value.data.bookings || br.value.data.data || []) : MOCK_BOOKINGS);
-    }).finally(() => setLoading(false));
-  }, []);
 
   const tabs = [
     { id: 'directory', icon: '🚛', label: 'Transporters' },

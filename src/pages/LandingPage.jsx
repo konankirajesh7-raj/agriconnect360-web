@@ -36,7 +36,7 @@ export default function LandingPage() {
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 40px', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'rgba(13,17,23,0.95)', backdropFilter: 'blur(12px)', zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem' }}>🌾</div>
-          <div><div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: '1.1rem' }}>Agri Connect 360</div><div style={{ fontSize: '0.65rem', color: '#22c55e' }}>Andhra Pradesh</div></div>
+          <div><div style={{ fontFamily: 'Outfit', fontWeight: 700, fontSize: '1.1rem' }}>Agri Connect 360</div><div style={{ fontSize: '0.75rem', color: '#22c55e' }}>Andhra Pradesh</div></div>
         </div>
         <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
           <a href="/features" style={{ color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.88rem', fontWeight: 500 }}>Features</a>
@@ -61,7 +61,7 @@ export default function LandingPage() {
           <a href="#features" style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)', padding: '14px 28px', borderRadius: 8, fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none' }}>See Features ↓</a>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginTop: 20 }}>
-          {['తెలుగు', 'हिन्दी', 'English'].map(l => <span key={l} style={{ background: 'var(--bg-card)', padding: '4px 12px', borderRadius: 20, fontSize: '0.72rem', color: 'var(--text-muted)' }}>{l}</span>)}
+          {['తెలుగు', 'हिन्दी', 'English'].map(l => <span key={l} style={{ background: 'var(--bg-card)', padding: '4px 12px', borderRadius: 20, fontSize: '0.75rem', color: 'var(--text-muted)' }}>{l}</span>)}
         </div>
       </section>
 
@@ -106,8 +106,8 @@ export default function LandingPage() {
             <div key={t.name} style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, padding: '24px' }}>
               <div style={{ fontSize: '0.88rem', lineHeight: 1.6, color: 'var(--text-secondary)', marginBottom: 16 }}>"{t.quote}"</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div><div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{t.name}</div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>📍 {t.location}</div></div>
-                <span style={{ fontSize: '0.72rem', background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '3px 10px', borderRadius: 20 }}>{t.crop}</span>
+                <div><div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{t.name}</div><div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>📍 {t.location}</div></div>
+                <span style={{ fontSize: '0.75rem', background: 'rgba(34,197,94,0.1)', color: '#22c55e', padding: '4px 12px', borderRadius: 20 }}>{t.crop}</span>
               </div>
             </div>
           ))}
@@ -125,7 +125,7 @@ export default function LandingPage() {
             { name: 'FPO / Enterprise', price: 'Custom', period: '', features: ['Everything in Pro', 'Bulk farmer onboarding', 'White-label dashboard', 'API access', 'Dedicated manager'], highlight: false },
           ].map(p => (
             <div key={p.name} style={{ background: p.highlight ? 'linear-gradient(135deg, rgba(34,197,94,0.08), rgba(34,197,94,0.02))' : 'var(--bg-card)', border: `1px solid ${p.highlight ? 'rgba(34,197,94,0.3)' : 'var(--border)'}`, borderRadius: 16, padding: '32px 24px', position: 'relative' }}>
-              {p.highlight && <div style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)', background: '#22c55e', color: '#000', padding: '3px 14px', borderRadius: 20, fontSize: '0.7rem', fontWeight: 700 }}>MOST POPULAR</div>}
+              {p.highlight && <div style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)', background: '#22c55e', color: '#000', padding: '3px 14px', borderRadius: 20, fontSize: '0.75rem', fontWeight: 700 }}>MOST POPULAR</div>}
               <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 8 }}>{p.name}</div>
               <div style={{ fontFamily: 'Outfit', fontSize: '2.5rem', fontWeight: 800, marginBottom: 4 }}>{p.price}<span style={{ fontSize: '0.8rem', fontWeight: 400, color: 'var(--text-muted)' }}>{p.period}</span></div>
               <div style={{ margin: '20px 0' }}>

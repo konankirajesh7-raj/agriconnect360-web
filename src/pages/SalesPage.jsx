@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 
 const MOCK_SALES = [
@@ -24,17 +24,8 @@ const BUYER_DIST = [
 ];
 
 export default function SalesPage() {
-  const [sales, setSales] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: sales, loading, isLive } = useSupabaseQuery('sales', { orderBy: { column: 'sale_date', ascending: false }, limit: 200 }, MOCK_SALES);
   const [activeTab, setActiveTab] = useState('overview');
-
-  useEffect(() => {
-    const token = localStorage.getItem('agri_admin_token');
-    axios.get('/api/v1/sales?all=true&limit=100', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => setSales(r.data.sales || r.data.data || []))
-      .catch(() => setSales(MOCK_SALES))
-      .finally(() => setLoading(false));
-  }, []);
 
   const totalRevenue = sales.reduce((s, r) => s + (r.total_amount || 0), 0);
   const totalQty = sales.reduce((s, r) => s + (r.quantity_quintals || 0), 0);

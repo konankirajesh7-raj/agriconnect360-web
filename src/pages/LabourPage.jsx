@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 
 const MOCK_LABOUR = [
   { id: 1, name: 'Mysuru Kisan Sangha', leader_name: 'Ramu Naik', mobile: '9876500001', district: 'Mysuru', total_workers: 45, rating: 4.5, is_active: true, specialties: ['Paddy harvesting', 'Weeding'], verified: true, daily_rate: 650, experience_years: 8 },
@@ -15,22 +15,10 @@ const MOCK_BOOKINGS = [
 ];
 
 export default function LabourPage() {
-  const [associations, setAssociations] = useState([]);
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: associations, loading: loadingA } = useSupabaseQuery('labour_associations', { orderBy: { column: 'rating', ascending: false }, limit: 200 }, MOCK_LABOUR);
+  const { data: bookings, loading: loadingB } = useSupabaseQuery('labour_bookings', { orderBy: { column: 'start_date', ascending: false }, limit: 200 }, MOCK_BOOKINGS);
+  const loading = loadingA || loadingB;
   const [activeTab, setActiveTab] = useState('associations');
-
-  useEffect(() => {
-    const token = localStorage.getItem('agri_admin_token');
-    Promise.allSettled([
-      axios.get('/api/v1/labour/associations', { headers: { Authorization: `Bearer ${token}` } }),
-      axios.get('/api/v1/labour/bookings?all=true', { headers: { Authorization: `Bearer ${token}` } }),
-    ]).then(([ar, br]) => {
-      setAssociations(ar.status === 'fulfilled' ? (ar.value.data.associations || ar.value.data.data || []) : MOCK_LABOUR);
-      setBookings(br.status === 'fulfilled' ? (br.value.data.bookings || br.value.data.data || []) : MOCK_BOOKINGS);
-    }).catch(() => { setAssociations(MOCK_LABOUR); setBookings(MOCK_BOOKINGS); })
-      .finally(() => setLoading(false));
-  }, []);
 
   const STATUS_COLOR = { active: 'badge-success', quoted: 'badge-warning', completed: 'badge-info', cancelled: 'badge-error' };
 

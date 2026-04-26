@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 
 const MOCK_DISPUTES = [
   { id: 1, complainant_id: 1, respondent_type: 'supplier', category: 'Payment', description: 'Supplier delivered inferior quality seeds but charged premium price', status: 'under_review', created_at: '2024-12-10', evidence_urls: ['doc1.pdf'] },
@@ -12,17 +12,8 @@ const STATUS_PIPELINE = ['filed', 'under_review', 'mediation', 'resolved', 'clos
 const STATUS_COLOR = { filed: '#ef4444', under_review: '#f59e0b', mediation: '#3b82f6', resolved: '#22c55e', closed: '#6b7280' };
 
 export default function DisputesPage() {
-  const [disputes, setDisputes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: disputes, loading, isLive } = useSupabaseQuery('disputes', { orderBy: { column: 'created_at', ascending: false }, limit: 200 }, MOCK_DISPUTES);
   const [statusFilter, setStatusFilter] = useState('all');
-
-  useEffect(() => {
-    const token = localStorage.getItem('agri_admin_token');
-    axios.get('/api/v1/disputes?all=true', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => setDisputes(r.data.disputes || r.data.data || []))
-      .catch(() => setDisputes(MOCK_DISPUTES))
-      .finally(() => setLoading(false));
-  }, []);
 
   const filtered = statusFilter === 'all' ? disputes : disputes.filter(d => d.status === statusFilter);
 

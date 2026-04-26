@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { Routes, Route, NavLink, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './lib/hooks/useAuth';
 import { triggerHaptic } from './lib/hooks/useMobile';
+import { isOnboardingComplete } from './lib/phase11Persistence';
+import { CookieConsentBanner } from './lib/consent.jsx';
+import { GAMIFICATION_EVENT, getCoins, getStreakInfo, recordLogin } from './lib/services/gamificationService';
 
 // Critical path — eagerly loaded
 import Dashboard from './pages/Dashboard';
@@ -31,73 +34,163 @@ const InsurancePage = lazy(() => import('./pages/InsurancePage'));
 const DronePage = lazy(() => import('./pages/DronePage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const PremiumUpgradesPage = lazy(() => import('./pages/PremiumUpgradesPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const FPOPage = lazy(() => import('./pages/FPOPage'));
 const PublicLayout = lazy(() => import('./layouts/PublicLayout'));
 const HomePage = lazy(() => import('./pages/public/HomePage'));
 const FeaturesPage = lazy(() => import('./pages/public/FeaturesPage'));
 const AboutPage = lazy(() => import('./pages/public/AboutPage'));
 const PricingPage = lazy(() => import('./pages/public/PricingPage'));
 const ContactPublicPage = lazy(() => import('./pages/public/ContactPublicPage'));
+const PublicStorePage = lazy(() => import('./pages/public/PublicStorePage'));
+const PublicPricesPage = lazy(() => import('./pages/public/PublicPricesPage'));
+const PublicWeatherPage = lazy(() => import('./pages/public/PublicWeatherPage'));
+const BlogPage = lazy(() => import('./pages/public/BlogPage'));
+const FinancialServicesPage = lazy(() => import('./pages/FinancialServicesPage'));
+const GamificationPage = lazy(() => import('./pages/GamificationPage'));
+const IndustrialDashboardPage = lazy(() => import('./pages/IndustrialDashboardPage'));
+const BrokerDashboardPage = lazy(() => import('./pages/BrokerDashboardPage'));
+const SupplierDashboardPage = lazy(() => import('./pages/SupplierDashboardPage'));
+const LabourDashboardPage = lazy(() => import('./pages/LabourDashboardPage'));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const MarketplacePage = lazy(() => import('./pages/MarketplacePage'));
+const CommunityPage = lazy(() => import('./pages/CommunityPage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
+const TaskManagerPage = lazy(() => import('./pages/TaskManagerPage'));
+const IoTDashboardPage = lazy(() => import('./pages/IoTDashboardPage'));
+const F2CStorePage = lazy(() => import('./pages/F2CStorePage'));
+const QualityLabPage = lazy(() => import('./pages/QualityLabPage'));
+const AgriTourismPage = lazy(() => import('./pages/AgriTourismPage'));
 
-const NAV_SECTIONS = [
-  {
-    label: 'Overview',
-    items: [
-      { path: '/', icon: '📊', label: 'Dashboard' },
+/** Dynamic sidebar navigation based on user role */
+function getNavSections(role) {
+  const FARMER_NAV = [
+    { label: 'Overview', items: [
+      { path: '/dashboard', icon: '📊', label: 'Dashboard' },
       { path: '/weather', icon: '🌤️', label: 'Weather' },
-    ],
-  },
-  {
-    label: 'Farmers',
-    items: [
+    ]},
+    { label: 'Farmers', items: [
       { path: '/farmers', icon: '👨‍🌾', label: 'Farmers', badge: '5K' },
       { path: '/fields', icon: '🌾', label: 'Fields' },
       { path: '/crops', icon: '🌱', label: 'Crop Tracking' },
       { path: '/network', icon: '🤝', label: 'Network' },
-    ],
-  },
-  {
-    label: 'Finance',
-    items: [
+    ]},
+    { label: 'Finance', items: [
       { path: '/market-prices', icon: '💰', label: 'Market Prices' },
       { path: '/sales', icon: '🧾', label: 'Sales & Profit' },
       { path: '/expenses', icon: '💳', label: 'Expenses' },
       { path: '/wallet', icon: '💳', label: 'Wallet' },
       { path: '/insurance', icon: '🛡️', label: 'Insurance' },
-    ],
-  },
-  {
-    label: 'Services',
-    items: [
+      { path: '/financial-services', icon: '💼', label: 'Financial Services', highlight: true },
+    ]},
+    { label: 'Services', items: [
       { path: '/labour', icon: '👷', label: 'Labour Bookings' },
       { path: '/transport', icon: '🚛', label: 'Transport' },
       { path: '/suppliers', icon: '🏪', label: 'Suppliers' },
       { path: '/equipment', icon: '🚜', label: 'Equipment' },
-    ],
-  },
-  {
-    label: 'Knowledge',
-    items: [
+    ]},
+    { label: 'Knowledge', items: [
       { path: '/soil', icon: '🧪', label: 'Soil & Water' },
       { path: '/schemes', icon: '🏛️', label: 'Gov Schemes' },
       { path: '/knowledge', icon: '📚', label: 'Knowledge' },
       { path: '/qa', icon: '❓', label: 'Q&A Forum' },
-    ],
-  },
-  {
-    label: 'Admin',
-    items: [
+    ]},
+    { label: 'Tools', items: [
+      { path: '/marketplace', icon: '🏪', label: 'Marketplace', highlight: true },
+      { path: '/community', icon: '💬', label: 'Community', highlight: true },
+      { path: '/notifications', icon: '🔔', label: 'Notifications', highlight: true },
+      { path: '/tasks', icon: '📋', label: 'Task Manager', highlight: true },
+    ]},
+    { label: 'More', items: [
       { path: '/disputes', icon: '⚖️', label: 'Disputes' },
       { path: '/drones', icon: '🛸', label: 'Drone Reports' },
       { path: '/contact', icon: '📞', label: 'Expert Connect' },
       { path: '/ai', icon: '🤖', label: 'AI Advisory', highlight: true },
+      { path: '/premium', icon: '💎', label: 'Premium', highlight: true },
+      { path: '/gamification', icon: '🎮', label: 'Rewards', highlight: true },
+      { path: '/iot', icon: '📡', label: 'IoT Sensors', highlight: true },
+      { path: '/f2c-store', icon: '🛒', label: 'F2C Store', highlight: true },
+      { path: '/quality-lab', icon: '🧪', label: 'Quality Lab', highlight: true },
+      { path: '/agri-tourism', icon: '🌿', label: 'AgriTourism', highlight: true },
+      { path: '/fpo', icon: '🏢', label: 'FPO Mode' },
+      { path: '/profile', icon: '👤', label: 'My Profile' },
       { path: '/settings', icon: '⚙️', label: 'Settings' },
-    ],
-  },
-];
+    ]},
+  ];
+
+  if (role === 'industrial') return [
+    { label: 'Industrial', items: [
+      { path: '/industrial-dashboard', icon: '🏭', label: 'Dashboard', highlight: true },
+      { path: '/market-prices', icon: '💰', label: 'Market Prices' },
+      { path: '/weather', icon: '🌤️', label: 'Weather' },
+    ]},
+    { label: 'Account', items: [
+      { path: '/profile', icon: '👤', label: 'Profile' },
+      { path: '/settings', icon: '⚙️', label: 'Settings' },
+    ]},
+  ];
+
+  if (role === 'broker') return [
+    { label: 'Broker', items: [
+      { path: '/broker-dashboard', icon: '🤝', label: 'Dashboard', highlight: true },
+      { path: '/market-prices', icon: '💰', label: 'Market Prices' },
+      { path: '/weather', icon: '🌤️', label: 'Weather' },
+      { path: '/transport', icon: '🚛', label: 'Transport' },
+    ]},
+    { label: 'Account', items: [
+      { path: '/profile', icon: '👤', label: 'Profile' },
+      { path: '/settings', icon: '⚙️', label: 'Settings' },
+    ]},
+  ];
+
+  if (role === 'supplier') return [
+    { label: 'Supplier', items: [
+      { path: '/supplier-dashboard', icon: '🏪', label: 'Dashboard', highlight: true },
+      { path: '/market-prices', icon: '💰', label: 'Market Prices' },
+      { path: '/weather', icon: '🌤️', label: 'Weather' },
+    ]},
+    { label: 'Account', items: [
+      { path: '/profile', icon: '👤', label: 'Profile' },
+      { path: '/settings', icon: '⚙️', label: 'Settings' },
+    ]},
+  ];
+
+  if (role === 'labour') return [
+    { label: 'Labour', items: [
+      { path: '/labour-dashboard', icon: '👷', label: 'Dashboard', highlight: true },
+      { path: '/weather', icon: '🌤️', label: 'Weather' },
+    ]},
+    { label: 'Account', items: [
+      { path: '/profile', icon: '👤', label: 'Profile' },
+      { path: '/settings', icon: '⚙️', label: 'Settings' },
+    ]},
+  ];
+
+  if (role === 'admin') {
+    return [
+      ...FARMER_NAV.slice(0, -1),
+      { label: 'Admin', items: [
+        { path: '/admin', icon: '🛡️', label: 'Admin Panel', highlight: true },
+        { path: '/industrial-dashboard', icon: '🏭', label: 'Industrial View' },
+        { path: '/broker-dashboard', icon: '🤝', label: 'Broker View' },
+        { path: '/supplier-dashboard', icon: '🏪', label: 'Supplier View' },
+        { path: '/labour-dashboard', icon: '👷', label: 'Labour View' },
+        ...FARMER_NAV[FARMER_NAV.length - 1].items,
+      ]},
+    ];
+  }
+
+  return FARMER_NAV;
+}
+
+// Keep static ref for search index
+const NAV_SECTIONS = getNavSections('admin');
 
 // Public routes that bypass admin layout
-const PUBLIC_PREFIXES = ['/home', '/features', '/about', '/pricing', '/contact-us', '/login', '/landing'];
+const PUBLIC_PREFIXES = ['/', '/home', '/features', '/about', '/pricing', '/contact-us', '/store', '/login', '/landing', '/onboarding', '/market', '/public-weather', '/blog'];
 
 // Loading skeleton for Suspense fallback
 function PageSkeleton() {
@@ -105,7 +198,7 @@ function PageSkeleton() {
     <div style={{ padding: '32px', animation: 'fadeIn 0.3s ease' }}>
       <div style={{ height: 28, width: 200, background: 'var(--bg-card)', borderRadius: 8, marginBottom: 24 }} />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16, marginBottom: 24 }}>
-        {[1,2,3,4].map(i => (
+        {[1, 2, 3, 4].map(i => (
           <div key={i} style={{ height: 120, background: 'var(--bg-card)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', animation: 'pulse 1.5s infinite' }} />
         ))}
       </div>
@@ -119,10 +212,38 @@ function PageSkeleton() {
 }
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, farmerProfile } = useAuth();
+  const location = useLocation();
   if (loading) return <PageSkeleton />;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  if (!isOnboardingComplete(farmerProfile)) {
+    return <Navigate to="/onboarding" replace state={{ from: location.pathname }} />;
+  }
   return children;
+}
+
+/** Role-guarded route — redirects to / if user doesn't have required role */
+function RoleRoute({ roles, children }) {
+  const { farmerProfile, isAdmin, isDemoMode, loading } = useAuth();
+  if (loading) return <PageSkeleton />;
+  const userRole = farmerProfile?.role || 'farmer';
+  // Demo mode users and admins can access all role dashboards
+  if (!roles.includes(userRole) && !isAdmin && !isDemoMode) return <Navigate to="/" replace />;
+  return children;
+}
+
+/** Smart dashboard router — sends user to their role-specific dashboard */
+function RoleDashboard() {
+  const { farmerProfile } = useAuth();
+  const role = farmerProfile?.role || 'farmer';
+  const ROLE_DASHBOARDS = {
+    industrial: IndustrialDashboardPage,
+    broker: BrokerDashboardPage,
+    supplier: SupplierDashboardPage,
+    labour: LabourDashboardPage,
+  };
+  const DashComponent = ROLE_DASHBOARDS[role] || Dashboard;
+  return <DashComponent />;
 }
 
 // Global search data
@@ -142,6 +263,9 @@ const SEARCH_INDEX = [
   { type: 'feature', label: 'Equipment Marketplace', icon: '🚜', path: '/equipment' },
   { type: 'feature', label: 'AI Crop Recommender', icon: '🤖', path: '/ai' },
   { type: 'feature', label: 'Pest & Disease Detector', icon: '🐛', path: '/ai' },
+  { type: 'feature', label: 'Premium Upgrades', icon: '💎', path: '/premium' },
+  { type: 'feature', label: 'Direct Farm Store', icon: '🛒', path: '/store' },
+  { type: 'feature', label: 'WhatsApp Bot', icon: '💬', path: '/premium?tab=whatsapp' },
   { type: 'crop', label: 'Cotton', icon: '🌿', path: '/crops' },
   { type: 'crop', label: 'Paddy', icon: '🌾', path: '/crops' },
   { type: 'crop', label: 'Wheat', icon: '🌾', path: '/crops' },
@@ -160,6 +284,7 @@ export default function App() {
   const [searchHighlight, setSearchHighlight] = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
   const [fabOpen, setFabOpen] = useState(false);
+  const [gamHeader, setGamHeader] = useState({ coins: 0, streak: 0 });
 
   const NOTIFICATIONS = [
     { id: 1, icon: '🌧️', title: 'Heavy Rain Alert — Hubli', time: '10 min ago', type: 'warning', read: false },
@@ -193,13 +318,33 @@ export default function App() {
     navigate(item.path);
   }, [navigate]);
 
-  const { signOut: authSignOut, farmerProfile } = useAuth();
+  const { signOut: authSignOut, farmerProfile, userRole, isAuthenticated } = useAuth();
+  const dynamicNav = getNavSections(userRole || 'farmer');
   const handleLogout = async () => {
     await authSignOut();
-    navigate('/login');
+    window.location.href = '/';
   };
 
-  const isPublic = PUBLIC_PREFIXES.some(p => location.pathname === p || location.pathname.startsWith(p + '/'));
+  const isPublic = PUBLIC_PREFIXES.some(p => {
+    if (p === '/') return location.pathname === '/';
+    return location.pathname === p || location.pathname.startsWith(p + '/');
+  });
+
+  useEffect(() => {
+    if (isPublic || !isAuthenticated) return undefined;
+    const syncGamificationHeader = () => {
+      const streakInfo = getStreakInfo();
+      setGamHeader({ coins: getCoins(), streak: streakInfo.currentStreak || 0 });
+    };
+    recordLogin();
+    syncGamificationHeader();
+    window.addEventListener(GAMIFICATION_EVENT, syncGamificationHeader);
+    window.addEventListener('storage', syncGamificationHeader);
+    return () => {
+      window.removeEventListener(GAMIFICATION_EVENT, syncGamificationHeader);
+      window.removeEventListener('storage', syncGamificationHeader);
+    };
+  }, [isPublic, isAuthenticated]);
 
   // Public website pages — render with PublicLayout (no admin sidebar)
   if (isPublic) {
@@ -208,12 +353,18 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/landing" element={<LandingPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
           <Route element={<PublicLayout />}>
+            <Route path="/" element={<HomePage />} />
             <Route path="/home" element={<HomePage />} />
             <Route path="/features" element={<FeaturesPage />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/contact-us" element={<ContactPublicPage />} />
+            <Route path="/store" element={<PublicStorePage />} />
+            <Route path="/market" element={<PublicPricesPage />} />
+            <Route path="/public-weather" element={<PublicWeatherPage />} />
+            <Route path="/blog" element={<BlogPage />} />
           </Route>
         </Routes>
       </Suspense>
@@ -231,12 +382,19 @@ export default function App() {
           <div className="sidebar-logo-icon">🌾</div>
           <div>
             <div className="sidebar-logo-text">Agri Connect 360</div>
-            <div className="sidebar-logo-sub">Admin Dashboard</div>
+            <div className="sidebar-logo-sub">{{
+              admin: 'Admin Dashboard',
+              industrial: 'Industrial Portal',
+              broker: 'Broker Portal',
+              supplier: 'Supplier Portal',
+              labour: 'Labour Portal',
+              fpo: 'FPO Dashboard',
+            }[userRole] || 'Farmer Dashboard'}</div>
           </div>
         </div>
 
         <div className="sidebar-nav">
-          {NAV_SECTIONS.map(section => (
+          {dynamicNav.map(section => (
             <div key={section.label}>
               <div className="nav-section-label">{section.label}</div>
               {section.items.map(item => (
@@ -263,7 +421,7 @@ export default function App() {
         <div style={{ padding: '16px', borderTop: '1px solid var(--border)', margin: '8px 0 0' }}>
           <div style={{ background: 'var(--green-glow)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', border: '1px solid rgba(34,197,94,0.2)' }}>
             <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--green-primary)', marginBottom: 4 }}>🟢 System Operational</div>
-            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>22 modules active</div>
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{dynamicNav.flatMap(s => s.items).length} modules active</div>
           </div>
         </div>
       </nav>
@@ -317,14 +475,22 @@ export default function App() {
           <div className="header-title">{currentPage?.icon} {currentPage?.label || 'Dashboard'}</div>
         </div>
         <div className="header-right">
+          <div className="gam-header-chips">
+            <button className="gam-header-chip streak" onClick={() => navigate('/gamification')} title="Open Rewards">
+              🔥 {gamHeader.streak}
+            </button>
+            <button className="gam-header-chip coins" onClick={() => navigate('/gamification')} title="Open Rewards">
+              🪙 {Number(gamHeader.coins || 0).toLocaleString('en-IN')}
+            </button>
+          </div>
           <button className="header-btn" onClick={() => { setSearchOpen(true); setSearchQuery(''); }} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            🔍 Search <kbd style={{ background: 'var(--bg-primary)', padding: '2px 6px', borderRadius: 4, fontSize: '0.65rem', color: 'var(--text-muted)', border: '1px solid var(--border)', marginLeft: 4 }}>Ctrl+K</kbd>
+            🔍 <span className="header-search-text">Search</span> <kbd className="header-search-kbd" style={{ background: 'var(--bg-primary)', padding: '2px 6px', borderRadius: 4, fontSize: '0.65rem', color: 'var(--text-muted)', border: '1px solid var(--border)', marginLeft: 4 }}>Ctrl+K</kbd>
           </button>
           <button className="header-btn" onClick={() => setNotifOpen(v => !v)} style={{ position: 'relative' }}>
             🔔 <span style={{ position: 'absolute', top: 4, right: 4, width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} />
           </button>
           {notifOpen && (
-            <div style={{ position: 'absolute', top: 48, right: 120, width: 360, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 10px 40px rgba(0,0,0,0.3)', zIndex: 500, overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 48, right: 10, width: 'min(360px, calc(100vw - 24px))', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 10px 40px rgba(0,0,0,0.3)', zIndex: 500, overflow: 'hidden' }}>
               <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontWeight: 700, fontSize: '0.88rem' }}>🔔 Notifications</span>
                 <span style={{ fontSize: '0.7rem', color: '#3b82f6', cursor: 'pointer' }}>Mark all read</span>
@@ -344,7 +510,7 @@ export default function App() {
               </div>
             </div>
           )}
-          <a href="http://localhost:3000/api-docs" target="_blank" rel="noopener noreferrer" className="btn btn-outline" style={{ padding: '7px 14px', fontSize: '0.8rem' }}>📚 API Docs</a>
+          <a href="/features" className="btn btn-outline header-api-docs" style={{ padding: '7px 14px', fontSize: '0.8rem' }}>📚 API Docs</a>
           <button className="header-btn" onClick={handleLogout}>👤 Logout</button>
         </div>
       </header>
@@ -352,43 +518,67 @@ export default function App() {
       {/* Main */}
       <main className="main-content">
         <Suspense fallback={<PageSkeleton />}>
-        <Routes>
-          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/farmers" element={<ProtectedRoute><FarmersPage /></ProtectedRoute>} />
-          <Route path="/fields" element={<ProtectedRoute><FieldsPage /></ProtectedRoute>} />
-          <Route path="/crops" element={<ProtectedRoute><CropsPage /></ProtectedRoute>} />
-          <Route path="/market-prices" element={<ProtectedRoute><MarketPricesPage /></ProtectedRoute>} />
-          <Route path="/sales" element={<ProtectedRoute><SalesPage /></ProtectedRoute>} />
-          <Route path="/expenses" element={<ProtectedRoute><ExpensesPage /></ProtectedRoute>} />
-          <Route path="/soil" element={<ProtectedRoute><SoilPage /></ProtectedRoute>} />
-          <Route path="/labour" element={<ProtectedRoute><LabourPage /></ProtectedRoute>} />
-          <Route path="/transport" element={<ProtectedRoute><TransportPage /></ProtectedRoute>} />
-          <Route path="/suppliers" element={<ProtectedRoute><SuppliersPage /></ProtectedRoute>} />
-          <Route path="/equipment" element={<ProtectedRoute><EquipmentPage /></ProtectedRoute>} />
-          <Route path="/disputes" element={<ProtectedRoute><DisputesPage /></ProtectedRoute>} />
-          <Route path="/schemes" element={<ProtectedRoute><SchemesPage /></ProtectedRoute>} />
-          <Route path="/knowledge" element={<ProtectedRoute><KnowledgePage /></ProtectedRoute>} />
-          <Route path="/qa" element={<ProtectedRoute><QAPage /></ProtectedRoute>} />
-          <Route path="/network" element={<ProtectedRoute><NetworkPage /></ProtectedRoute>} />
-          <Route path="/weather" element={<ProtectedRoute><WeatherPage /></ProtectedRoute>} />
-          <Route path="/ai" element={<ProtectedRoute><AIPage /></ProtectedRoute>} />
-          <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
-          <Route path="/insurance" element={<ProtectedRoute><InsurancePage /></ProtectedRoute>} />
-          <Route path="/drones" element={<ProtectedRoute><DronePage /></ProtectedRoute>} />
-          <Route path="/contact" element={<ProtectedRoute><ContactPage /></ProtectedRoute>} />
-          <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/landing" element={<LandingPage />} />
-          {/* Public Website Routes — Phase 6 & 7 */}
-          <Route element={<PublicLayout />}>
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/features" element={<FeaturesPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/contact-us" element={<ContactPublicPage />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+          <Routes>
+            <Route path="/dashboard" element={<ProtectedRoute><RoleDashboard /></ProtectedRoute>} />
+            <Route path="/farmers" element={<ProtectedRoute><FarmersPage /></ProtectedRoute>} />
+            <Route path="/fields" element={<ProtectedRoute><FieldsPage /></ProtectedRoute>} />
+            <Route path="/crops" element={<ProtectedRoute><CropsPage /></ProtectedRoute>} />
+            <Route path="/market-prices" element={<ProtectedRoute><MarketPricesPage /></ProtectedRoute>} />
+            <Route path="/sales" element={<ProtectedRoute><SalesPage /></ProtectedRoute>} />
+            <Route path="/expenses" element={<ProtectedRoute><ExpensesPage /></ProtectedRoute>} />
+            <Route path="/soil" element={<ProtectedRoute><SoilPage /></ProtectedRoute>} />
+            <Route path="/labour" element={<ProtectedRoute><LabourPage /></ProtectedRoute>} />
+            <Route path="/transport" element={<ProtectedRoute><TransportPage /></ProtectedRoute>} />
+            <Route path="/suppliers" element={<ProtectedRoute><SuppliersPage /></ProtectedRoute>} />
+            <Route path="/equipment" element={<ProtectedRoute><EquipmentPage /></ProtectedRoute>} />
+            <Route path="/disputes" element={<ProtectedRoute><DisputesPage /></ProtectedRoute>} />
+            <Route path="/schemes" element={<ProtectedRoute><SchemesPage /></ProtectedRoute>} />
+            <Route path="/knowledge" element={<ProtectedRoute><KnowledgePage /></ProtectedRoute>} />
+            <Route path="/qa" element={<ProtectedRoute><QAPage /></ProtectedRoute>} />
+            <Route path="/network" element={<ProtectedRoute><NetworkPage /></ProtectedRoute>} />
+            <Route path="/weather" element={<ProtectedRoute><WeatherPage /></ProtectedRoute>} />
+            <Route path="/ai" element={<ProtectedRoute><AIPage /></ProtectedRoute>} />
+            <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
+            <Route path="/insurance" element={<ProtectedRoute><InsurancePage /></ProtectedRoute>} />
+            <Route path="/financial-services" element={<ProtectedRoute><FinancialServicesPage /></ProtectedRoute>} />
+            <Route path="/gamification" element={<ProtectedRoute><GamificationPage /></ProtectedRoute>} />
+            <Route path="/drones" element={<ProtectedRoute><DronePage /></ProtectedRoute>} />
+            <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
+            <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+            <Route path="/tasks" element={<ProtectedRoute><TaskManagerPage /></ProtectedRoute>} />
+            <Route path="/iot" element={<ProtectedRoute><IoTDashboardPage /></ProtectedRoute>} />
+            <Route path="/f2c-store" element={<ProtectedRoute><F2CStorePage /></ProtectedRoute>} />
+            <Route path="/quality-lab" element={<ProtectedRoute><QualityLabPage /></ProtectedRoute>} />
+            <Route path="/agri-tourism" element={<ProtectedRoute><AgriTourismPage /></ProtectedRoute>} />
+            <Route path="/contact" element={<ProtectedRoute><ContactPage /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/fpo" element={<ProtectedRoute><FPOPage /></ProtectedRoute>} />
+            <Route path="/premium" element={<ProtectedRoute><PremiumUpgradesPage /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+            {/* Phase 13 — Role-Based Dashboard Routes */}
+            <Route path="/industrial-dashboard" element={<ProtectedRoute><RoleRoute roles={['industrial']}><IndustrialDashboardPage /></RoleRoute></ProtectedRoute>} />
+            <Route path="/broker-dashboard" element={<ProtectedRoute><RoleRoute roles={['broker']}><BrokerDashboardPage /></RoleRoute></ProtectedRoute>} />
+            <Route path="/supplier-dashboard" element={<ProtectedRoute><RoleRoute roles={['supplier']}><SupplierDashboardPage /></RoleRoute></ProtectedRoute>} />
+            <Route path="/labour-dashboard" element={<ProtectedRoute><RoleRoute roles={['labour']}><LabourDashboardPage /></RoleRoute></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><RoleRoute roles={['admin']}><AdminDashboardPage /></RoleRoute></ProtectedRoute>} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/landing" element={<LandingPage />} />
+            {/* Public Website Routes — Phase 6 & 7 */}
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/home" element={<HomePage />} />
+              <Route path="/features" element={<FeaturesPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/pricing" element={<PricingPage />} />
+              <Route path="/contact-us" element={<ContactPublicPage />} />
+              <Route path="/store" element={<PublicStorePage />} />
+              <Route path="/market" element={<PublicPricesPage />} />
+              <Route path="/public-weather" element={<PublicWeatherPage />} />
+              <Route path="/blog" element={<BlogPage />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </Suspense>
       </main>
 
@@ -396,7 +586,7 @@ export default function App() {
       <nav className="bottom-nav">
         <div className="bottom-nav-items">
           {[
-            { path: '/', icon: '🏠', label: 'Home' },
+            { path: '/dashboard', icon: '🏠', label: 'Home' },
             { path: '/weather', icon: '🌤️', label: 'Weather' },
             { path: '/market-prices', icon: '💰', label: 'Prices' },
             { path: '/ai', icon: '🤖', label: 'AI' },
@@ -425,6 +615,7 @@ export default function App() {
       <button className="fab" onClick={() => { setFabOpen(!fabOpen); triggerHaptic(); }}>
         {fabOpen ? '✕' : '⚡'}
       </button>
+      <CookieConsentBanner />
     </div>
   );
 }

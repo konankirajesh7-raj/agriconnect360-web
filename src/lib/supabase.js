@@ -9,12 +9,15 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
 export const supabase = createClient(
   SUPABASE_URL || 'https://gwetaesjkkrtmhnxuekc.supabase.co',
-  SUPABASE_ANON_KEY || '',
+  SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZXRhZXNqa2tydG1obnh1ZWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMDgyMDUsImV4cCI6MjA4OTY4NDIwNX0.hFNMO_V_E3Ua2nf33ZijgFx_1J6jrO-GANm5XjqBhmY',
   {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
+      flowType: 'implicit',
+      storageKey: 'ac360-auth',
+      lock: false,
     },
     realtime: {
       params: { eventsPerSecond: 10 },
@@ -205,6 +208,177 @@ export const weatherAlertsDB = {
 export const preferencesDB = {
   get: (farmerId) => supabase.from('farmer_preferences').select('*').eq('farmer_id', farmerId).single(),
   upsert: (data) => supabase.from('farmer_preferences').upsert(data, { onConflict: 'farmer_id' }).select().single(),
+};
+
+// ── Premium Phase 12 Helpers ───────────────────────────────────────────────────
+const PREMIUM_API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
+function getPremiumAuthToken() {
+  if (typeof window === 'undefined') return '';
+  return localStorage.getItem('agri_admin_token') || '';
+}
+
+async function premiumApiRequest(path, { method = 'GET', body, auth = true } = {}) {
+  const headers = {};
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (auth) {
+    const token = getPremiumAuthToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
+
+  const base = PREMIUM_API_BASE || '';
+  const prefix = base.endsWith('/api/v1') ? '/premium' : '/api/v1/premium';
+  const url = `${base}${prefix}${path}`;
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return {
+        data: null,
+        error: { message: payload?.message || payload?.error || `Premium API request failed (${response.status})` },
+      };
+    }
+    return { data: payload?.data ?? payload ?? null, error: null };
+  } catch (err) {
+    return { data: null, error: { message: err?.message || 'Premium API unavailable' } };
+  }
+}
+
+async function withPremiumFallback(supabaseRunner, apiRunner) {
+  let supabaseResult;
+  try {
+    supabaseResult = await supabaseRunner();
+  } catch (err) {
+    supabaseResult = { data: null, error: { message: err?.message || 'Supabase request failed' } };
+  }
+
+  if (!supabaseResult?.error) return supabaseResult;
+
+  // Only attempt API fallback if we have a configured API base
+  if (PREMIUM_API_BASE) {
+    try {
+      const apiResult = await apiRunner();
+      if (!apiResult?.error) return apiResult;
+    } catch (e) {
+      // silently ignore API fallback failures
+    }
+  }
+
+  return supabaseResult;
+}
+
+export const premiumDB = {
+  disease: {
+    getHistory: (farmerId) => withPremiumFallback(
+      () => supabase.from('disease_scans').select('*').eq('farmer_id', farmerId).order('created_at', { ascending: false }).limit(100),
+      () => premiumApiRequest('/disease-scans')
+    ),
+    createScan: (data) => withPremiumFallback(
+      () => supabase.from('disease_scans').insert(data).select().single(),
+      () => premiumApiRequest('/disease-scans', { method: 'POST', body: data })
+    ),
+    updateScan: (id, data) => withPremiumFallback(
+      () => supabase.from('disease_scans').update(data).eq('id', id).select().single(),
+      () => premiumApiRequest(`/disease-scans/${id}`, { method: 'PUT', body: data })
+    ),
+  },
+  notifications: {
+    getPreferences: (farmerId) => withPremiumFallback(
+      () => supabase.from('notification_preferences').select('*').eq('farmer_id', farmerId).maybeSingle(),
+      () => premiumApiRequest('/notification-preferences')
+    ),
+    upsertPreferences: (data) => withPremiumFallback(
+      () => supabase.from('notification_preferences').upsert(data, { onConflict: 'farmer_id' }).select().single(),
+      () => premiumApiRequest('/notification-preferences', { method: 'PUT', body: data })
+    ),
+  },
+  reports: {
+    create: (data) => withPremiumFallback(
+      () => supabase.from('premium_reports').insert(data).select().single(),
+      () => premiumApiRequest('/reports', { method: 'POST', body: data })
+    ),
+    getAll: (farmerId) => withPremiumFallback(
+      () => supabase.from('premium_reports').select('*').eq('farmer_id', farmerId).order('created_at', { ascending: false }),
+      () => premiumApiRequest('/reports')
+    ),
+  },
+  whatsapp: {
+    createInteraction: (data) => withPremiumFallback(
+      () => supabase.from('whatsapp_interactions').insert(data).select().single(),
+      () => premiumApiRequest('/whatsapp/interactions', { method: 'POST', body: data })
+    ),
+    getInteractions: (farmerId) => withPremiumFallback(
+      () => supabase.from('whatsapp_interactions').select('*').eq('farmer_id', farmerId).order('created_at', { ascending: false }).limit(100),
+      () => premiumApiRequest('/whatsapp/interactions')
+    ),
+  },
+  store: {
+    getListings: () => withPremiumFallback(
+      () => supabase.from('f2c_store_listings').select('*').order('created_at', { ascending: false }),
+      () => premiumApiRequest('/store/listings', { auth: false })
+    ),
+    createListing: (data) => withPremiumFallback(
+      () => supabase.from('f2c_store_listings').insert(data).select().single(),
+      () => premiumApiRequest('/store/listings', { method: 'POST', body: data })
+    ),
+    updateListing: (id, data) => withPremiumFallback(
+      () => supabase.from('f2c_store_listings').update(data).eq('id', id).select().single(),
+      () => premiumApiRequest(`/store/listings/${id}`, { method: 'PUT', body: data })
+    ),
+  },
+  analytics: {
+    createSnapshot: (data) => withPremiumFallback(
+      () => supabase.from('analytics_snapshots').insert(data).select().single(),
+      () => premiumApiRequest('/analytics/snapshots', { method: 'POST', body: data })
+    ),
+    getSnapshots: (farmerId) => withPremiumFallback(
+      () => supabase.from('analytics_snapshots').select('*').eq('farmer_id', farmerId).order('created_at', { ascending: false }),
+      () => premiumApiRequest('/analytics/snapshots')
+    ),
+  },
+  iot: {
+    getSensors: (farmerId) => withPremiumFallback(
+      () => supabase.from('iot_sensor_data').select('*').eq('farmer_id', farmerId).order('recorded_at', { ascending: false }).limit(200),
+      () => premiumApiRequest('/iot/sensors')
+    ),
+    insertSensorData: (data) => withPremiumFallback(
+      () => supabase.from('iot_sensor_data').insert(data).select().single(),
+      () => premiumApiRequest('/iot/sensors', { method: 'POST', body: data })
+    ),
+  },
+  finance: {
+    getKcc: (farmerId) => withPremiumFallback(
+      () => supabase.from('kcc_trackers').select('*').eq('farmer_id', farmerId).maybeSingle(),
+      () => premiumApiRequest('/finance/kcc')
+    ),
+    upsertKcc: (data) => withPremiumFallback(
+      () => supabase.from('kcc_trackers').upsert(data, { onConflict: 'farmer_id' }).select().single(),
+      () => premiumApiRequest('/finance/kcc', { method: 'PUT', body: data })
+    ),
+    getLoanMarketplace: () => withPremiumFallback(
+      () => supabase.from('loan_marketplace').select('*').order('interest_rate', { ascending: true }),
+      () => premiumApiRequest('/finance/loans')
+    ),
+  },
+  gamification: {
+    getProfile: (farmerId) => withPremiumFallback(
+      () => supabase.from('gamification_profiles').select('*').eq('farmer_id', farmerId).maybeSingle(),
+      () => premiumApiRequest('/gamification/profile')
+    ),
+    upsertProfile: (data) => withPremiumFallback(
+      () => supabase.from('gamification_profiles').upsert(data, { onConflict: 'farmer_id' }).select().single(),
+      () => premiumApiRequest('/gamification/profile', { method: 'PUT', body: data })
+    ),
+    getLeaderboard: () => withPremiumFallback(
+      () => supabase.from('gamification_profiles').select('*').order('agri_coins', { ascending: false }).limit(50),
+      () => premiumApiRequest('/gamification/leaderboard')
+    ),
+  },
 };
 
 // ── Realtime Subscriptions ────────────────────────────────────────────────────

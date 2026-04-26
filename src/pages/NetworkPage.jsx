@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 
 const MOCK_CONNECTIONS = [
   { id: 1, requester_id: 1, receiver_id: 2, status: 'accepted', connected_at: '2024-11-10' },
@@ -24,21 +24,10 @@ const MOCK_POSTS = [
 const TYPE_LABELS = { cooperative: { label: 'Cooperative', icon: '🤝', color: '#22c55e' }, self_help: { label: 'Self Help Group', icon: '👥', color: '#3b82f6' }, topic: { label: 'Topic Group', icon: '💬', color: '#f59e0b' }, district: { label: 'District', icon: '📍', color: '#8b5cf6' } };
 
 export default function NetworkPage() {
-  const [connections, setConnections] = useState([]);
-  const [groups, setGroups] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: connections, loading: loadingC } = useSupabaseQuery('network_connections', { limit: 200 }, MOCK_CONNECTIONS);
+  const { data: groups, loading: loadingG } = useSupabaseQuery('network_groups', { limit: 200 }, MOCK_GROUPS);
+  const loading = loadingC || loadingG;
   const [activeTab, setActiveTab] = useState('feed');
-
-  useEffect(() => {
-    const token = localStorage.getItem('agri_admin_token');
-    Promise.allSettled([
-      axios.get('/api/v1/network/connections?all=true', { headers: { Authorization: `Bearer ${token}` } }),
-      axios.get('/api/v1/network/groups', { headers: { Authorization: `Bearer ${token}` } }),
-    ]).then(([cr, gr]) => {
-      setConnections(cr.status === 'fulfilled' ? (cr.value.data.connections || cr.value.data.data || []) : MOCK_CONNECTIONS);
-      setGroups(gr.status === 'fulfilled' ? (gr.value.data.groups || gr.value.data.data || []) : MOCK_GROUPS);
-    }).finally(() => setLoading(false));
-  }, []);
 
   const tabs = [
     { id: 'feed', icon: '📱', label: 'Community Feed' },

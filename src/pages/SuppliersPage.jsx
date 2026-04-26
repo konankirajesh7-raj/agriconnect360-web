@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 
 const CATS = ['Seeds', 'Fertilizers', 'Pesticides', 'Equipment', 'Irrigation', 'Storage'];
 const CAT_ICONS = { Seeds: '🌱', Fertilizers: '🧪', Pesticides: '💊', Equipment: '🚜', Irrigation: '💧', Storage: '🏭' };
@@ -27,20 +27,11 @@ const MOCK_PRODUCTS = [
 ];
 
 export default function SuppliersPage() {
-  const [suppliers, setSuppliers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: suppliers, loading, isLive } = useSupabaseQuery('suppliers', { orderBy: { column: 'rating', ascending: false }, limit: 200 }, MOCK_SUPPLIERS);
   const [catFilter, setCatFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState('store');
   const [cart, setCart] = useState([]);
-
-  useEffect(() => {
-    const token = localStorage.getItem('agri_admin_token');
-    axios.get('/api/v1/suppliers?limit=100', { headers: { Authorization: `Bearer ${token}` } })
-      .then(r => setSuppliers(r.data.suppliers || r.data.data || []))
-      .catch(() => setSuppliers(MOCK_SUPPLIERS))
-      .finally(() => setLoading(false));
-  }, []);
 
   const filteredProducts = MOCK_PRODUCTS.filter(p => {
     const q = search.toLowerCase();
