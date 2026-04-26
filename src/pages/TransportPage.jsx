@@ -1,203 +1,261 @@
 import React, { useState } from 'react';
-import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 
-const MOCK_TRANSPORTERS = [
-  { id: 1, name: 'Raju Transport Co', business_name: 'Raju Logistics', mobile: '9876501001', district: 'Mysuru', rating: 4.3, total_trips: 234, is_available: true, is_verified: true, vehicle_type: 'Truck (10T)', price_per_km: 18 },
-  { id: 2, name: 'Shiva Brothers', business_name: 'Shiva Agri Transport', mobile: '9876501002', district: 'Belagavi', rating: 4.7, total_trips: 412, is_available: true, is_verified: true, vehicle_type: 'Tempo (5T)', price_per_km: 14 },
-  { id: 3, name: 'AP Transports', business_name: 'APT Logistics', mobile: '9876501003', district: 'Guntur', rating: 4.0, total_trips: 89, is_available: false, is_verified: false, vehicle_type: 'Mini Truck (3T)', price_per_km: 12 },
-  { id: 4, name: 'Agri Movers', business_name: 'AM Cargo', mobile: '9876501004', district: 'Hubli', rating: 4.5, total_trips: 156, is_available: true, is_verified: true, vehicle_type: 'Truck (10T)', price_per_km: 16 },
+const VEHICLES = [
+  { type:'Mini Truck', capacity:'3-5 tonnes', rate:25, icon:'🚐', minKm:5 },
+  { type:'Medium Truck', capacity:'5-10 tonnes', rate:35, icon:'🚛', minKm:10 },
+  { type:'Large Truck', capacity:'10-20 tonnes', rate:50, icon:'🚚', minKm:15 },
+  { type:'Tractor Trolley', capacity:'2-3 tonnes', rate:15, icon:'🚜', minKm:3 },
 ];
-
-const MOCK_BOOKINGS = [
-  { id: 1, farmer_id: 1, transporter_id: 1, crop_type: 'Paddy', quantity_tonnes: 5.5, pickup_address: 'Nanjangud Village', delivery_address: 'Mysuru APMC', booking_date: '2024-12-22', total_amount: 4200, status: 'in_transit', payment_status: 'advance_paid', distance_km: 42, eta: '2:30 PM' },
-  { id: 2, farmer_id: 4, transporter_id: 2, crop_type: 'Cotton', quantity_tonnes: 2.0, pickup_address: 'Muddebihal', delivery_address: 'Hubli Mandi', booking_date: '2024-12-24', total_amount: 3800, status: 'requested', payment_status: 'pending', distance_km: 180, eta: null },
-  { id: 3, farmer_id: 7, transporter_id: 1, crop_type: 'Wheat', quantity_tonnes: 8.0, pickup_address: 'Lingasugur', delivery_address: 'Raichur FCI', booking_date: '2024-12-15', total_amount: 6500, status: 'completed', payment_status: 'completed', distance_km: 65, eta: null },
+const AP_LOCATIONS = [
+  'Guntur APMC Market','Narasaraopet, Guntur','Tenali, Guntur','Vijayawada, Krishna',
+  'Nellore, Nellore','Kurnool APMC','Ongole, Prakasam','Rajahmundry, East Godavari',
+  'Visakhapatnam Mandi','Tirupati APMC','Anantapur Mandi','Kadapa Mandi',
 ];
+const INP = { width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.88rem', boxSizing:'border-box' };
+const LBL = { display:'block', fontSize:'0.75rem', color:'var(--text-muted)', marginBottom:4, fontWeight:600 };
 
-const STATUS_COLOR = { requested: '#f59e0b', confirmed: '#3b82f6', in_transit: '#22c55e', completed: '#8b5cf6', cancelled: '#ef4444' };
-const STATUS_ICONS = { requested: '📋', confirmed: '✅', in_transit: '🚛', completed: '🏁', cancelled: '❌' };
+const BLANK = { pickup:'Narasaraopet, Guntur', delivery:'Guntur APMC Market', cargo:'15', vehicle:'Mini Truck', crop:'Paddy' };
+
+function estimateDistance(from, to) {
+  if (!from || !to || from===to) return 0;
+  const d = { 'Guntur APMC Market':0, 'Narasaraopet, Guntur':38, 'Tenali, Guntur':25, 'Vijayawada, Krishna':58, 'Nellore, Nellore':162, 'Kurnool APMC':210, 'Ongole, Prakasam':120 };
+  return Math.abs((d[from]||50) - (d[to]||0)) || 45;
+}
 
 export default function TransportPage() {
-  const { data: transporters, loading: loadingT } = useSupabaseQuery('transporters', { orderBy: { column: 'rating', ascending: false }, limit: 200 }, MOCK_TRANSPORTERS);
-  const { data: bookings, loading: loadingB } = useSupabaseQuery('transport_bookings', { orderBy: { column: 'booking_date', ascending: false }, limit: 200 }, MOCK_BOOKINGS);
-  const loading = loadingT || loadingB;
-  const [activeTab, setActiveTab] = useState('directory');
+  const [tab, setTab] = useState('calculator');
+  const [form, setForm] = useState(BLANK);
+  const [result, setResult] = useState(null);
+  const [bookings, setBookings] = useState([
+    { ref:'TR-KQM29', crop:'Paddy', qty:5.5, pickup:'Narasaraopet, Guntur', delivery:'Guntur APMC Market', vehicle:'Mini Truck', cost:4200, status:'in_transit', eta:'2:30 PM', date:'2026-04-25' },
+    { ref:'TR-VBN44', crop:'Cotton', qty:2.0, pickup:'Tenali, Guntur', delivery:'Vijayawada, Krishna', vehicle:'Medium Truck', cost:3800, status:'delivered', eta:null, date:'2026-04-20' },
+  ]);
 
-  const tabs = [
-    { id: 'directory', icon: '🚛', label: 'Transporters' },
-    { id: 'bookings', icon: '📋', label: 'Bookings' },
-    { id: 'tracking', icon: '📍', label: 'Live Tracking' },
-    { id: 'estimate', icon: '💰', label: 'Cost Estimator' },
-  ];
+  const upd = (k,v) => setForm(p=>({...p,[k]:v}));
 
-  const activeTrips = bookings.filter(b => b.status === 'in_transit');
+  const calculate = () => {
+    const dist = estimateDistance(form.pickup, form.delivery) || 45;
+    const veh = VEHICLES.find(v=>v.type===form.vehicle) || VEHICLES[0];
+    const cargo = parseFloat(form.cargo)||15;
+    const baseCost = dist * veh.rate;
+    const loadCost = cargo * 12;
+    const total = baseCost + loadCost;
+    const options = VEHICLES.map(v=>({ ...v, cost: dist*v.rate + cargo*12 }));
+    setResult({ dist, cargo, total, options, duration: Math.ceil(dist/45) + 'h ' + Math.round((dist/45%1)*60) + 'm' });
+  };
+
+  const book = () => {
+    const ref = 'TR-' + Math.random().toString(36).substring(2,7).toUpperCase();
+    const entry = { ref, crop:form.crop, qty:parseFloat(form.cargo)/10, pickup:form.pickup, delivery:form.delivery, vehicle:form.vehicle, cost:result?.total||0, status:'requested', eta:null, date:new Date().toISOString().split('T')[0] };
+    setBookings(p=>[entry,...p]);
+    setTab('bookings');
+    setResult(null);
+  };
+
+  const STATUS_COLOR = { in_transit:'#f59e0b', delivered:'#22c55e', requested:'#8b5cf6', cancelled:'#ef4444' };
+  const STATUS_ICON = { in_transit:'🚛', delivered:'✅', requested:'📋', cancelled:'❌' };
 
   return (
     <div className="animated">
       <div className="section-header">
         <div>
-          <div className="section-title">🚛 Transport & Logistics</div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>Farm-to-market transport • Live tracking • Cost estimation</div>
+          <div className="section-title">🚚 Transport & Freight</div>
+          <div style={{ fontSize:'0.78rem', color:'var(--text-muted)', marginTop:2 }}>Farm-to-market transport · Freight calculator · Live tracking</div>
         </div>
-        <button className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>+ Book Transport</button>
       </div>
 
-      <div className="grid-4" style={{ marginBottom: 20 }}>
+      {/* Stats */}
+      <div className="grid-4" style={{ marginBottom:20 }}>
         {[
-          { label: 'Transporters', value: transporters.length, icon: '🚛', color: '#3b82f6' },
-          { label: 'Available Now', value: transporters.filter(t => t.is_available).length, icon: '🟢', color: '#22c55e' },
-          { label: 'Active Trips', value: activeTrips.length, icon: '📍', color: '#f59e0b' },
-          { label: 'Completed', value: bookings.filter(b => b.status === 'completed').length, icon: '✅', color: '#8b5cf6' },
-        ].map(s => (
+          { label:'Active Trips', value:bookings.filter(b=>b.status==='in_transit').length, icon:'🚛', color:'#f59e0b' },
+          { label:'Completed', value:bookings.filter(b=>b.status==='delivered').length, icon:'✅', color:'#22c55e' },
+          { label:'Available Vehicles', value:VEHICLES.length, icon:'🚐', color:'#3b82f6' },
+          { label:'Districts Covered', value:12, icon:'📍', color:'#8b5cf6' },
+        ].map(s=>(
           <div key={s.label} className="stat-card">
-            <div style={{ fontSize: '1.8rem', marginBottom: 8 }}>{s.icon}</div>
-            <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
+            <div style={{ fontSize:'1.8rem', marginBottom:8 }}>{s.icon}</div>
+            <div className="stat-value" style={{ color:s.color }}>{s.value}</div>
             <div className="stat-label">{s.label}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
-        {tabs.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)}
-            style={{ padding: '10px 18px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', border: 'none', fontSize: '0.82rem', fontWeight: 600, background: activeTab === t.id ? 'var(--text-primary)' : 'var(--bg-card)', color: activeTab === t.id ? '#fff' : 'var(--text-muted)', transition: 'all 0.2s' }}>
-            {t.icon} {t.label}
+      {/* Tabs */}
+      <div style={{ display:'flex', gap:6, marginBottom:20 }}>
+        {[['calculator','🧮','Freight Calculator'],['bookings','📋','My Bookings'],['tracking','📡','Live Tracking']].map(([id,icon,label])=>(
+          <button key={id} onClick={()=>setTab(id)} style={{ padding:'10px 18px', borderRadius:'var(--radius-sm)', border:'none', cursor:'pointer', fontSize:'0.82rem', fontWeight:600, background:tab===id?'var(--text-primary)':'var(--bg-card)', color:tab===id?'#fff':'var(--text-muted)', transition:'all 0.2s' }}>
+            {icon} {label}
           </button>
         ))}
       </div>
 
-      {activeTab === 'directory' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-          {loading ? <div className="loading-state" style={{ gridColumn: '1/-1' }}>⟳ Loading...</div> :
-            transporters.map(t => (
-              <div key={t.id} className="card" style={{ padding: '20px', opacity: t.is_available ? 1 : 0.65, transition: 'transform 0.2s' }}
-                onMouseEnter={ev => { ev.currentTarget.style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={ev => { ev.currentTarget.style.transform = ''; }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{t.name}</span>
-                      {t.is_verified && <span style={{ background: '#22c55e', color: '#fff', padding: '1px 8px', borderRadius: 10, fontSize: '0.6rem', fontWeight: 700 }}>✓ VERIFIED</span>}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>{t.district} • {t.vehicle_type} • 📞 {t.mobile}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#22c55e' }}>₹{t.price_per_km}<span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>/km</span></div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 16, marginBottom: 12, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                  <span>⭐ <strong style={{ color: '#f59e0b' }}>{t.rating}</strong></span>
-                  <span>🚛 {t.total_trips} trips</span>
-                  <span className={`badge ${t.is_available ? 'badge-success' : 'badge-error'}`} style={{ fontSize: '0.7rem' }}>{t.is_available ? '● Available' : '● Busy'}</span>
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button className="btn btn-primary" style={{ flex: 1, padding: '8px', fontSize: '0.82rem' }} disabled={!t.is_available}>Book Now</button>
-                  <button className="btn btn-outline" style={{ padding: '8px 14px', fontSize: '0.82rem' }}>Call</button>
-                </div>
-              </div>
-            ))
-          }
-        </div>
-      )}
-
-      {activeTab === 'bookings' && (
-        <div className="card">
-          {loading ? <div className="loading-state">⟳ Loading...</div> : (
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead><tr><th>ID</th><th>Crop</th><th>Route</th><th>Distance</th><th>Qty</th><th>Amount</th><th>Status</th><th>Payment</th></tr></thead>
-                <tbody>
-                  {bookings.map(b => (
-                    <tr key={b.id}>
-                      <td style={{ color: 'var(--text-muted)' }}>#{b.id}</td>
-                      <td style={{ fontWeight: 600 }}>{b.crop_type}</td>
-                      <td style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{b.pickup_address?.split(',')[0]} → {b.delivery_address?.split(',')[0]}</td>
-                      <td>{b.distance_km}km</td>
-                      <td>{b.quantity_tonnes}T</td>
-                      <td style={{ fontWeight: 700, color: '#22c55e' }}>₹{b.total_amount?.toLocaleString()}</td>
-                      <td><span style={{ background: (STATUS_COLOR[b.status] || '#888') + '22', color: STATUS_COLOR[b.status], padding: '3px 10px', borderRadius: 20, fontSize: '0.72rem', fontWeight: 600 }}>{STATUS_ICONS[b.status]} {b.status?.replace('_', ' ')}</span></td>
-                      <td><span className={`badge ${b.payment_status === 'completed' ? 'badge-success' : 'badge-warning'}`}>{b.payment_status?.replace('_', ' ')}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'tracking' && (
-        <div>
-          {activeTrips.length === 0 ? (
-            <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <div style={{ fontSize: '3rem', marginBottom: 12 }}>📍</div>
-              <div style={{ fontSize: '0.95rem', fontWeight: 600 }}>No active trips to track</div>
-            </div>
-          ) : activeTrips.map(trip => (
-            <div key={trip.id} className="card" style={{ padding: '24px', marginBottom: 16 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div>
-                  <div style={{ fontSize: '1rem', fontWeight: 700 }}>🚛 Trip #{trip.id} — {trip.crop_type}</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{trip.quantity_tonnes}T • Booked {trip.booking_date}</div>
-                </div>
-                <span className="badge badge-green" style={{ fontSize: '0.8rem' }}>🔴 LIVE</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 0, marginBottom: 20 }}>
-                <div style={{ textAlign: 'center', minWidth: 100 }}>
-                  <div style={{ width: 14, height: 14, borderRadius: '50%', background: '#22c55e', margin: '0 auto 6px' }} />
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600 }}>{trip.pickup_address}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Pickup</div>
-                </div>
-                <div style={{ flex: 1, position: 'relative', height: 4, background: 'var(--border)', margin: '0 8px' }}>
-                  <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: '60%', background: '#22c55e', borderRadius: 2 }} />
-                  <div style={{ position: 'absolute', left: '60%', top: -8, fontSize: '1.2rem', transform: 'translateX(-50%)' }}>🚛</div>
-                </div>
-                <div style={{ textAlign: 'center', minWidth: 100 }}>
-                  <div style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--border)', margin: '0 auto 6px' }} />
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600 }}>{trip.delivery_address}</div>
-                  <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Delivery</div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 20, fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                <span>📏 {trip.distance_km}km total</span>
-                <span>⏱️ ETA: <strong style={{ color: '#f59e0b' }}>{trip.eta}</strong></span>
-                <span>💰 ₹{trip.total_amount?.toLocaleString()}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {activeTab === 'estimate' && (
-        <div className="card" style={{ padding: '24px', maxWidth: 600 }}>
-          <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 4 }}>💰 Transport Cost Estimator</div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 20 }}>Get instant cost estimate for your transport needs</div>
-          {[
-            { label: 'From (Pickup)', type: 'text', placeholder: 'e.g. Dharwad Farm' },
-            { label: 'To (Delivery)', type: 'text', placeholder: 'e.g. Hubli APMC' },
-            { label: 'Approx. Distance (km)', type: 'number', placeholder: '45' },
-            { label: 'Quantity (tonnes)', type: 'number', placeholder: '5' },
-            { label: 'Vehicle Type', type: 'select', options: ['Mini Truck (3T)', 'Tempo (5T)', 'Truck (10T)', 'Container (20T)'] },
-          ].map(f => (
-            <div key={f.label} style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 5 }}>{f.label}</label>
-              {f.type === 'select' ? (
-                <select style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '0.88rem' }}>
-                  {f.options.map(o => <option key={o}>{o}</option>)}
+      {/* Freight Calculator */}
+      {tab==='calculator' && (
+        <div style={{ display:'grid', gridTemplateColumns:'420px 1fr', gap:20 }}>
+          <div className="card" style={{ padding:24 }}>
+            <div style={{ fontWeight:700, fontSize:'0.95rem', marginBottom:18 }}>🧮 Freight Calculator</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+              <div>
+                <label style={LBL}>Pickup Location *</label>
+                <select value={form.pickup} onChange={e=>upd('pickup',e.target.value)} style={INP}>
+                  {AP_LOCATIONS.map(l=><option key={l}>{l}</option>)}
                 </select>
-              ) : (
-                <input type={f.type} placeholder={f.placeholder} style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '0.88rem', boxSizing: 'border-box' }} />
-              )}
-            </div>
-          ))}
-          <button className="btn btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.95rem' }}>🧮 Calculate Cost</button>
-          <div style={{ marginTop: 16, padding: '14px', background: 'rgba(59,130,246,0.06)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(59,130,246,0.15)' }}>
-            <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#3b82f6', marginBottom: 8 }}>Estimated Cost</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>45km × ₹14/km (Tempo)</div>
-              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#22c55e' }}>₹630</div>
+              </div>
+              <div>
+                <label style={LBL}>Delivery Location *</label>
+                <select value={form.delivery} onChange={e=>upd('delivery',e.target.value)} style={INP}>
+                  {AP_LOCATIONS.map(l=><option key={l}>{l}</option>)}
+                </select>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                <div>
+                  <label style={LBL}>Cargo (Quintals) *</label>
+                  <input type="number" min="1" value={form.cargo} onChange={e=>upd('cargo',e.target.value)} style={INP} placeholder="15"/>
+                </div>
+                <div>
+                  <label style={LBL}>Crop Type</label>
+                  <select value={form.crop} onChange={e=>upd('crop',e.target.value)} style={INP}>
+                    {['Paddy','Cotton','Groundnut','Maize','Chilli','Wheat','Sugarcane'].map(c=><option key={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label style={LBL}>Preferred Vehicle</label>
+                <select value={form.vehicle} onChange={e=>upd('vehicle',e.target.value)} style={INP}>
+                  {VEHICLES.map(v=><option key={v.type}>{v.type} ({v.capacity})</option>)}
+                </select>
+              </div>
+              <button className="btn btn-primary" style={{ padding:12, fontSize:'0.95rem' }} onClick={calculate}>
+                🧮 Calculate Freight Cost
+              </button>
             </div>
           </div>
+
+          {/* Results */}
+          <div>
+            {!result && (
+              <div className="card" style={{ padding:40, textAlign:'center', color:'var(--text-muted)' }}>
+                <div style={{ fontSize:'3rem', marginBottom:16 }}>🚚</div>
+                <div style={{ fontWeight:600, marginBottom:8 }}>Ready to Calculate</div>
+                <div style={{ fontSize:'0.82rem' }}>Fill in pickup, delivery, cargo details and click Calculate</div>
+              </div>
+            )}
+            {result && (
+              <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+                {/* Summary */}
+                <div className="card" style={{ padding:20 }}>
+                  <div style={{ fontWeight:700, marginBottom:12, color:'#22c55e' }}>📦 Route Summary</div>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, textAlign:'center', marginBottom:14 }}>
+                    <div style={{ background:'var(--bg-primary)', borderRadius:8, padding:12 }}>
+                      <div style={{ fontSize:'1.4rem' }}>📍</div>
+                      <div style={{ fontSize:'0.82rem', fontWeight:700, marginTop:4 }}>{result.dist} km</div>
+                      <div style={{ fontSize:'0.68rem', color:'var(--text-muted)' }}>Distance</div>
+                    </div>
+                    <div style={{ background:'var(--bg-primary)', borderRadius:8, padding:12 }}>
+                      <div style={{ fontSize:'1.4rem' }}>⏱</div>
+                      <div style={{ fontSize:'0.82rem', fontWeight:700, marginTop:4 }}>{result.duration}</div>
+                      <div style={{ fontSize:'0.68rem', color:'var(--text-muted)' }}>Est. Time</div>
+                    </div>
+                    <div style={{ background:'var(--bg-primary)', borderRadius:8, padding:12 }}>
+                      <div style={{ fontSize:'1.4rem' }}>📦</div>
+                      <div style={{ fontSize:'0.82rem', fontWeight:700, marginTop:4 }}>{result.cargo} qtl</div>
+                      <div style={{ fontSize:'0.68rem', color:'var(--text-muted)' }}>Cargo</div>
+                    </div>
+                  </div>
+                  <div style={{ background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.2)', borderRadius:8, padding:'12px 16px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                    <div style={{ fontSize:'0.85rem', color:'var(--text-secondary)' }}>Estimated Total Cost</div>
+                    <div style={{ fontSize:'1.5rem', fontWeight:800, color:'#22c55e' }}>₹{result.total.toLocaleString()}</div>
+                  </div>
+                </div>
+
+                {/* Vehicle options */}
+                <div className="card" style={{ padding:20 }}>
+                  <div style={{ fontWeight:700, marginBottom:12 }}>🚐 Vehicle Options (All Prices)</div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                    {result.options.map(v=>(
+                      <div key={v.type} onClick={()=>upd('vehicle',v.type)} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 14px', borderRadius:8, border:`2px solid ${form.vehicle===v.type?'#22c55e':'var(--border)'}`, background:form.vehicle===v.type?'rgba(34,197,94,0.06)':'var(--bg-primary)', cursor:'pointer', transition:'all 0.2s' }}>
+                        <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                          <span style={{ fontSize:'1.4rem' }}>{v.icon}</span>
+                          <div>
+                            <div style={{ fontWeight:600, fontSize:'0.88rem' }}>{v.type}</div>
+                            <div style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>{v.capacity}</div>
+                          </div>
+                        </div>
+                        <div style={{ fontWeight:800, color:'#22c55e', fontSize:'1.05rem' }}>₹{v.cost.toLocaleString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button className="btn btn-primary" style={{ padding:14, fontSize:'1rem' }} onClick={book}>
+                  🚀 Book Transport Now
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Bookings */}
+      {tab==='bookings' && (
+        <div className="card">
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead><tr><th>Ref</th><th>Crop</th><th>Pickup</th><th>Delivery</th><th>Vehicle</th><th>Cost</th><th>Date</th><th>Status</th></tr></thead>
+              <tbody>
+                {bookings.map(b=>(
+                  <tr key={b.ref}>
+                    <td style={{ fontWeight:700, color:'#8b5cf6' }}>{b.ref}</td>
+                    <td>{b.crop}</td>
+                    <td style={{ fontSize:'0.8rem', color:'var(--text-muted)' }}>{b.pickup}</td>
+                    <td style={{ fontSize:'0.8rem', color:'var(--text-muted)' }}>{b.delivery}</td>
+                    <td>{b.vehicle}</td>
+                    <td style={{ fontWeight:700, color:'#22c55e' }}>₹{b.cost.toLocaleString()}</td>
+                    <td>{b.date}</td>
+                    <td><span style={{ color:STATUS_COLOR[b.status]||'#888', fontWeight:700, fontSize:'0.78rem' }}>{STATUS_ICON[b.status]} {b.status.replace('_',' ')}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Live Tracking */}
+      {tab==='tracking' && (
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          {bookings.filter(b=>b.status==='in_transit').length===0 ? (
+            <div className="card" style={{ padding:40, textAlign:'center', color:'var(--text-muted)' }}>
+              <div style={{ fontSize:'3rem', marginBottom:12 }}>📡</div>
+              <div style={{ fontWeight:600 }}>No active trips to track</div>
+            </div>
+          ) : bookings.filter(b=>b.status==='in_transit').map(b=>(
+            <div key={b.ref} className="card" style={{ padding:20 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+                <div>
+                  <div style={{ fontWeight:700 }}>🚛 {b.vehicle} — {b.crop}</div>
+                  <div style={{ fontSize:'0.78rem', color:'var(--text-muted)', marginTop:2 }}>Ref: {b.ref} · ETA: {b.eta||'Calculating...'}</div>
+                </div>
+                <span style={{ background:'rgba(245,158,11,0.1)', color:'#f59e0b', padding:'4px 12px', borderRadius:12, fontWeight:700, fontSize:'0.78rem' }}>IN TRANSIT</span>
+              </div>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <div style={{ textAlign:'center', fontSize:'0.78rem' }}>
+                  <div style={{ fontWeight:700 }}>{b.pickup}</div>
+                  <div style={{ color:'var(--text-muted)', fontSize:'0.68rem' }}>Pickup</div>
+                </div>
+                <div style={{ flex:1, position:'relative' }}>
+                  <div style={{ height:4, background:'var(--border)', borderRadius:2 }}>
+                    <div style={{ height:'100%', width:'60%', background:'linear-gradient(90deg,#22c55e,#f59e0b)', borderRadius:2 }}/>
+                  </div>
+                  <div style={{ position:'absolute', left:'60%', top:-8, transform:'translateX(-50%)', fontSize:'1.2rem' }}>🚛</div>
+                </div>
+                <div style={{ textAlign:'center', fontSize:'0.78rem' }}>
+                  <div style={{ fontWeight:700 }}>{b.delivery}</div>
+                  <div style={{ color:'var(--text-muted)', fontSize:'0.68rem' }}>Destination</div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
