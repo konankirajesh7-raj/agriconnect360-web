@@ -616,9 +616,9 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
       {/* Quick Tips */}
       <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
         {[
-          { icon: '🌱', tip: 'Ask about paddy cultivation schedule for Kharif season in Guntur district', lang: 'EN' },
-          { icon: '🐛', tip: 'White mites on tomato leaves — describe symptoms in the Pest Detector', lang: 'EN' },
-          { icon: '💬', tip: 'పత్తి పంటకు ఎరువులు ఏమి వేయాలి? (Ask in Telugu)', lang: 'TE' },
+          { icon: '🌱', tip: 'Paddy cultivation schedule for Kharif season in Guntur district', lang: 'EN' },
+          { icon: '🐛', tip: 'White mites on tomato leaves — how to control?', lang: 'EN' },
+          { icon: '💬', tip: 'పత్తి పంటకు ఎరువులు ఏమి వేయాలి?', lang: 'TE' },
           { icon: '💰', tip: 'Should I sell my cotton now or wait 2 weeks for better prices?', lang: 'EN' },
         ].map((tip, i) => (
           <div key={i} style={{
@@ -628,7 +628,7 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
           }}
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)'; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; }}
-          onClick={() => { setActiveTool('ask'); setAskForm({ question: tip.tip }); setResult(null); }}>
+          onClick={() => { setActiveTool('chat'); sendChat(tip.tip); }}>
             <div style={{ fontSize: '1.2rem', marginBottom: 6 }}>{tip.icon}</div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>{tip.tip}</div>
             <div style={{ marginTop: 6, fontSize: '0.65rem', color: '#8b5cf6', fontWeight: 600 }}>{tip.lang} • Click to try</div>
