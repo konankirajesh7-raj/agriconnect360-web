@@ -68,7 +68,11 @@ function useAuthProvider() {
     let mounted = true;
     const init = async () => {
       try {
-        const { data: { session: s } } = await supabase.auth.getSession();
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('getSession timeout')), 4000)
+        );
+        const { data: { session: s } } = await Promise.race([sessionPromise, timeoutPromise]);
         if (s && mounted) {
           setSession(s); setUser(s.user);
           await loadProfile(s.user.id);
