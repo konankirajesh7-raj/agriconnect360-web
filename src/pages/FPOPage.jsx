@@ -1,400 +1,282 @@
-/**
- * Phase 11C — FPO Mode (9 tasks)
- * - Switch between farmer profiles
- * - FPO admin view — manage members
- * - Bulk SMS to FPO members
- * - Aggregated reports
- * - FPO activity heatmap
- * - Collective bargaining tool
- * - FPO expense splitting
- * - CSV export for government reporting
- * - FPO performance dashboard vs district averages
- */
 import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clearStoredFPOMember, setStoredFPOMember } from '../lib/phase11Persistence';
 
-// ── Mock FPO Data ─────────────────────────────────────────────────
-const FPO_INFO = {
-  name: 'Guntur Farmers Producer Organization',
-  regNo: 'AP/FPO/2024/001247',
-  district: 'Guntur',
-  state: 'Andhra Pradesh',
-  totalMembers: 128,
-  activeMembers: 112,
-  established: '2023-06-15',
-  revenue: 4250000,
-  expenses: 2890000,
+const AP_HIERARCHY = {
+  'Guntur': { mandals:['Tenali','Mangalagiri','Ponnur','Repalle','Prathipadu','Narasaraopet'] },
+  'Krishna': { mandals:['Vijayawada','Machilipatnam','Gudivada','Nuzvid'] },
+  'Kurnool': { mandals:['Kurnool','Adoni','Nandyal','Yemmiganur'] },
+  'Anantapur': { mandals:['Anantapur','Dharmavaram','Hindupur','Penukonda'] },
+  'Chittoor': { mandals:['Tirupati','Madanapalle','Chittoor','Palamaner'] },
+  'Prakasam': { mandals:['Ongole','Markapur','Chirala'] },
+  'East Godavari': { mandals:['Kakinada','Rajahmundry','Amalapuram'] },
 };
 
 const MEMBERS = [
-  { id: 1, name: 'Rajesh Kumar', village: 'Tenali', acres: 8, crops: ['Paddy', 'Cotton'], phone: '9876543210', active: true, contribution: 52000 },
-  { id: 2, name: 'Lakshmi Devi', village: 'Mangalagiri', acres: 5, crops: ['Chilli', 'Vegetables'], phone: '9876543211', active: true, contribution: 38000 },
-  { id: 3, name: 'Venkata Rao', village: 'Ponnur', acres: 12, crops: ['Paddy', 'Sugarcane'], phone: '9876543212', active: true, contribution: 78000 },
-  { id: 4, name: 'Suresh Babu', village: 'Tenali', acres: 6, crops: ['Cotton'], phone: '9876543213', active: false, contribution: 22000 },
-  { id: 5, name: 'Padma', village: 'Repalle', acres: 3, crops: ['Vegetables', 'Banana'], phone: '9876543214', active: true, contribution: 28000 },
-  { id: 6, name: 'Ravi Teja', village: 'Prathipadu', acres: 15, crops: ['Paddy', 'Cotton', 'Chilli'], phone: '9876543215', active: true, contribution: 95000 },
-  { id: 7, name: 'Anitha', village: 'Mangalagiri', acres: 4, crops: ['Tomato', 'Chilli'], phone: '9876543216', active: true, contribution: 32000 },
-  { id: 8, name: 'Krishna Murthy', village: 'Duggirala', acres: 10, crops: ['Paddy', 'Groundnut'], phone: '9876543217', active: true, contribution: 65000 },
-  { id: 9, name: 'Sita Rama', village: 'Kakumanu', acres: 7, crops: ['Cotton', 'Maize'], phone: '9876543218', active: true, contribution: 48000 },
-  { id: 10, name: 'Ganga Dhar', village: 'Tenali', acres: 9, crops: ['Paddy'], phone: '9876543219', active: false, contribution: 15000 },
+  { id:1, name:'Rajesh Kumar', village:'Tenali', mandal:'Tenali', district:'Guntur', acres:8, crops:['Paddy','Cotton'], phone:'9876543210', active:true, contribution:52000, role:'Village Head' },
+  { id:2, name:'Lakshmi Devi', village:'Mangalagiri', mandal:'Mangalagiri', district:'Guntur', acres:5, crops:['Chilli','Vegetables'], phone:'9876543211', active:true, contribution:38000, role:'Member' },
+  { id:3, name:'Venkata Rao', village:'Ponnur', mandal:'Ponnur', district:'Guntur', acres:12, crops:['Paddy','Sugarcane'], phone:'9876543212', active:true, contribution:78000, role:'Mandal Head' },
+  { id:4, name:'Suresh Babu', village:'Tenali', mandal:'Tenali', district:'Guntur', acres:6, crops:['Cotton'], phone:'9876543213', active:false, contribution:22000, role:'Member' },
+  { id:5, name:'Padma', village:'Repalle', mandal:'Repalle', district:'Guntur', acres:3, crops:['Vegetables','Banana'], phone:'9876543214', active:true, contribution:28000, role:'Village Head' },
+  { id:6, name:'Ravi Teja', village:'Prathipadu', mandal:'Prathipadu', district:'Guntur', acres:15, crops:['Paddy','Cotton','Chilli'], phone:'9876543215', active:true, contribution:95000, role:'District Head' },
+  { id:7, name:'Krishna Prasad', village:'Vijayawada', mandal:'Vijayawada', district:'Krishna', acres:10, crops:['Sugarcane'], phone:'9876543216', active:true, contribution:65000, role:'District Head' },
+  { id:8, name:'Anitha B.', village:'Machilipatnam', mandal:'Machilipatnam', district:'Krishna', acres:4, crops:['Paddy'], phone:'9876543217', active:true, contribution:32000, role:'Village Head' },
+  { id:9, name:'Srinivas R.', village:'Adoni', mandal:'Adoni', district:'Kurnool', acres:7, crops:['Cotton','Groundnut'], phone:'9876543218', active:true, contribution:48000, role:'District Head' },
+  { id:10, name:'Ramesh G.', village:'Anantapur', mandal:'Anantapur', district:'Anantapur', acres:9, crops:['Groundnut'], phone:'9876543219', active:true, contribution:55000, role:'Mandal Head' },
 ];
+
+const ROLE_COLORS = { 'District Head':{bg:'rgba(139,92,246,0.1)',color:'#8b5cf6',icon:'👑'}, 'Mandal Head':{bg:'rgba(59,130,246,0.1)',color:'#3b82f6',icon:'🏛️'}, 'Village Head':{bg:'rgba(245,158,11,0.1)',color:'#f59e0b',icon:'⭐'}, 'Member':{bg:'rgba(34,197,94,0.1)',color:'#22c55e',icon:'👨‍🌾'} };
 
 const COLLECTIVE_DEALS = [
-  { id: 1, crop: 'Cotton', qty: '450 Quintals', members: 34, bestPrice: '₹7,200/Q', status: 'negotiating', mandi: 'Guntur APMC' },
-  { id: 2, crop: 'Paddy', qty: '800 Quintals', members: 52, bestPrice: '₹2,150/Q', status: 'confirmed', mandi: 'Tenali APMC' },
-  { id: 3, crop: 'Chilli', qty: '120 Quintals', members: 18, bestPrice: '₹15,500/Q', status: 'completed', mandi: 'Guntur Mirchi Yard' },
+  { id:1, crop:'Cotton', qty:'450 Quintals', members:34, bestPrice:'₹7,200/Q', status:'negotiating', mandi:'Guntur APMC' },
+  { id:2, crop:'Paddy', qty:'800 Quintals', members:52, bestPrice:'₹2,150/Q', status:'confirmed', mandi:'Tenali APMC' },
+  { id:3, crop:'Chilli', qty:'120 Quintals', members:18, bestPrice:'₹15,500/Q', status:'completed', mandi:'Guntur Mirchi Yard' },
 ];
 
-const SHARED_EXPENSES = [
-  { item: 'Tractor Rental (3 units)', total: 45000, members: 12, perMember: 3750, date: '2026-04-15' },
-  { item: 'Bulk Fertilizer Purchase', total: 180000, members: 45, perMember: 4000, date: '2026-04-10' },
-  { item: 'Pesticide Spray Drone', total: 28000, members: 8, perMember: 3500, date: '2026-04-05' },
-  { item: 'Transport to Mandi', total: 32000, members: 15, perMember: 2133, date: '2026-03-28' },
-  { item: 'Soil Testing (Group)', total: 12000, members: 20, perMember: 600, date: '2026-03-20' },
-];
-
-const HEATMAP_DATA = [
-  { village: 'Tenali', members: 32, activity: 92 },
-  { village: 'Mangalagiri', members: 18, activity: 85 },
-  { village: 'Ponnur', members: 14, activity: 78 },
-  { village: 'Repalle', members: 12, activity: 65 },
-  { village: 'Prathipadu', members: 10, activity: 72 },
-  { village: 'Duggirala', members: 8, activity: 58 },
-  { village: 'Kakumanu', members: 6, activity: 45 },
-  { village: 'Others', members: 28, activity: 60 },
-];
-
-const DISTRICT_AVG = { yield: 28, income: 185000, techAdoption: 42, schemeAccess: 55 };
-const FPO_PERF = { yield: 35, income: 245000, techAdoption: 78, schemeAccess: 82 };
+const INP = { width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.85rem', boxSizing:'border-box' };
 
 export default function FPOPage() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState('dashboard');
+  const [tab, setTab] = useState('hierarchy');
+  const [districtFilter, setDistrictFilter] = useState('All');
+  const [mandalFilter, setMandalFilter] = useState('All');
+  const [roleFilterFPO, setRoleFilterFPO] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedMember, setSelectedMember] = useState(null);
   const [smsMessage, setSmsMessage] = useState('');
-  const [smsRecipients, setSmsRecipients] = useState('all');
   const [smsSending, setSmsSending] = useState(false);
   const [smsSent, setSmsSent] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+
+  const districts = ['All', ...Object.keys(AP_HIERARCHY)];
+  const mandals = districtFilter !== 'All' ? ['All', ...(AP_HIERARCHY[districtFilter]?.mandals || [])] : ['All'];
 
   const filteredMembers = useMemo(() => {
-    if (!searchQuery) return MEMBERS;
-    return MEMBERS.filter(m =>
-      m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.village.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery]);
+    let list = MEMBERS;
+    if (districtFilter !== 'All') list = list.filter(m => m.district === districtFilter);
+    if (mandalFilter !== 'All') list = list.filter(m => m.mandal === mandalFilter);
+    if (roleFilterFPO !== 'All') list = list.filter(m => m.role === roleFilterFPO);
+    if (searchQuery) list = list.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()) || m.village.toLowerCase().includes(searchQuery.toLowerCase()));
+    return list;
+  }, [districtFilter, mandalFilter, roleFilterFPO, searchQuery]);
 
-  const handleBulkSMS = () => {
-    setSmsSending(true);
-    setTimeout(() => {
-      setSmsSending(false);
-      setSmsSent(true);
-      setTimeout(() => setSmsSent(false), 3000);
-    }, 2000);
-  };
+  const hierarchyStats = useMemo(() => {
+    const dHeads = MEMBERS.filter(m => m.role === 'District Head').length;
+    const mHeads = MEMBERS.filter(m => m.role === 'Mandal Head').length;
+    const vHeads = MEMBERS.filter(m => m.role === 'Village Head').length;
+    return { dHeads, mHeads, vHeads, total: MEMBERS.length };
+  }, []);
+
+  const handleBulkSMS = () => { setSmsSending(true); setTimeout(() => { setSmsSending(false); setSmsSent(true); setTimeout(() => setSmsSent(false), 3000); }, 2000); };
 
   const exportCSV = () => {
-    const headers = ['Name', 'Village', 'Acres', 'Crops', 'Phone', 'Active', 'Contribution (₹)'];
-    const rows = MEMBERS.map(m => [m.name, m.village, m.acres, m.crops.join('; '), m.phone, m.active ? 'Yes' : 'No', m.contribution]);
-    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    const headers = ['Name','Village','Mandal','District','Role','Acres','Crops','Phone','Active','Contribution'];
+    const rows = MEMBERS.map(m => [m.name,m.village,m.mandal,m.district,m.role,m.acres,m.crops.join(';'),m.phone,m.active?'Yes':'No',m.contribution]);
+    const csv = [headers,...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type:'text/csv' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `FPO_Members_${FPO_INFO.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = `FPO_Members_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
   };
 
   const openMemberProfile = useCallback((member) => {
-    if (!member) return;
-    setStoredFPOMember({
-      ...member,
-      district: FPO_INFO.district,
-      state: FPO_INFO.state,
-      mandal: member.village,
-      selectedCrops: member.crops,
-    });
-    navigate('/profile');
-  }, [navigate]);
-
-  const openOwnProfile = useCallback(() => {
-    clearStoredFPOMember();
+    setStoredFPOMember({ ...member, state:'Andhra Pradesh', selectedCrops:member.crops });
     navigate('/profile');
   }, [navigate]);
 
   const TABS = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'members', label: 'Members', icon: '👥' },
-    { id: 'bargaining', label: 'Bargaining', icon: '🤝' },
-    { id: 'expenses', label: 'Expenses', icon: '💰' },
-    { id: 'sms', label: 'Bulk SMS', icon: '📱' },
+    { id:'hierarchy', label:'🏛️ Hierarchy', icon:'🏛️' },
+    { id:'members', label:'👥 Members', icon:'👥' },
+    { id:'bargaining', label:'🤝 Bargaining', icon:'🤝' },
+    { id:'sms', label:'📱 Bulk SMS', icon:'📱' },
   ];
 
   return (
-    <div className="animated fpo-page">
-      {/* FPO Header */}
-      <div className="fpo-header-card">
-        <div className="fpo-header-left">
-          <div className="fpo-logo">🏢</div>
-          <div>
-            <h2 className="fpo-title">{FPO_INFO.name}</h2>
-            <p className="fpo-subtitle">Reg No: {FPO_INFO.regNo} | Est. {new Date(FPO_INFO.established).getFullYear()}</p>
-          </div>
+    <div className="animated">
+      {/* Header */}
+      <div style={{ background:'linear-gradient(135deg,rgba(139,92,246,0.08),rgba(34,197,94,0.06))', border:'1px solid rgba(139,92,246,0.15)', borderRadius:16, padding:'20px 24px', marginBottom:20, display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10 }}>
+        <div>
+          <div style={{ fontWeight:800, fontSize:'1.3rem', display:'flex', alignItems:'center', gap:10 }}>🏢 FPO Mode — Location-Based Network</div>
+          <div style={{ fontSize:'0.78rem', color:'var(--text-muted)', marginTop:4 }}>Village → Mandal → District hierarchy · Connect farmer heads across AP</div>
         </div>
-        <div className="fpo-header-stats">
-          <div className="fpo-hstat"><span className="fpo-hstat-val">{FPO_INFO.totalMembers}</span><span>Members</span></div>
-          <div className="fpo-hstat"><span className="fpo-hstat-val">{FPO_INFO.activeMembers}</span><span>Active</span></div>
-          <div className="fpo-hstat"><span className="fpo-hstat-val">₹{(FPO_INFO.revenue / 100000).toFixed(1)}L</span><span>Revenue</span></div>
+        <div style={{ display:'flex', gap:8 }}>
+          <button onClick={exportCSV} style={{ padding:'8px 14px', borderRadius:8, border:'1px solid var(--border)', background:'transparent', color:'var(--text-primary)', fontWeight:600, fontSize:'0.78rem', cursor:'pointer' }}>📥 Export CSV</button>
+          <button onClick={() => { clearStoredFPOMember(); navigate('/profile'); }} style={{ padding:'8px 14px', borderRadius:8, border:'none', background:'linear-gradient(135deg,#22c55e,#16a34a)', color:'#fff', fontWeight:700, fontSize:'0.78rem', cursor:'pointer' }}>👤 My Profile</button>
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="fpo-tabs">
-        {TABS.map(t => (
-          <button key={t.id} className={`fpo-tab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
-            {t.icon} {t.label}
-          </button>
+      {/* Stats */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:16 }}>
+        {[
+          { label:'District Heads', value:hierarchyStats.dHeads, ...ROLE_COLORS['District Head'] },
+          { label:'Mandal Heads', value:hierarchyStats.mHeads, ...ROLE_COLORS['Mandal Head'] },
+          { label:'Village Heads', value:hierarchyStats.vHeads, ...ROLE_COLORS['Village Head'] },
+          { label:'Total Members', value:hierarchyStats.total, bg:'rgba(34,197,94,0.1)', color:'#22c55e', icon:'👥' },
+        ].map(s => (
+          <div key={s.label} style={{ background:s.bg, border:`1px solid ${s.bg.replace('0.1','0.25')}`, borderRadius:12, padding:'14px 10px', textAlign:'center' }}>
+            <div style={{ fontSize:'1.4rem' }}>{s.icon}</div>
+            <div style={{ fontWeight:800, fontSize:'1.4rem', color:s.color }}>{s.value}</div>
+            <div style={{ fontSize:'0.68rem', color:'var(--text-muted)', fontWeight:600 }}>{s.label}</div>
+          </div>
         ))}
-        <button className="btn btn-outline fpo-export-btn" onClick={openOwnProfile}>👤 My Profile</button>
-        <button className="btn btn-outline fpo-export-btn" onClick={exportCSV}>📥 Export CSV</button>
       </div>
 
-      {/* Dashboard Tab */}
-      {tab === 'dashboard' && (
-        <div className="fpo-dashboard">
-          {/* Performance vs District */}
-          <div className="card fpo-perf-card">
-            <h4>📊 FPO vs District Average</h4>
-            <div className="fpo-perf-grid">
-              {[
-                { label: 'Yield (Q/acre)', fpo: FPO_PERF.yield, avg: DISTRICT_AVG.yield, unit: 'Q' },
-                { label: 'Avg Income', fpo: FPO_PERF.income, avg: DISTRICT_AVG.income, unit: '₹', fmt: v => `₹${(v/1000).toFixed(0)}K` },
-                { label: 'Tech Adoption', fpo: FPO_PERF.techAdoption, avg: DISTRICT_AVG.techAdoption, unit: '%' },
-                { label: 'Scheme Access', fpo: FPO_PERF.schemeAccess, avg: DISTRICT_AVG.schemeAccess, unit: '%' },
-              ].map(m => (
-                <div key={m.label} className="fpo-perf-item">
-                  <div className="fpo-perf-label">{m.label}</div>
-                  <div className="fpo-perf-bars">
-                    <div className="fpo-perf-bar-row">
-                      <span className="fpo-perf-bar-label">FPO</span>
-                      <div className="fpo-perf-bar-track">
-                        <div className="fpo-perf-bar-fill green" style={{ width: `${(m.fpo / Math.max(m.fpo, m.avg)) * 100}%` }} />
-                      </div>
-                      <span className="fpo-perf-val">{m.fmt ? m.fmt(m.fpo) : `${m.fpo}${m.unit}`}</span>
-                    </div>
-                    <div className="fpo-perf-bar-row">
-                      <span className="fpo-perf-bar-label">Avg</span>
-                      <div className="fpo-perf-bar-track">
-                        <div className="fpo-perf-bar-fill muted" style={{ width: `${(m.avg / Math.max(m.fpo, m.avg)) * 100}%` }} />
-                      </div>
-                      <span className="fpo-perf-val">{m.fmt ? m.fmt(m.avg) : `${m.avg}${m.unit}`}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Tabs */}
+      <div style={{ display:'flex', gap:4, marginBottom:16, background:'var(--bg-primary)', borderRadius:10, padding:4 }}>
+        {TABS.map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} style={{ flex:1, padding:'8px', borderRadius:8, border:'none', fontSize:'0.78rem', fontWeight:tab===t.id?700:500, cursor:'pointer', background:tab===t.id?'var(--bg-card)':'transparent', color:tab===t.id?'#8b5cf6':'var(--text-muted)' }}>{t.icon} {t.label}</button>
+        ))}
+      </div>
 
-          {/* Activity Heatmap */}
-          <div className="card fpo-heatmap-card">
-            <h4>🗺️ Village Activity Heatmap</h4>
-            <div className="fpo-heatmap-grid">
-              {HEATMAP_DATA.map(h => (
-                <div key={h.village} className="fpo-heatmap-item" style={{ '--heat': h.activity / 100 }}>
-                  <div className="fpo-heatmap-bar" style={{ height: `${h.activity}%`, background: `rgba(34,197,94,${0.3 + h.activity * 0.007})` }} />
-                  <div className="fpo-heatmap-info">
-                    <span className="fpo-heatmap-village">{h.village}</span>
-                    <span className="fpo-heatmap-count">{h.members} members</span>
-                    <span className="fpo-heatmap-score">{h.activity}%</span>
+      {/* HIERARCHY TAB */}
+      {tab === 'hierarchy' && (
+        <div>
+          <div style={{ fontWeight:700, fontSize:'0.9rem', marginBottom:12 }}>🏛️ AP District → Mandal → Village Heads</div>
+          {Object.entries(AP_HIERARCHY).map(([dist, data]) => {
+            const dHead = MEMBERS.find(m => m.district === dist && m.role === 'District Head');
+            const distMembers = MEMBERS.filter(m => m.district === dist);
+            return (
+              <div key={dist} className="card" style={{ padding:16, marginBottom:12, borderLeft:'3px solid #8b5cf6' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                  <div>
+                    <div style={{ fontWeight:800, fontSize:'1rem' }}>📍 {dist} District</div>
+                    <div style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>{data.mandals.length} Mandals · {distMembers.length} members</div>
                   </div>
+                  {dHead && (
+                    <div style={{ display:'flex', gap:8, alignItems:'center', padding:'6px 12px', borderRadius:8, background:ROLE_COLORS['District Head'].bg, cursor:'pointer' }} onClick={() => setSelectedMember(dHead)}>
+                      <span>👑</span>
+                      <div>
+                        <div style={{ fontWeight:700, fontSize:'0.78rem', color:ROLE_COLORS['District Head'].color }}>{dHead.name}</div>
+                        <div style={{ fontSize:'0.65rem', color:'var(--text-muted)' }}>District Head</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:8 }}>
+                  {data.mandals.map(mandal => {
+                    const mHead = MEMBERS.find(m => m.mandal === mandal && (m.role === 'Mandal Head' || m.role === 'Village Head'));
+                    return (
+                      <div key={mandal} style={{ padding:'10px 12px', borderRadius:8, background:'var(--bg-primary)', border:'1px solid var(--border)', cursor: mHead ? 'pointer' : 'default' }} onClick={() => mHead && setSelectedMember(mHead)}>
+                        <div style={{ fontWeight:600, fontSize:'0.82rem' }}>🏘️ {mandal}</div>
+                        {mHead ? (
+                          <div style={{ fontSize:'0.7rem', color:ROLE_COLORS[mHead.role].color, marginTop:4 }}>{ROLE_COLORS[mHead.role].icon} {mHead.name} ({mHead.role})</div>
+                        ) : (
+                          <div style={{ fontSize:'0.7rem', color:'var(--text-muted)', marginTop:4 }}>No head assigned</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Members Tab */}
+      {/* MEMBERS TAB */}
       {tab === 'members' && (
-        <div className="fpo-members-section">
-          <div className="fpo-members-toolbar">
-            <input className="search-input" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="🔍 Search members by name or village..." style={{ flex: 1 }} />
-            <span className="fpo-member-count">{filteredMembers.length} members</span>
+        <div>
+          <div style={{ display:'flex', gap:10, marginBottom:12, flexWrap:'wrap' }}>
+            <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="🔍 Search..." style={{ ...INP, flex:'1 1 160px' }} />
+            <select value={districtFilter} onChange={e => { setDistrictFilter(e.target.value); setMandalFilter('All'); }} style={{ ...INP, width:140 }}>
+              {districts.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <select value={mandalFilter} onChange={e => setMandalFilter(e.target.value)} style={{ ...INP, width:140 }}>
+              {mandals.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+            <select value={roleFilterFPO} onChange={e => setRoleFilterFPO(e.target.value)} style={{ ...INP, width:140 }}>
+              {['All','District Head','Mandal Head','Village Head','Member'].map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
           </div>
-
-          <div className="fpo-members-table card">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Village</th>
-                  <th>Acres</th>
-                  <th>Crops</th>
-                  <th>Contribution</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredMembers.map(m => (
-                  <tr key={m.id}>
-                    <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>👨‍🌾 {m.name}</td>
-                    <td>📍 {m.village}</td>
-                    <td>{m.acres} ac</td>
-                    <td>{m.crops.map(c => <span key={c} className="badge badge-blue" style={{ marginRight: 4 }}>{c}</span>)}</td>
-                    <td style={{ fontWeight: 600 }}>₹{m.contribution.toLocaleString()}</td>
-                    <td><span className={`badge ${m.active ? 'badge-green' : 'badge-amber'}`}>{m.active ? 'Active' : 'Inactive'}</span></td>
-                    <td>
-                      <button className="action-btn" onClick={() => setSelectedMember(m)} title="View">👁️</button>
-                      <button className="action-btn" style={{ marginLeft: 4 }} title="Open Profile" onClick={() => openMemberProfile(m)}>👤</button>
-                      <button className="action-btn" style={{ marginLeft: 4 }} title="Call">📞</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Member Detail Modal */}
-          {selectedMember && (
-            <div className="fpo-modal-overlay" onClick={() => setSelectedMember(null)}>
-              <div className="fpo-modal" onClick={e => e.stopPropagation()}>
-                <div className="fpo-modal-header">
-                  <h3>👨‍🌾 {selectedMember.name}</h3>
-                  <button className="action-btn" onClick={() => setSelectedMember(null)}>✕</button>
-                </div>
-                <div className="fpo-modal-body">
-                  <div className="fpo-modal-grid">
-                    <div><span className="fpo-modal-label">Village</span><span>{selectedMember.village}</span></div>
-                    <div><span className="fpo-modal-label">Farm Area</span><span>{selectedMember.acres} acres</span></div>
-                    <div><span className="fpo-modal-label">Crops</span><span>{selectedMember.crops.join(', ')}</span></div>
-                    <div><span className="fpo-modal-label">Phone</span><span>{selectedMember.phone}</span></div>
-                    <div><span className="fpo-modal-label">Contribution</span><span>₹{selectedMember.contribution.toLocaleString()}</span></div>
-                    <div><span className="fpo-modal-label">Status</span><span className={`badge ${selectedMember.active ? 'badge-green' : 'badge-amber'}`}>{selectedMember.active ? 'Active' : 'Inactive'}</span></div>
+          <div style={{ fontSize:'0.78rem', color:'var(--text-muted)', marginBottom:10 }}>{filteredMembers.length} members found</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:12 }}>
+            {filteredMembers.map(m => {
+              const rc = ROLE_COLORS[m.role];
+              return (
+                <div key={m.id} className="card" style={{ padding:16, borderLeft:`3px solid ${rc.color}`, cursor:'pointer', transition:'transform 0.2s' }}
+                  onClick={() => setSelectedMember(m)}
+                  onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-2px)'}} onMouseLeave={e=>{e.currentTarget.style.transform=''}}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                    <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                      <div style={{ width:42, height:42, borderRadius:'50%', background:rc.bg, border:`2px solid ${rc.color}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.2rem' }}>{rc.icon}</div>
+                      <div>
+                        <div style={{ fontWeight:700, fontSize:'0.88rem' }}>{m.name}</div>
+                        <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>📍 {m.village}, {m.mandal}, {m.district}</div>
+                      </div>
+                    </div>
+                    <span style={{ fontSize:'0.65rem', padding:'3px 10px', borderRadius:10, background:rc.bg, color:rc.color, fontWeight:700 }}>{m.role}</span>
                   </div>
-                  <button className="btn btn-primary" style={{ width: '100%', marginTop: 16 }} onClick={() => openMemberProfile(selectedMember)}>
-                    👤 Open Member Profile
-                  </button>
+                  <div style={{ display:'flex', gap:12, marginTop:10, fontSize:'0.75rem', color:'var(--text-muted)' }}>
+                    <span>🌾 {m.crops.join(', ')}</span><span>📐 {m.acres} acres</span><span>💰 ₹{m.contribution.toLocaleString()}</span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+              );
+            })}
+          </div>
         </div>
       )}
 
-      {/* Collective Bargaining Tab */}
+      {/* BARGAINING TAB */}
       {tab === 'bargaining' && (
-        <div className="fpo-bargaining-section">
-          <div className="fpo-deals-grid">
-            {COLLECTIVE_DEALS.map(d => (
-              <div key={d.id} className="card fpo-deal-card">
-                <div className="fpo-deal-header">
-                  <span className="fpo-deal-crop">{d.crop}</span>
-                  <span className={`badge ${d.status === 'completed' ? 'badge-green' : d.status === 'confirmed' ? 'badge-blue' : 'badge-amber'}`}>{d.status}</span>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:12 }}>
+          {COLLECTIVE_DEALS.map(d => (
+            <div key={d.id} className="card" style={{ padding:18 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
+                <span style={{ fontWeight:800, fontSize:'1rem' }}>{d.crop}</span>
+                <span style={{ fontSize:'0.72rem', padding:'3px 10px', borderRadius:10, fontWeight:700, background: d.status==='completed'?'rgba(34,197,94,0.1)':d.status==='confirmed'?'rgba(59,130,246,0.1)':'rgba(245,158,11,0.1)', color: d.status==='completed'?'#22c55e':d.status==='confirmed'?'#3b82f6':'#f59e0b' }}>{d.status}</span>
+              </div>
+              {[['Quantity',d.qty],['Members',`${d.members} farmers`],['Best Price',d.bestPrice],['Mandi',d.mandi]].map(([l,v]) => (
+                <div key={l} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', fontSize:'0.82rem', borderBottom:'1px solid var(--border)' }}>
+                  <span style={{ color:'var(--text-muted)' }}>{l}</span><strong>{v}</strong>
                 </div>
-                <div className="fpo-deal-details">
-                  <div className="fpo-deal-row"><span>Quantity</span><strong>{d.qty}</strong></div>
-                  <div className="fpo-deal-row"><span>Members</span><strong>{d.members} farmers</strong></div>
-                  <div className="fpo-deal-row"><span>Best Price</span><strong style={{ color: '#22c55e' }}>{d.bestPrice}</strong></div>
-                  <div className="fpo-deal-row"><span>Mandi</span><strong>{d.mandi}</strong></div>
-                </div>
-                {d.status === 'negotiating' && (
-                  <button className="btn btn-primary" style={{ width: '100%', marginTop: 12 }}>🤝 Join This Deal</button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Expense Splitting Tab */}
-      {tab === 'expenses' && (
-        <div className="fpo-expenses-section">
-          <div className="card" style={{ padding: 20 }}>
-            <h4 style={{ marginBottom: 16 }}>💰 Shared Expenses</h4>
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Item</th>
-                  <th>Total Cost</th>
-                  <th>Members</th>
-                  <th>Per Member</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {SHARED_EXPENSES.map((e, i) => (
-                  <tr key={i}>
-                    <td style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{e.item}</td>
-                    <td>₹{e.total.toLocaleString()}</td>
-                    <td>{e.members}</td>
-                    <td style={{ fontWeight: 600, color: '#22c55e' }}>₹{e.perMember.toLocaleString()}</td>
-                    <td>{new Date(e.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="fpo-expense-summary">
-              <div className="fpo-expense-total">
-                <span>Total Shared</span>
-                <strong>₹{SHARED_EXPENSES.reduce((s, e) => s + e.total, 0).toLocaleString()}</strong>
-              </div>
-              <div className="fpo-expense-total">
-                <span>Avg Per Member</span>
-                <strong>₹{Math.round(SHARED_EXPENSES.reduce((s, e) => s + e.perMember, 0) / SHARED_EXPENSES.length).toLocaleString()}</strong>
-              </div>
+              ))}
+              {d.status === 'negotiating' && <button style={{ width:'100%', marginTop:12, padding:10, borderRadius:8, border:'none', background:'linear-gradient(135deg,#22c55e,#16a34a)', color:'#fff', fontWeight:700, cursor:'pointer' }}>🤝 Join Deal</button>}
             </div>
-          </div>
+          ))}
         </div>
       )}
 
-      {/* Bulk SMS Tab */}
+      {/* SMS TAB */}
       {tab === 'sms' && (
-        <div className="fpo-sms-section">
-          <div className="card" style={{ padding: 24 }}>
-            <h4 style={{ marginBottom: 16 }}>📱 Bulk SMS to Members</h4>
-            <div className="fpo-sms-form">
-              <div className="onb-field">
-                <label>Recipients</label>
-                <select value={smsRecipients} onChange={e => setSmsRecipients(e.target.value)} style={{ width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '0.88rem' }}>
-                  <option value="all">All Members ({FPO_INFO.totalMembers})</option>
-                  <option value="active">Active Members ({FPO_INFO.activeMembers})</option>
-                  <option value="paddy">Paddy Farmers</option>
-                  <option value="cotton">Cotton Farmers</option>
-                </select>
+        <div className="card" style={{ padding:24 }}>
+          <div style={{ fontWeight:700, fontSize:'1rem', marginBottom:14 }}>📱 Bulk SMS to Members</div>
+          <select style={{ ...INP, marginBottom:10 }}>
+            <option>All Members ({MEMBERS.length})</option>
+            <option>District Heads Only</option>
+            <option>Mandal Heads Only</option>
+            <option>Village Heads Only</option>
+          </select>
+          <textarea value={smsMessage} onChange={e => setSmsMessage(e.target.value)} rows={4} placeholder="Type your message... (Max 160 characters)" maxLength={160} style={{ ...INP, resize:'vertical', marginBottom:6 }} />
+          <div style={{ fontSize:'0.72rem', color:'var(--text-muted)', textAlign:'right', marginBottom:12 }}>{smsMessage.length}/160</div>
+          <button onClick={handleBulkSMS} disabled={!smsMessage||smsSending} style={{ width:'100%', padding:12, borderRadius:8, border:'none', background:'linear-gradient(135deg,#22c55e,#16a34a)', color:'#fff', fontWeight:700, cursor:'pointer', opacity:smsMessage?1:0.5 }}>
+            {smsSending ? '⏳ Sending...' : smsSent ? '✅ Sent!' : '📤 Send SMS'}
+          </button>
+        </div>
+      )}
+
+      {/* Member Detail Modal */}
+      {selectedMember && (
+        <div style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,0.65)', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)' }} onClick={() => setSelectedMember(null)}>
+          <div className="card" style={{ width:420, maxWidth:'92vw', padding:0, overflow:'hidden' }} onClick={e => e.stopPropagation()}>
+            {(() => { const m = selectedMember, rc = ROLE_COLORS[m.role]; return (<>
+              <div style={{ background:`linear-gradient(135deg,${rc.bg},rgba(0,0,0,0.2))`, padding:'24px 20px', textAlign:'center', borderBottom:`2px solid ${rc.color}` }}>
+                <div style={{ width:56, height:56, borderRadius:'50%', background:rc.bg, border:`3px solid ${rc.color}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.8rem', margin:'0 auto 8px' }}>{rc.icon}</div>
+                <div style={{ fontWeight:800, fontSize:'1.1rem' }}>{m.name}</div>
+                <span style={{ fontSize:'0.72rem', padding:'3px 12px', borderRadius:10, background:rc.bg, color:rc.color, fontWeight:700 }}>{m.role}</span>
               </div>
-              <div className="onb-field" style={{ marginTop: 12 }}>
-                <label>Message</label>
-                <textarea
-                  value={smsMessage}
-                  onChange={e => setSmsMessage(e.target.value)}
-                  rows={4}
-                  placeholder="Type your message here... (Max 160 characters)"
-                  maxLength={160}
-                  style={{ width: '100%', padding: '12px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', fontSize: '0.88rem', resize: 'vertical', boxSizing: 'border-box' }}
-                />
-                <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4, textAlign: 'right' }}>
-                  {smsMessage.length}/160 characters
+              <div style={{ padding:'16px 20px' }}>
+                {[['📍 Village',m.village],['🏘️ Mandal',m.mandal],['🗺️ District',m.district],['🌾 Crops',m.crops.join(', ')],['📐 Farm Area',`${m.acres} acres`],['💰 Contribution',`₹${m.contribution.toLocaleString()}`],['📞 Phone',m.phone],['Status',m.active?'✅ Active':'⚠️ Inactive']].map(([l,v]) => (
+                  <div key={l} style={{ display:'flex', justifyContent:'space-between', padding:'7px 0', borderBottom:'1px solid var(--border)', fontSize:'0.82rem' }}>
+                    <span style={{ color:'var(--text-muted)' }}>{l}</span><span style={{ fontWeight:600 }}>{v}</span>
+                  </div>
+                ))}
+                <div style={{ display:'flex', gap:8, marginTop:16 }}>
+                  <a href={`tel:${m.phone}`} style={{ flex:1, padding:10, borderRadius:8, background:'linear-gradient(135deg,#22c55e,#16a34a)', color:'#fff', textDecoration:'none', textAlign:'center', fontWeight:700, fontSize:'0.82rem' }}>📞 Call</a>
+                  <a href={`https://wa.me/91${m.phone}`} target="_blank" rel="noreferrer" style={{ flex:1, padding:10, borderRadius:8, background:'#25D366', color:'#fff', textDecoration:'none', textAlign:'center', fontWeight:700, fontSize:'0.82rem' }}>💬 WhatsApp</a>
+                  <button onClick={() => openMemberProfile(m)} style={{ flex:1, padding:10, borderRadius:8, border:'1px solid var(--border)', background:'transparent', color:'var(--text-primary)', cursor:'pointer', fontWeight:600, fontSize:'0.82rem' }}>👤 Profile</button>
                 </div>
               </div>
-              <div className="fpo-sms-templates" style={{ marginTop: 12 }}>
-                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 8, display: 'block' }}>Quick Templates:</label>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {[
-                    'Meeting on [DATE] at [TIME]. All members please attend.',
-                    'Cotton prices up! Best price at Guntur APMC. Sell now.',
-                    'Govt scheme deadline approaching. Apply before [DATE].',
-                    'Heavy rain alert for next 3 days. Protect your crops.',
-                  ].map((t, i) => (
-                    <button key={i} className="filter-btn" onClick={() => setSmsMessage(t)} style={{ fontSize: '0.72rem' }}>{t.slice(0, 40)}...</button>
-                  ))}
-                </div>
-              </div>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: 16 }} onClick={handleBulkSMS} disabled={!smsMessage || smsSending}>
-                {smsSending ? '⏳ Sending...' : smsSent ? '✅ Sent!' : `📤 Send to ${smsRecipients === 'all' ? FPO_INFO.totalMembers : FPO_INFO.activeMembers} Members`}
-              </button>
-            </div>
+            </>); })()}
           </div>
         </div>
       )}

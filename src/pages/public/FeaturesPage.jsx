@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import DownloadAppPrompt from '../../components/DownloadAppPrompt';
 
 const FEATURE_CATEGORIES = [
   {
@@ -186,6 +187,9 @@ export default function FeaturesPage() {
         }}>
           🌾 Get Started Free
         </Link>
+        <div style={{ marginTop: 28 }}>
+          <DownloadAppPrompt variant="hero" />
+        </div>
       </section>
     </div>
   );

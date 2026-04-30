@@ -1,4 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+const AP_DISTRICTS = ['All Locations','Guntur','Krishna','Anantapur','Chittoor','Kurnool','Prakasam','Nellore','East Godavari','West Godavari','Visakhapatnam','Vizianagaram','Srikakulam','Kadapa'];
+const DISTRICT_COORDS = [
+  { n:'Guntur', lat:16.3067, lon:80.4365 }, { n:'Krishna', lat:16.5062, lon:80.6480 },
+  { n:'Anantapur', lat:14.6819, lon:77.6006 }, { n:'Chittoor', lat:13.2172, lon:79.1003 },
+  { n:'Kurnool', lat:15.8281, lon:78.0373 }, { n:'Prakasam', lat:15.5057, lon:80.0499 },
+  { n:'Nellore', lat:14.4426, lon:79.9865 }, { n:'East Godavari', lat:17.0005, lon:81.8040 },
+  { n:'West Godavari', lat:16.9174, lon:81.3399 }, { n:'Visakhapatnam', lat:17.6868, lon:83.2185 },
+  { n:'Vizianagaram', lat:18.1067, lon:83.3956 }, { n:'Srikakulam', lat:18.2949, lon:83.8935 },
+  { n:'Kadapa', lat:14.4674, lon:78.8241 },
+];
 
 const ASSOC = [
   { id:1, name:'Guntur Kisan Mazdoor Sangha', leader:'Ramu Naik', mobile:'98765 00001', district:'Guntur', workers:45, rating:4.5, specialties:['Paddy Harvesting','Weeding','Transplanting'], verified:true, rate:500, exp:8, completed:234, photo:'👨‍🌾' },
@@ -6,6 +17,13 @@ const ASSOC = [
   { id:3, name:'Tenali Agri Workers Union', leader:'Sridhar B.', mobile:'98765 00003', district:'Guntur', workers:30, rating:4.2, specialties:['Paddy Transplanting','Irrigation','Planting'], verified:true, rate:450, exp:6, completed:178, photo:'🧑‍🌾' },
   { id:4, name:'Ongole Farm Workers Assoc.', leader:'Prasad K.', mobile:'98765 00004', district:'Prakasam', workers:50, rating:4.4, specialties:['Groundnut Digging','Weeding','Harvesting'], verified:false, rate:420, exp:9, completed:189, photo:'👨‍🌾' },
   { id:5, name:'Kurnool Agricultural Labourers', leader:'Ravi T.', mobile:'98765 00005', district:'Kurnool', workers:40, rating:4.6, specialties:['Sugarcane Cutting','Cotton Picking','Weed Control'], verified:true, rate:520, exp:11, completed:256, photo:'👩‍🌾' },
+  { id:6, name:'Anantapur Dryland Workers', leader:'Nagappa M.', mobile:'98765 00006', district:'Anantapur', workers:35, rating:4.3, specialties:['Groundnut Harvesting','Land Preparation','Seed Sowing'], verified:true, rate:400, exp:7, completed:145, photo:'👨‍🌾' },
+  { id:7, name:'Vizianagaram Farm Labour Union', leader:'Srinivasa Rao', mobile:'98765 00007', district:'Vizianagaram', workers:42, rating:4.4, specialties:['Paddy Harvesting','Transplanting','Spraying'], verified:true, rate:460, exp:10, completed:198, photo:'👨‍🌾' },
+  { id:8, name:'Visakha Agri Workers Co-op', leader:'Durga Prasad', mobile:'98765 00008', district:'Visakhapatnam', workers:55, rating:4.5, specialties:['Cashew Picking','Coffee Harvesting','Land Clearing'], verified:true, rate:500, exp:14, completed:287, photo:'👩‍🌾' },
+  { id:9, name:'Chittoor Horticulture Labourers', leader:'Subramaniam K.', mobile:'98765 00009', district:'Chittoor', workers:38, rating:4.3, specialties:['Mango Picking','Spraying','Pruning'], verified:true, rate:480, exp:8, completed:165, photo:'🧑‍🌾' },
+  { id:10, name:'East Godavari Coconut Workers', leader:'Nageswara Rao', mobile:'98765 00010', district:'East Godavari', workers:48, rating:4.6, specialties:['Coconut Harvesting','Palm Climbing','Copra Making'], verified:true, rate:550, exp:15, completed:340, photo:'👨‍🌾' },
+  { id:11, name:'Krishna Delta Labour Group', leader:'Satyam V.', mobile:'98765 00011', district:'Krishna', workers:65, rating:4.8, specialties:['Paddy Transplanting','Harvesting','Canal Clearing'], verified:true, rate:470, exp:13, completed:410, photo:'👩‍🌾' },
+  { id:12, name:'Kadapa Agri Services', leader:'Obul Reddy', mobile:'98765 00012', district:'Kadapa', workers:32, rating:4.1, specialties:['Groundnut Harvesting','Sunflower Picking','Ploughing'], verified:false, rate:400, exp:6, completed:120, photo:'👨‍🌾' },
 ];
 const TASKS = ['Harvesting','Transplanting','Weeding','Spraying','Groundnut Digging','Cotton Picking','Planting','Irrigation','Land Preparation','Sugarcane Cutting'];
 const INP = { width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.88rem', boxSizing:'border-box' };
@@ -16,6 +34,9 @@ const BLANK = { task:'Harvesting', assoc:1, date:'', workers:'5', duration:'Full
 export default function LabourPage() {
   const [tab, setTab] = useState('associations');
   const [form, setForm] = useState(BLANK);
+  const [locFilter, setLocFilter] = useState('All Locations');
+  const [gpsDistrict, setGpsDistrict] = useState('');
+  const [searchQ, setSearchQ] = useState('');
   const [bookings, setBookings] = useState([
     { id:'LB-A3F2', task:'Paddy Harvesting', assocName:'Guntur Kisan Mazdoor Sangha', workers:12, wage:500, date:'2026-04-20', status:'completed', total:6000, location:'Pedakakani, Guntur' },
     { id:'LB-B8K1', task:'Cotton Picking', assocName:'Narasaraopet Labour Cooperative', workers:8, wage:480, date:'2026-04-28', status:'active', total:3840, location:'Chilakaluripet, Guntur' },
@@ -23,6 +44,22 @@ export default function LabourPage() {
   const [confirmed, setConfirmed] = useState(null);
   const upd = (k,v) => setForm(p=>({...p,[k]:v}));
   const totalWage = (parseInt(form.workers)||0)*(parseInt(form.wage)||0)*(form.duration==='Full day'?1:0.5);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      let best = DISTRICT_COORDS[0], minD = Infinity;
+      DISTRICT_COORDS.forEach(d => { const dd = (d.lat-lat)**2 + (d.lon-lon)**2; if (dd < minD) { minD = dd; best = d; } });
+      setGpsDistrict(best.n); setLocFilter(best.n);
+    }, () => {}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+  }, []);
+
+  const filteredAssoc = ASSOC.filter(a => {
+    if (locFilter !== 'All Locations' && a.district !== locFilter) return false;
+    if (searchQ && !a.name.toLowerCase().includes(searchQ.toLowerCase()) && !a.leader.toLowerCase().includes(searchQ.toLowerCase()) && !a.specialties.some(s => s.toLowerCase().includes(searchQ.toLowerCase()))) return false;
+    return true;
+  });
 
   const handleRequest = () => {
     const ref = 'LB-'+Math.random().toString(36).substring(2,6).toUpperCase();
@@ -81,8 +118,19 @@ export default function LabourPage() {
 
       {/* Associations */}
       {tab==='associations' && (
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:18 }}>
-          {ASSOC.map(a=>(
+        <>
+          <div style={{ display:'flex', gap:8, marginBottom:14, flexWrap:'wrap', alignItems:'center' }}>
+            <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="🔍 Search labour associations..."
+              style={{ flex:'1 1 180px', minWidth:160, padding:'10px 14px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.85rem', boxSizing:'border-box' }} />
+            <select value={locFilter} onChange={e => setLocFilter(e.target.value)}
+              style={{ padding:'8px 14px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.82rem' }}>
+              {AP_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            {gpsDistrict && <span style={{ fontSize:'0.72rem', color:'#22c55e', fontWeight:600 }}>📍 GPS: {gpsDistrict}</span>}
+            <span style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>({filteredAssoc.length} associations)</span>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))', gap:18 }}>
+          {filteredAssoc.map(a=>(
             <div key={a.id} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:16, padding:22, transition:'all 0.25s' }}
               onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 12px 32px rgba(0,0,0,0.15)'}}
               onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
@@ -123,6 +171,7 @@ export default function LabourPage() {
             </div>
           ))}
         </div>
+        </>
       )}
 
       {/* Book Form */}

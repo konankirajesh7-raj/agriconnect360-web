@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import DownloadAppPrompt from '../../components/DownloadAppPrompt';
 
 const FEATURES = [
   { icon: '🌤️', title: 'Live Weather AI', desc: 'Real-time forecasts with farming-specific advice in Telugu, Hindi & English. Hourly & 7-day forecasts for all AP districts.', color: '#3b82f6' },
@@ -86,20 +87,21 @@ export default function HomePage() {
   }, [activeTestimonial]);
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0d1117', color: '#e2e8f0' }}>
+    <div style={{ minHeight: '100vh', background: '#0d1117', color: '#e2e8f0', overflowX: 'hidden', maxWidth: '100vw', width: '100%' }}>
 
       {/* ── HERO SECTION ── */}
       <section style={{
-        padding: '100px 40px 80px',
+        padding: 'clamp(60px, 12vw, 100px) clamp(16px, 4vw, 40px) clamp(50px, 10vw, 80px)',
         textAlign: 'center',
         maxWidth: 1100,
         margin: '0 auto',
         position: 'relative',
+        overflow: 'hidden',
       }}>
         {/* Background glow */}
         <div style={{
           position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)',
-          width: 600, height: 300,
+          width: 'min(600px, 90vw)', height: 300,
           background: 'radial-gradient(ellipse, rgba(34,197,94,0.12) 0%, transparent 70%)',
           pointerEvents: 'none',
         }} />
@@ -175,12 +177,18 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+
+        {/* Download App CTA */}
+        <div style={{ marginTop: 32 }}>
+          <DownloadAppPrompt variant="hero" />
+        </div>
       </section>
 
       {/* ── STATS BAND ── */}
       <section style={{
         background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.06)',
-        borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '48px 40px',
+        borderBottom: '1px solid rgba(255,255,255,0.06)', padding: 'clamp(28px, 6vw, 48px) clamp(16px, 4vw, 40px)',
+        overflow: 'hidden',
       }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 32, textAlign: 'center' }}>
           {STATS.map(s => (
@@ -194,7 +202,7 @@ export default function HomePage() {
       </section>
 
       {/* ── SEEDS TO MARKET JOURNEY ── */}
-      <section style={{ padding: '80px 40px', maxWidth: 1100, margin: '0 auto' }}>
+      <section style={{ padding: 'clamp(40px, 10vw, 80px) clamp(16px, 4vw, 40px)', maxWidth: 1100, margin: '0 auto', overflow: 'hidden' }}>
         <div style={{ textAlign: 'center', marginBottom: 60 }}>
           <div style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Complete Farming Journey</div>
           <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(1.8rem, 3vw, 2.8rem)', fontWeight: 800, marginBottom: 12 }}>From Seed to Market — All in One Platform</h2>
@@ -221,7 +229,7 @@ export default function HomePage() {
       </section>
 
       {/* ── FEATURES GRID ── */}
-      <section id="features" style={{ padding: '80px 40px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <section id="features" style={{ padding: 'clamp(40px, 10vw, 80px) clamp(16px, 4vw, 40px)', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: 60 }}>
             <div style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>24 Powerful Modules</div>
@@ -260,7 +268,7 @@ export default function HomePage() {
       </section>
 
       {/* ── TESTIMONIALS ── */}
-      <section style={{ padding: '80px 40px', maxWidth: 1100, margin: '0 auto' }}>
+      <section style={{ padding: 'clamp(40px, 10vw, 80px) clamp(16px, 4vw, 40px)', maxWidth: 1100, margin: '0 auto', overflow: 'hidden' }}>
         <div style={{ textAlign: 'center', marginBottom: 60 }}>
           <div style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Farmer Success Stories</div>
           <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(1.8rem, 3vw, 2.6rem)', fontWeight: 800 }}>Trusted by AP Farmers Across 13 Districts</h2>
@@ -300,7 +308,7 @@ export default function HomePage() {
       </section>
 
       {/* ── AP DISTRICTS COVERAGE ── */}
-      <section style={{ padding: '60px 40px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <section style={{ padding: 'clamp(36px, 8vw, 60px) clamp(16px, 4vw, 40px)', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid rgba(255,255,255,0.06)', overflow: 'hidden' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(1.5rem, 3vw, 2rem)', fontWeight: 800, marginBottom: 8 }}>Covering All 13 AP Districts</h2>
           <p style={{ color: '#64748b', marginBottom: 32, fontSize: '0.88rem' }}>Live mandi prices, weather data, and scheme info for every district in Andhra Pradesh</p>
@@ -316,7 +324,7 @@ export default function HomePage() {
       </section>
 
       {/* ── CTA ── */}
-      <section style={{ padding: '100px 40px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+      <section style={{ padding: 'clamp(60px, 12vw, 100px) clamp(16px, 4vw, 40px)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{
           position: 'absolute', inset: 0,
           background: 'radial-gradient(ellipse at center, rgba(34,197,94,0.06) 0%, transparent 70%)',
@@ -350,6 +358,9 @@ export default function HomePage() {
           <p style={{ fontSize: '0.78rem', color: '#475569', marginTop: 20 }}>
             No credit card • No hidden fees • Full platform access free
           </p>
+          <div style={{ marginTop: 28 }}>
+            <DownloadAppPrompt variant="hero" />
+          </div>
         </div>
       </section>
     </div>

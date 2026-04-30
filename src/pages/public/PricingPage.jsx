@@ -1,66 +1,88 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import DownloadAppPrompt from '../../components/DownloadAppPrompt';
 
 const PLANS = [
   {
-    name: 'Free Farmer',
+    name: '👨‍🌾 Farmer',
     price: '₹0',
-    period: '/forever',
-    desc: 'Everything a smallholder needs — completely free forever',
-    highlight: false,
+    afterTrial: '₹100/year',
+    period: ' for 6 months',
+    desc: 'First 6 months completely FREE — then just ₹100/year (less than ₹9/month)',
+    highlight: true,
+    badge: '🌾 FOR FARMERS',
     features: [
-      'Dashboard & 18 core modules',
+      'Dashboard & all 18+ core modules',
       'Live weather in Telugu/Hindi/English',
       'Market prices — all AP mandis',
-      'AI disease detection (10/month)',
+      'AI crop disease detection — 10/month',
       'Crop calendar & growth tracking',
       'Government scheme eligibility checker',
-      'Knowledge library — 22+ articles',
-      'Community Q&A forum',
+      'Community feed & farmer network',
       'Labour & equipment marketplace',
+      'Soil & water testing reports',
     ],
-    cta: 'Start Free',
+    cta: 'Start Free — 6 Months Free',
     color: '#22c55e',
   },
   {
-    name: 'Pro Farmer',
-    price: '₹99',
-    period: '/month',
-    desc: 'For serious farmers who want every advantage',
-    highlight: true,
-    features: [
-      'Everything in Free Farmer',
-      'AI disease detection — unlimited',
-      'Drone NDVI reports (2/month)',
-      'Expert video call — 30 min/month',
-      'LSTM price prediction — advanced',
-      'Satellite NDVI monitoring',
-      'Insurance claim assistance',
-      'Priority support — 4hr response',
-      'Advanced profit analytics',
-      'SMS price alerts — 50/month',
-    ],
-    cta: 'Start Pro — 30 Day Free Trial',
-    color: '#22c55e',
-  },
-  {
-    name: 'FPO / Enterprise',
-    price: 'Custom',
-    period: '',
-    desc: 'For farmer producer organizations and agribusinesses',
+    name: '🤝 Broker / Trader',
+    price: '₹499',
+    afterTrial: null,
+    period: '/year',
+    desc: 'Market intelligence for traders — just ₹42/month',
     highlight: false,
+    badge: null,
     features: [
-      'Everything in Pro Farmer',
+      'Real-time mandi prices (all India)',
+      'Price trend analytics & predictions',
+      'Farmer network directory',
+      'Transport & logistics booking',
+      'Crop quality grading tools',
+      'SMS/WhatsApp price alerts',
+      'Bulk purchase management',
+    ],
+    cta: 'Start Broker Plan',
+    color: '#3b82f6',
+  },
+  {
+    name: '🏪 Supplier / Dealer',
+    price: '₹999',
+    afterTrial: null,
+    period: '/year',
+    desc: 'Grow your agri business — just ₹83/month',
+    highlight: false,
+    badge: null,
+    features: [
+      'Product catalog & inventory',
+      'Order management dashboard',
+      'Farmer demand insights',
+      'Delivery tracking & logistics',
+      'Credit & payment management',
+      'Seasonal demand forecasting',
+      'Priority listing in marketplace',
+    ],
+    cta: 'Start Supplier Plan',
+    color: '#f59e0b',
+  },
+  {
+    name: '🏢 FPO / Enterprise',
+    price: '₹1,999',
+    afterTrial: null,
+    period: '/year',
+    desc: 'For farmer organizations — just ₹167/month for unlimited members',
+    highlight: false,
+    badge: null,
+    features: [
+      'Everything in Farmer plan',
       'Bulk farmer onboarding (1000+)',
       'White-label dashboard option',
-      'REST API access',
       'Custom district-level analytics',
+      'API access & integrations',
       'Dedicated account manager',
-      'Training workshops (on-site)',
-      'Integration with state APMC systems',
-      'SLA guarantee — 99.5% uptime',
+      'On-site training workshops',
     ],
-    cta: 'Contact Sales',
+    cta: 'Contact Us',
     color: '#8b5cf6',
   },
 ];
@@ -85,76 +107,59 @@ export default function PricingPage() {
 
       {/* Hero */}
       <section style={{ padding: '80px 40px 60px', textAlign: 'center', maxWidth: 700, margin: '0 auto' }}>
-        <div style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Simple Pricing</div>
+        <div style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Simple Pricing for Everyone</div>
         <h1 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2rem, 4vw, 3.2rem)', fontWeight: 900, marginBottom: 16 }}>
-          Free for Farmers.<br />
-          <span style={{ color: '#22c55e' }}>Always.</span>
+          Farmers Start <span style={{ color: '#22c55e' }}>Free</span>.<br />
+          Everyone Pays <span style={{ color: '#f59e0b' }}>Almost Nothing</span>.
         </h1>
         <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: 1.7 }}>
-          All core features are free forever for individual AP farmers. Pro features available for power users. Enterprise plans for FPOs.
+          6 months free for farmers, then ₹100/year. Role-based plans for brokers, suppliers & FPOs — all under ₹170/month.
         </p>
-
-        {/* Billing toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 32 }}>
-          <span style={{ fontSize: '0.85rem', color: billing === 'monthly' ? '#e2e8f0' : '#64748b' }}>Monthly</span>
-          <div style={{
-            width: 48, height: 26, borderRadius: 13, background: 'rgba(34,197,94,0.2)',
-            border: '1px solid rgba(34,197,94,0.3)', cursor: 'pointer', position: 'relative',
-            transition: 'all 0.2s',
-          }} onClick={() => setBilling(b => b === 'monthly' ? 'yearly' : 'monthly')}>
-            <div style={{
-              position: 'absolute', top: 3, left: billing === 'yearly' ? 22 : 3,
-              width: 18, height: 18, borderRadius: '50%', background: '#22c55e',
-              transition: 'left 0.2s',
-            }} />
-          </div>
-          <span style={{ fontSize: '0.85rem', color: billing === 'yearly' ? '#e2e8f0' : '#64748b' }}>
-            Yearly
-            <span style={{ fontSize: '0.72rem', color: '#22c55e', marginLeft: 6, fontWeight: 700 }}>Save 20%</span>
-          </span>
-        </div>
       </section>
 
       {/* Plans */}
-      <section style={{ padding: '20px 40px 80px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+      <section style={{ padding: '20px 40px 80px', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
           {PLANS.map((p, i) => (
             <div key={i} style={{
               background: p.highlight ? 'linear-gradient(135deg, rgba(34,197,94,0.06), rgba(34,197,94,0.02))' : 'rgba(255,255,255,0.02)',
               border: `1px solid ${p.highlight ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.06)'}`,
-              borderRadius: 20, padding: '36px 28px',
+              borderRadius: 20, padding: '32px 24px',
               position: 'relative', transition: 'all 0.3s',
             }}
             onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; }}
             onMouseLeave={e => { e.currentTarget.style.transform = ''; }}>
-              {p.highlight && (
+              {p.badge && (
                 <div style={{
                   position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)',
                   background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: '#000',
-                  padding: '4px 16px', borderRadius: 20, fontSize: '0.7rem', fontWeight: 700,
-                }}>⭐ MOST POPULAR</div>
+                  padding: '4px 16px', borderRadius: 20, fontSize: '0.7rem', fontWeight: 700, whiteSpace: 'nowrap',
+                }}>{p.badge}</div>
               )}
-              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#64748b', marginBottom: 6 }}>{p.name}</div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: p.color, marginBottom: 8 }}>{p.name}</div>
               <div style={{ fontFamily: 'Outfit, sans-serif', marginBottom: 4 }}>
-                <span style={{ fontSize: '3rem', fontWeight: 900, color: '#e2e8f0' }}>{p.price === '₹0' ? '₹0' : billing === 'yearly' && p.price !== 'Custom' ? `₹${Math.round(parseInt(p.price.slice(1)) * 0.8)}` : p.price}</span>
+                <span style={{ fontSize: '2.8rem', fontWeight: 900, color: '#e2e8f0' }}>{p.price}</span>
                 <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{p.period}</span>
               </div>
-              <div style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 28, lineHeight: 1.5 }}>{p.desc}</div>
-              <Link to={p.name === 'FPO / Enterprise' ? '/contact' : '/login'} style={{
-                display: 'block', textAlign: 'center', padding: '13px',
-                borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: '0.9rem',
+              {p.afterTrial && (
+                <div style={{ fontSize: '0.78rem', color: '#f59e0b', fontWeight: 600, marginBottom: 6 }}>Then {p.afterTrial} after trial</div>
+              )}
+              <div style={{ fontSize: '0.82rem', color: '#64748b', marginBottom: 24, lineHeight: 1.5 }}>{p.desc}</div>
+              <Link to={p.cta === 'Contact Us' ? '/contact' : '/login'} style={{
+                display: 'block', textAlign: 'center', padding: '12px',
+                borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: '0.85rem',
                 background: p.highlight ? 'linear-gradient(135deg, #22c55e, #16a34a)' : 'transparent',
                 color: p.highlight ? '#000' : '#94a3b8',
                 border: p.highlight ? 'none' : '1px solid rgba(255,255,255,0.12)',
-                marginBottom: 28, transition: 'all 0.2s',
+                marginBottom: 24, transition: 'all 0.2s',
               }}>
                 {p.cta}
               </Link>
               <div>
                 {p.features.map((f, fi) => (
-                  <div key={fi} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '7px 0', borderBottom: fi < p.features.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                    <span style={{ color: '#22c55e', flexShrink: 0, marginTop: 1 }}>✓</span>
-                    <span style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.4 }}>{f}</span>
+                  <div key={fi} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '6px 0', borderBottom: fi < p.features.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                    <span style={{ color: p.color, flexShrink: 0, marginTop: 1 }}>✓</span>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.4 }}>{f}</span>
                   </div>
                 ))}
               </div>
@@ -204,6 +209,9 @@ export default function PricingPage() {
         }}>
           🌾 Get Started Free
         </Link>
+        <div style={{ marginTop: 28 }}>
+          <DownloadAppPrompt variant="hero" />
+        </div>
       </section>
     </div>
   );

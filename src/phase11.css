@@ -3002,32 +3002,47 @@
 }
 
 .fin-summary-card {
-  background: var(--bg-card, #1a1a2e);
+  background: rgba(255,255,255,0.04);
   border-radius: 14px;
   padding: 20px;
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
   transition: transform 0.2s, box-shadow 0.2s;
+  backdrop-filter: blur(8px);
+  position: relative;
+  overflow: hidden;
+}
+.fin-summary-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #10b981, #3b82f6);
+  opacity: 0.5;
 }
 .fin-summary-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+  border-color: rgba(16,185,129,0.3);
 }
 .fin-summary-card .fin-card-label {
-  font-size: 0.75rem;
-  color: var(--text-secondary, #94a3b8);
+  font-size: 0.72rem;
+  color: var(--text-muted, #64748b);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  letter-spacing: 0.6px;
+  margin-bottom: 10px;
+  font-weight: 600;
 }
 .fin-summary-card .fin-card-value {
-  font-size: 1.6rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 800;
   color: var(--text-primary, #e2e8f0);
+  font-family: var(--font-display, 'Outfit', sans-serif);
+  line-height: 1.1;
 }
 .fin-summary-card .fin-card-sub {
-  font-size: 0.78rem;
-  color: var(--text-secondary, #94a3b8);
-  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--text-muted, #64748b);
+  margin-top: 6px;
 }
 
 /* ── Gauge / Score Circle ──────────────────────────────────────── */

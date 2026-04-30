@@ -213,7 +213,7 @@ Desktop: 1920×1080 | Laptop: 1366×768 | Tablet: iPad (768×1024) | Mobile: 375
 ### 2.7 CONTACT PAGE (/contact-us)
 
 - □ Navigate to /contact-us
-  - ✓ Contact form visible with name, email, message fields
+  - ✓ Contact form visible with name, email, message fields 
   - □ [TAP] Submit without filling → ✓ Validation errors shown
   - □ [FILL] complete form → [TAP] Submit → ✓ Success message appears
 
@@ -311,7 +311,7 @@ Desktop: 1920×1080 | Laptop: 1366×768 | Tablet: iPad (768×1024) | Mobile: 375
 
 ## SECTION 4: FARMER DASHBOARD — COMPLETE MODULE TESTING
 
-> **PRE-CONDITION:** Login via Demo Login first
+> **PRE-CONDITION:** Login via farmer role login first
 
 ### 4.1 DASHBOARD OVERVIEW
 

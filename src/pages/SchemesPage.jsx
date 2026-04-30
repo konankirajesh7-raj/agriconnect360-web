@@ -8,6 +8,20 @@ const MOCK_SCHEMES = [
   { _id: '4', name: 'YSR Rythu Bharosa', category: 'subsidy', description: 'AP state scheme: ₹13,500/year investment support to every farmer family. Paid in Kharif, Rabi, and summer seasons.', amount: 13500, ministry: 'AP Agriculture Dept', state: 'Andhra Pradesh', is_active: true, documents_required: ['Aadhaar', 'Land Pattadar Passbook', 'Bank Account'], deadline: null, application_url: 'ysrrythubharosa.ap.gov.in', beneficiaries: '51 L', eligibility: ['Andhra Pradesh resident', 'Own cultivable land', 'Not a govt employee'] },
   { _id: '5', name: 'Soil Health Card', category: 'other', description: 'Free soil testing with digital card showing NPK, pH, organic carbon + crop-wise fertilizer recommendations.', amount: null, ministry: 'Agriculture Ministry', state: 'Central', is_active: true, documents_required: ['Land records'], deadline: null, application_url: 'soilhealth.dac.gov.in', beneficiaries: '22 Cr', eligibility: ['Any farmer with cultivable land'] },
   { _id: '6', name: 'e-NAM', category: 'market', description: 'Online trading platform connecting 1000+ mandis. Sell at best national price via transparent auction.', amount: null, ministry: 'Agriculture Ministry', state: 'Central', is_active: true, documents_required: ['Aadhaar', 'Bank account'], deadline: null, application_url: 'enam.gov.in', beneficiaries: '1.7 Cr', eligibility: ['Any farmer or trader', 'Valid Aadhaar & bank account'] },
+  { _id: '7', name: 'PM Krishi Sinchai Yojana', category: 'subsidy', description: 'Subsidy up to 55% for micro-irrigation (drip/sprinkler). Per Drop More Crop component.', amount: null, ministry: 'Agriculture Ministry', state: 'Central', is_active: true, documents_required: ['Aadhaar', 'Land records', 'Quotation from vendor'], deadline: null, application_url: 'pmksy.gov.in', beneficiaries: '3.2 Cr', eligibility: ['All farmers', 'Valid land ownership', 'No prior micro-irrigation subsidy'] },
+  { _id: '8', name: 'Paramparagat Krishi Vikas', category: 'subsidy', description: 'Organic farming support: ₹50,000/ha over 3 years for cluster-based organic conversion.', amount: 50000, ministry: 'Agriculture Ministry', state: 'Central', is_active: true, documents_required: ['Aadhaar', 'Land records', 'Organic certification'], deadline: null, application_url: 'pgsindia-ncof.gov.in', beneficiaries: '30 L', eligibility: ['Farmer groups (min 20)', 'Contiguous land area', 'Commitment to organic practices'] },
+  { _id: '9', name: 'AP Annadata Sukhibhava', category: 'insurance', description: 'Free crop insurance for all AP farmers. Govt pays full premium. Covers drought, flood, pest damage.', amount: null, ministry: 'AP Agriculture Dept', state: 'Andhra Pradesh', is_active: true, documents_required: ['Aadhaar', 'Land records', 'e-Crop booking'], deadline: '2025-06-30', application_url: 'apagrisnet.gov.in', beneficiaries: '48 L', eligibility: ['AP resident farmer', 'Registered in e-Crop', 'Active cultivation'] },
+  { _id: '10', name: 'National Horticulture Mission', category: 'subsidy', description: 'Subsidy for fruit orchards, vegetable cultivation, flowers, spices. Up to 50% cost coverage.', amount: null, ministry: 'Agriculture Ministry', state: 'Central', is_active: true, documents_required: ['Aadhaar', 'Land records', 'Project proposal'], deadline: null, application_url: 'nhm.nic.in', beneficiaries: '2.1 Cr', eligibility: ['Horticulture farmers', 'Valid land records', 'Project viability report'] },
+  { _id: '11', name: 'Agri-Clinics Scheme', category: 'loan', description: 'Bank loan subsidy (44%) for agri graduates to start agri-clinics or agri-business centres.', amount: 2000000, ministry: 'Agriculture Ministry', state: 'Central', is_active: true, documents_required: ['Degree certificate', 'Business plan', 'Aadhaar'], deadline: null, application_url: 'acabcmis.gov.in', beneficiaries: '65K', eligibility: ['Agriculture graduates', 'Completed ACABC training', 'Age 18-60 years'] },
+  { _id: '12', name: 'AP Rythu Raksha', category: 'insurance', description: 'Free life insurance (₹5L) for all AP farmers aged 18-59. Premium paid by state government.', amount: 500000, ministry: 'AP Agriculture Dept', state: 'Andhra Pradesh', is_active: true, documents_required: ['Aadhaar', 'Land records', 'Age proof'], deadline: null, application_url: 'apagrisnet.gov.in', beneficiaries: '52 L', eligibility: ['AP resident', 'Active farmer', 'Age 18-59 years'] },
+];
+
+const DBT_TRACKING = [
+  { id: 1, scheme: 'PM-KISAN', installment: '17th (Apr-Jul 2024)', amount: 2000, status: 'credited', date: '2024-06-15', account: '****4521', txnId: 'DBT2024061534521' },
+  { id: 2, scheme: 'PM-KISAN', installment: '16th (Dec-Mar 2024)', amount: 2000, status: 'credited', date: '2024-02-24', account: '****4521', txnId: 'DBT2024022434521' },
+  { id: 3, scheme: 'YSR Rythu Bharosa', installment: 'Kharif 2024', amount: 7500, status: 'credited', date: '2024-05-15', account: '****4521', txnId: 'YSRRB2024051574521' },
+  { id: 4, scheme: 'PM-KISAN', installment: '18th (Aug-Nov 2024)', amount: 2000, status: 'pending', date: null, account: '****4521', txnId: null },
+  { id: 5, scheme: 'YSR Rythu Bharosa', installment: 'Rabi 2024', amount: 4000, status: 'processing', date: null, account: '****4521', txnId: null },
 ];
 
 const CAT_LABELS = { subsidy: { label: 'Subsidy', color: '#22c55e', icon: '💵' }, insurance: { label: 'Insurance', color: '#3b82f6', icon: '🛡️' }, loan: { label: 'Loan', color: '#f59e0b', icon: '🏦' }, market: { label: 'Market', color: '#8b5cf6', icon: '🏪' }, other: { label: 'Other', color: '#6b7280', icon: '📋' } };
@@ -17,12 +31,24 @@ export default function SchemesPage() {
   const [catFilter, setCatFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('browse');
   const [selectedScheme, setSelectedScheme] = useState(null);
+  const [eligibilityResults, setEligibilityResults] = useState(null);
+  const [eligForm, setEligForm] = useState({ state: 'Andhra Pradesh', land: '2.5', category: 'Small (< 2 ha)', income: '200000', crop: 'Cotton', irrigation: 'Borewell' });
 
   const categories = [...new Set(schemes.map(s => s.category))];
   const filtered = catFilter === 'all' ? schemes : schemes.filter(s => s.category === catFilter);
 
+  const runEligibilityCheck = () => {
+    const results = schemes.map(s => {
+      const score = Math.floor(60 + Math.random() * 40);
+      return { ...s, score, eligible: score >= 70 };
+    }).sort((a, b) => b.score - a.score);
+    setEligibilityResults(results);
+  };
+
   const tabs = [
     { id: 'browse', icon: '📋', label: 'Browse Schemes' },
+    { id: 'pmkisan', icon: '🏛️', label: 'PM-KISAN Detail' },
+    { id: 'dbt', icon: '💳', label: 'DBT Tracking' },
     { id: 'eligibility', icon: '✅', label: 'Eligibility Checker' },
     { id: 'applied', icon: '📂', label: 'My Applications' },
   ];
@@ -106,6 +132,102 @@ export default function SchemesPage() {
         </>
       )}
 
+      {activeTab === 'pmkisan' && (() => {
+        const pk = schemes.find(s => s.name === 'PM-KISAN');
+        return (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20 }}>
+          <div className="card" style={{ padding: 24 }}>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#22c55e18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem' }}>🏛️</div>
+              <div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>PM-KISAN Samman Nidhi</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Ministry of Agriculture & Farmers Welfare</div>
+              </div>
+            </div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.8, marginBottom: 20 }}>
+              Under PM-KISAN, eligible farmer families receive income support of <strong>₹6,000 per year</strong> in three equal installments of ₹2,000 each directly into their bank accounts via DBT. The scheme covers all landholding farmer families across India.
+            </div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12 }}>📅 Installment Timeline</div>
+            {[{ period: 'Apr - Jul', inst: '1st', status: 'credited' }, { period: 'Aug - Nov', inst: '2nd', status: 'pending' }, { period: 'Dec - Mar', inst: '3rd', status: 'upcoming' }].map((i, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)', marginBottom: 8 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', fontWeight: 700, background: i.status === 'credited' ? '#22c55e22' : i.status === 'pending' ? '#f59e0b22' : 'var(--bg-card)', color: i.status === 'credited' ? '#22c55e' : i.status === 'pending' ? '#f59e0b' : 'var(--text-muted)' }}>{i.status === 'credited' ? '✓' : idx + 1}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 600 }}>{i.inst} Installment ({i.period})</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>₹2,000</div>
+                </div>
+                <span style={{ padding: '3px 10px', borderRadius: 12, fontSize: '0.7rem', fontWeight: 600, background: i.status === 'credited' ? '#22c55e22' : i.status === 'pending' ? '#f59e0b22' : 'var(--bg-card)', color: i.status === 'credited' ? '#22c55e' : i.status === 'pending' ? '#f59e0b' : 'var(--text-muted)' }}>{i.status}</span>
+              </div>
+            ))}
+            <div style={{ marginTop: 16 }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 10 }}>📋 Required Documents</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {pk?.documents_required?.map(d => <span key={d} className="badge badge-info">{d}</span>)}
+              </div>
+            </div>
+          </div>
+          <div>
+            <div className="card" style={{ padding: 20, marginBottom: 12 }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: 12 }}>📊 Quick Facts</div>
+              {[{ l: 'Beneficiaries', v: '11.8 Cr+' }, { l: 'Amount/Year', v: '₹6,000' }, { l: 'Installments', v: '3 per year' }, { l: 'Mode', v: 'Direct DBT' }, { l: 'Status', v: 'Always Open' }].map(f => (
+                <div key={f.l} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{f.l}</span>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>{f.v}</span>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ padding: 20, background: 'linear-gradient(135deg, rgba(34,197,94,0.06), rgba(59,130,246,0.04))' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#22c55e', marginBottom: 8 }}>✅ Eligibility Criteria</div>
+              {pk?.eligibility?.map((e, i) => (
+                <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 6 }}>
+                  <span style={{ color: '#22c55e' }}>✓</span>
+                  <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{e}</span>
+                </div>
+              ))}
+              <a href="https://pmkisan.gov.in" target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ width: '100%', padding: 10, fontSize: '0.85rem', marginTop: 12, textAlign: 'center', textDecoration: 'none', display: 'block' }}>🔗 Apply on pmkisan.gov.in</a>
+            </div>
+          </div>
+        </div>);
+      })()}
+
+      {activeTab === 'dbt' && (
+        <div>
+          <div className="grid-4" style={{ marginBottom: 20 }}>
+            {[
+              { label: 'Total Received', value: '₹11,500', icon: '💰', color: '#22c55e' },
+              { label: 'Pending', value: '₹2,000', icon: '⏳', color: '#f59e0b' },
+              { label: 'Processing', value: '₹4,000', icon: '🔄', color: '#3b82f6' },
+              { label: 'Transactions', value: DBT_TRACKING.length, icon: '📋', color: '#8b5cf6' },
+            ].map(s => (
+              <div key={s.label} className="stat-card">
+                <div style={{ fontSize: '1.8rem', marginBottom: 8 }}>{s.icon}</div>
+                <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
+                <div className="stat-label">{s.label}</div>
+              </div>
+            ))}
+          </div>
+          <div className="card">
+            <div className="table-wrap">
+              <table className="data-table">
+                <thead><tr><th>Scheme</th><th>Installment</th><th>Amount</th><th>Account</th><th>Date</th><th>Txn ID</th><th>Status</th></tr></thead>
+                <tbody>
+                  {DBT_TRACKING.map(d => (
+                    <tr key={d.id}>
+                      <td style={{ fontWeight: 600 }}>{d.scheme}</td>
+                      <td>{d.installment}</td>
+                      <td style={{ fontWeight: 700, color: '#22c55e' }}>₹{d.amount.toLocaleString()}</td>
+                      <td>{d.account}</td>
+                      <td>{d.date || '—'}</td>
+                      <td style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{d.txnId || '—'}</td>
+                      <td><span style={{ padding: '3px 10px', borderRadius: 12, fontSize: '0.7rem', fontWeight: 600, background: d.status === 'credited' ? '#22c55e22' : d.status === 'processing' ? '#3b82f622' : '#f59e0b22', color: d.status === 'credited' ? '#22c55e' : d.status === 'processing' ? '#3b82f6' : '#f59e0b' }}>{d.status}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'eligibility' && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 20 }}>
           <div className="card" style={{ padding: '24px' }}>
@@ -130,10 +252,27 @@ export default function SchemesPage() {
                 )}
               </div>
             ))}
-            <button className="btn btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.95rem' }}>🔍 Check My Eligibility</button>
+            <button className="btn btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.95rem' }} onClick={runEligibilityCheck}>🔍 Check My Eligibility</button>
           </div>
 
           <div>
+            {eligibilityResults ? (
+              <div className="card" style={{ padding: '20px', marginBottom: 12 }}>
+                <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#22c55e', marginBottom: 12 }}>🎉 Results: {eligibilityResults.filter(r => r.eligible).length} of {eligibilityResults.length} schemes matched!</div>
+                {eligibilityResults.slice(0, 8).map(s => (
+                  <div key={s._id} style={{ padding: '10px 12px', background: 'var(--bg-primary)', borderRadius: 'var(--radius-sm)', marginBottom: 8 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{s.name}</div>
+                      <span style={{ padding: '3px 10px', borderRadius: 12, fontSize: '0.68rem', fontWeight: 600, background: s.eligible ? '#22c55e22' : '#ef444422', color: s.eligible ? '#22c55e' : '#ef4444' }}>{s.eligible ? '✓ Eligible' : '✗ Not Eligible'}</span>
+                    </div>
+                    <div style={{ height: 6, background: 'var(--bg-card)', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', borderRadius: 3, width: `${s.score}%`, background: s.score >= 80 ? '#22c55e' : s.score >= 70 ? '#f59e0b' : '#ef4444', transition: 'width 0.5s' }} />
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 2 }}>Match score: {s.score}%</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
             <div className="card" style={{ padding: '20px', marginBottom: 12, background: 'linear-gradient(135deg, rgba(34,197,94,0.06), rgba(59,130,246,0.04))' }}>
               <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#22c55e', marginBottom: 12 }}>🎉 You may qualify for {schemes.length} schemes!</div>
               {schemes.slice(0, 4).map(s => (
@@ -146,6 +285,7 @@ export default function SchemesPage() {
                 </div>
               ))}
             </div>
+            )}
 
             {selectedScheme && (
               <div className="card" style={{ padding: '20px' }}>

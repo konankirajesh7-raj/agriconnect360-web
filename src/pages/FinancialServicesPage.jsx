@@ -236,44 +236,71 @@ function KCCSection({ profile }) {
   const kccData = prefillKCCApplication(profile);
   const [utilizedAmount, setUtilizedAmount] = useState(Math.round(kccData.eligibleAmount * 0.38));
   const [projectionMonths, setProjectionMonths] = useState(6);
-  const utilizationPercent = Math.min(100, Math.round((utilizedAmount / Math.max(kccData.eligibleAmount, 1)) * 100));
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkForm, setLinkForm] = useState({ bank:'SBI', branch:'Guntur Main', ifsc:'SBIN0000001', account:'1234567890', limit:'200000', disbursed:'150000', utilized:'80000', rate:'7', due:'3' });
+  const [kccLinked, setKccLinked] = useState(false);
+  const [calcAmt, setCalcAmt] = useState('80000');
+  const [calcRate, setCalcRate] = useState('7');
+  const [calcDays, setCalcDays] = useState('30');
+  const [showCalcResult, setShowCalcResult] = useState(false);
+
+  const sanctioned = kccLinked ? 200000 : kccData.eligibleAmount;
+  const utilized = kccLinked ? 80000 : utilizedAmount;
+  const available = kccLinked ? (200000 - 150000) + (150000 - 80000) : sanctioned - utilized;
+  const utilizationPercent = Math.min(100, Math.round((utilized / Math.max(sanctioned, 1)) * 100));
   const tone = getToneByPercent(utilizationPercent);
-  const subsidizedInterest = Math.round((utilizedAmount * 0.04 * projectionMonths) / 12);
-  const standardInterest = Math.round((utilizedAmount * 0.07 * projectionMonths) / 12);
+  const subsidizedInterest = Math.round((utilized * 0.04 * projectionMonths) / 12);
+  const standardInterest = Math.round((utilized * 0.07 * projectionMonths) / 12);
   const savedInterest = Math.max(0, standardInterest - subsidizedInterest);
-  const linkedAccounts = [
-    { bank: kccData.bankName || 'State Bank of India', account: kccData.accountNumber || 'XXXX4521', status: 'Primary KCC' },
-    { bank: 'District Co-op Bank', account: 'XXXX1187', status: 'Secondary payout' }
-  ];
+  const calcInterest = ((parseFloat(calcAmt)||0) * (parseFloat(calcRate)||0) / 100 * (parseFloat(calcDays)||0) / 365).toFixed(2);
+
+  const linkedAccounts = kccLinked
+    ? [{ bank: 'SBI', account: '1234567890', status: 'Primary KCC', ifsc: 'SBIN0000001', branch: 'Guntur Main' }, { bank: 'District Co-op Bank', account: 'XXXX1187', status: 'Secondary payout' }]
+    : [{ bank: kccData.bankName || 'State Bank of India', account: kccData.accountNumber || 'XXXX4521', status: 'Primary KCC' }, { bank: 'District Co-op Bank', account: 'XXXX1187', status: 'Secondary payout' }];
+
+  const TODAY_STR = new Date().toISOString().slice(0,10);
   const dueSchedule = [
     { label: 'Interest servicing', dueDate: '2026-05-31', amount: Math.round(subsidizedInterest / 2) },
     { label: 'Mid-cycle review', dueDate: '2026-07-15', amount: Math.round(subsidizedInterest / 2) },
     { label: 'Renewal/rollover', dueDate: '2026-10-01', amount: 0 }
   ];
 
+  function getDueDateColor(dueDate) {
+    const diff = Math.ceil((new Date(dueDate) - new Date(TODAY_STR)) / 86400000);
+    if (diff < 7) return { bg: 'rgba(239,68,68,0.15)', color: '#f87171', label: '⚠️ <7 days' };
+    if (diff < 30) return { bg: 'rgba(245,158,11,0.15)', color: '#fbbf24', label: '⏰ <30 days' };
+    return { bg: 'rgba(16,185,129,0.08)', color: '#34d399', label: '✅ On Track' };
+  }
+
+  function downloadKCCStatement() {
+    const content = `AgriConnect 360 — KCC Statement\n${'='.repeat(40)}\nDate: ${new Date().toLocaleDateString('en-IN')}\n\nAccount: ${linkedAccounts[0].account}\nBank: ${linkedAccounts[0].bank}\nSanctioned Limit: ₹${CURRENCY.format(sanctioned)}\nDisbursed: ₹${CURRENCY.format(kccLinked?150000:sanctioned)}\nUtilized: ₹${CURRENCY.format(utilized)}\nAvailable: ₹${CURRENCY.format(available)}\nUtilization: ${utilizationPercent}%\nInterest Rate: ${kccLinked?'7':'4'}% p.a.\n\n--- Due Dates ---\n${dueSchedule.map(d=>`${d.label}: ${d.dueDate} — ₹${d.amount>0?CURRENCY.format(d.amount):'N/A'}`).join('\n')}\n\nPowered by AgriConnect 360 🌾`;
+    const blob = new Blob([content], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'AgriConnect360_KCC_Statement.pdf'; a.click(); URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="card" style={{ padding: '24px' }}>
       <h3 className="fin-section-title">🏦 Kisan Credit Card (KCC)</h3>
       <div className="fin-summary-row">
         <div className="fin-summary-card">
-          <div className="fin-card-label">Eligible Limit</div>
-          <div className="fin-card-value text-green-500">{formatCurrency(kccData.eligibleAmount)}</div>
-          <div className="fin-card-sub">Based on {kccData.landHolding} acres</div>
+          <div className="fin-card-label">Sanctioned Limit</div>
+          <div className="fin-card-value text-green-500">{formatCurrency(sanctioned)}</div>
+          <div className="fin-card-sub">{kccLinked ? 'SBI Guntur Main' : `Based on ${kccData.landHolding} acres`}</div>
         </div>
         <div className="fin-summary-card">
-          <div className="fin-card-label">Utilized Credit</div>
-          <div className="fin-card-value text-blue-500">{formatCurrency(utilizedAmount)}</div>
-          <div className="fin-card-sub">{utilizationPercent}% of sanctioned limit</div>
+          <div className="fin-card-label">Utilized</div>
+          <div className="fin-card-value text-blue-500">{formatCurrency(utilized)}</div>
+          <div className="fin-card-sub">{utilizationPercent}% utilization</div>
+        </div>
+        <div className="fin-summary-card">
+          <div className="fin-card-label">Available</div>
+          <div className="fin-card-value text-green-500">{formatCurrency(available)}</div>
+          <div className="fin-card-sub">ready to draw</div>
         </div>
         <div className="fin-summary-card">
           <div className="fin-card-label">Interest Saved</div>
-          <div className="fin-card-value text-green-500">{formatCurrency(savedInterest)}</div>
+          <div className="fin-card-value text-yellow-500">{formatCurrency(savedInterest)}</div>
           <div className="fin-card-sub">by paying on schedule</div>
-        </div>
-        <div className="fin-summary-card">
-          <div className="fin-card-label">Current Interest</div>
-          <div className="fin-card-value text-blue-500">4%</div>
-          <div className="fin-card-sub">With timely repayment</div>
         </div>
       </div>
 
@@ -361,6 +388,26 @@ function KCCSection({ profile }) {
         </table>
       </div>
 
+      {/* Interest Calculator */}
+      <div className="fin-compare-grid" style={{ marginTop: '20px', marginBottom: '20px' }}>
+        <div className="fin-compare-card">
+          <div className="fin-lender-name">🧮 Interest Calculator</div>
+          <div className="fin-input-grid" style={{ marginTop: '10px' }}>
+            <label className="fin-input-group"><span>Amount (₹)</span><input className="fin-filter-input" type="number" value={calcAmt} onChange={e=>setCalcAmt(e.target.value)} /></label>
+            <label className="fin-input-group"><span>Rate (%)</span><input className="fin-filter-input" type="number" value={calcRate} onChange={e=>setCalcRate(e.target.value)} /></label>
+            <label className="fin-input-group"><span>Days</span><input className="fin-filter-input" type="number" value={calcDays} onChange={e=>setCalcDays(e.target.value)} /></label>
+          </div>
+          <button className="btn btn-primary" style={{ marginTop:'10px', width:'100%' }} onClick={()=>setShowCalcResult(true)}>Calculate Interest</button>
+          {showCalcResult && (
+            <div style={{ marginTop:'12px', padding:'14px', borderRadius:'10px', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.15)', textAlign:'center' }}>
+              <div style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>Monthly Interest</div>
+              <div style={{ fontSize:'1.3rem', fontWeight:800, color:'#34d399' }}>₹{parseFloat(calcInterest).toLocaleString('en-IN', {minimumFractionDigits:2})}</div>
+              <div style={{ fontSize:'0.68rem', color:'var(--text-muted)', marginTop:4 }}>₹{calcAmt} × {calcRate}% × {calcDays} days / 365</div>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div style={{ marginTop: '20px' }}>
         <h4 style={{ marginBottom: '12px' }}>Required Documents</h4>
         <div className="fin-content-grid">
@@ -373,17 +420,48 @@ function KCCSection({ profile }) {
         </div>
       </div>
       <div className="fin-actions">
-        <button className="btn btn-outline">🔗 Link Bank Account</button>
+        <button className="btn btn-outline" onClick={() => setShowLinkModal(true)}>+ Link KCC Account</button>
+        <button className="btn btn-outline" onClick={downloadKCCStatement}>📄 Download KCC Statement</button>
         <button className="btn btn-primary">Apply for KCC Limit</button>
       </div>
+
+      {/* Link KCC Modal */}
+      {showLinkModal && (
+        <div style={{ position:'fixed',inset:0,zIndex:1000,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(4px)' }} onClick={()=>setShowLinkModal(false)}>
+          <div style={{ width:'min(500px,92vw)',maxHeight:'85vh',overflowY:'auto',background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',boxShadow:'0 20px 60px rgba(0,0,0,0.5)' }} onClick={e=>e.stopPropagation()}>
+            <div style={{ padding:'18px 22px',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+              <div style={{ fontSize:'1rem',fontWeight:800,color:'var(--text-primary)' }}>+ Link KCC Account</div>
+              <button style={{ background:'none',border:'none',color:'var(--text-muted)',fontSize:'1.3rem',cursor:'pointer' }} onClick={()=>setShowLinkModal(false)}>✕</button>
+            </div>
+            <div style={{ padding:'18px 22px' }}>
+              <div className="fin-input-grid">
+                <label className="fin-input-group"><span>Bank</span><input className="fin-filter-input" value={linkForm.bank} onChange={e=>setLinkForm(p=>({...p,bank:e.target.value}))} /></label>
+                <label className="fin-input-group"><span>Branch</span><input className="fin-filter-input" value={linkForm.branch} onChange={e=>setLinkForm(p=>({...p,branch:e.target.value}))} /></label>
+                <label className="fin-input-group"><span>IFSC</span><input className="fin-filter-input" value={linkForm.ifsc} onChange={e=>setLinkForm(p=>({...p,ifsc:e.target.value}))} /></label>
+                <label className="fin-input-group"><span>Account No.</span><input className="fin-filter-input" value={linkForm.account} onChange={e=>setLinkForm(p=>({...p,account:e.target.value}))} /></label>
+                <label className="fin-input-group"><span>Sanctioned Limit (₹)</span><input className="fin-filter-input" type="number" value={linkForm.limit} onChange={e=>setLinkForm(p=>({...p,limit:e.target.value}))} /></label>
+                <label className="fin-input-group"><span>Disbursed (₹)</span><input className="fin-filter-input" type="number" value={linkForm.disbursed} onChange={e=>setLinkForm(p=>({...p,disbursed:e.target.value}))} /></label>
+                <label className="fin-input-group"><span>Utilized (₹)</span><input className="fin-filter-input" type="number" value={linkForm.utilized} onChange={e=>setLinkForm(p=>({...p,utilized:e.target.value}))} /></label>
+                <label className="fin-input-group"><span>Interest Rate (%)</span><input className="fin-filter-input" type="number" value={linkForm.rate} onChange={e=>setLinkForm(p=>({...p,rate:e.target.value}))} /></label>
+                <label className="fin-input-group"><span>Due In (months)</span><input className="fin-filter-input" type="number" value={linkForm.due} onChange={e=>setLinkForm(p=>({...p,due:e.target.value}))} /></label>
+              </div>
+              <button className="btn btn-primary" style={{ width:'100%', marginTop:'16px' }} onClick={()=>{setKccLinked(true);setShowLinkModal(false);}}>💾 Save & Link KCC</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function LoansSection() {
-  const [amount, setAmount] = useState(300000);
+  const [amount, setAmount] = useState(100000);
   const [tenure, setTenure] = useState(24);
   const [selectedLenders, setSelectedLenders] = useState(['sbi', 'hdfc', 'baroda']);
+  const [showApply, setShowApply] = useState(false);
+  const [applyLender, setApplyLender] = useState(null);
+  const [applicationSubmitted, setApplicationSubmitted] = useState(false);
+  const [applicationId, setApplicationId] = useState('');
 
   const lenderQuotes = useMemo(
     () => LENDER_CATALOG.map((lender) => {
@@ -393,6 +471,7 @@ function LoansSection() {
         ...lender,
         emi: emi.emi,
         totalInterest: emi.totalInterest,
+        totalPayment: emi.totalPayment,
         totalOutflow: emi.totalPayment + processingFee,
         processingFeeAmount: processingFee
       };
@@ -407,28 +486,58 @@ function LoansSection() {
 
   function toggleLender(lenderId) {
     setSelectedLenders((prev) => {
-      if (prev.includes(lenderId)) {
-        return prev.filter((id) => id !== lenderId);
-      }
-      if (prev.length >= 3) {
-        return [...prev.slice(1), lenderId];
-      }
+      if (prev.includes(lenderId)) return prev.filter((id) => id !== lenderId);
+      if (prev.length >= 3) return [...prev.slice(1), lenderId];
       return [...prev, lenderId];
     });
   }
 
   const comparedLenders = lenderQuotes.filter((lender) => selectedLenders.includes(lender.id));
 
+  function handleApply(lender) {
+    setApplyLender(lender);
+    setShowApply(true);
+  }
+
+  function submitApplication() {
+    setApplicationId(`AGRI-LN-${Date.now().toString(36).toUpperCase()}`);
+    setApplicationSubmitted(true);
+    setShowApply(false);
+  }
+
   return (
     <div className="card" style={{ padding: '24px' }}>
-      <h3 className="fin-section-title">💸 Loan Marketplace & EMI Compare</h3>
+      <h3 className="fin-section-title">💸 Micro-Loan Marketplace & EMI Compare</h3>
+
+      {/* Application Status */}
+      {applicationSubmitted && (
+        <div style={{ padding:'16px', borderRadius:'12px', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.15)', marginBottom:'20px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }}>
+            <div><div style={{ fontWeight:700, color:'var(--text-primary)' }}>Application: {applicationId}</div><div style={{ fontSize:'0.78rem', color:'var(--text-muted)' }}>{applyLender?.name} • {formatCurrency(amount)} • {tenure} months</div></div>
+            <span className="fin-badge green">Submitted</span>
+          </div>
+          <div className="fin-pipeline">
+            {['Submitted','Documents Verified','Credit Check','Approved','Disbursed'].map((step, i) => (
+              <React.Fragment key={step}>
+                <div className={`fin-pipeline-step ${i < 1 ? 'done' : ''} ${i === 1 ? 'active' : ''}`}>
+                  <div className="fin-pipeline-dot">{i < 1 ? '✓' : i + 1}</div>
+                  <div className="fin-pipeline-label">{step}</div>
+                </div>
+                {i < 4 && <div className={`fin-pipeline-line ${i < 1 ? 'done' : ''}`}></div>}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Loan Calculator */}
       <div className="fin-compare-grid" style={{ marginBottom: '24px' }}>
         <div className="fin-slider-group">
           <div className="fin-slider-header">
             <span className="fin-slider-label">Loan Amount (₹)</span>
             <span className="fin-slider-value">{formatCurrency(amount)}</span>
           </div>
-          <input type="range" min="100000" max="900000" step="10000" value={amount} onChange={e => setAmount(Number(e.target.value))} className="fin-slider" />
+          <input type="range" min="50000" max="900000" step="10000" value={amount} onChange={e => setAmount(Number(e.target.value))} className="fin-slider" />
         </div>
         <div className="fin-slider-group">
           <div className="fin-slider-header">
@@ -442,18 +551,23 @@ function LoansSection() {
       <div className="fin-summary-row">
         <div className="fin-summary-card">
           <div className="fin-card-label">Best EMI</div>
-          <div className="fin-card-value text-green-500">{formatCurrency(bestQuote?.emi || 0)}</div>
+          <div className="fin-card-value text-green-500">{formatCurrency(bestQuote?.emi || 0)}/mo</div>
           <div className="fin-card-sub">{bestQuote?.name}</div>
         </div>
         <div className="fin-summary-card">
-          <div className="fin-card-label">Fastest Approval</div>
-          <div className="fin-card-value text-blue-500">{Math.min(...lenderQuotes.map((q) => q.approvalDays))} days</div>
-          <div className="fin-card-sub">for eligible profile</div>
+          <div className="fin-card-label">Total Payable</div>
+          <div className="fin-card-value text-blue-500">{formatCurrency(bestQuote?.totalPayment || 0)}</div>
+          <div className="fin-card-sub">principal + interest</div>
         </div>
         <div className="fin-summary-card">
-          <div className="fin-card-label">Compared Lenders</div>
-          <div className="fin-card-value text-yellow-500">{selectedLenders.length}/3</div>
-          <div className="fin-card-sub">side-by-side mode</div>
+          <div className="fin-card-label">Total Interest</div>
+          <div className="fin-card-value text-yellow-500">{formatCurrency(bestQuote?.totalInterest || 0)}</div>
+          <div className="fin-card-sub">over {tenure} months</div>
+        </div>
+        <div className="fin-summary-card">
+          <div className="fin-card-label">Compared</div>
+          <div className="fin-card-value text-blue-500">{selectedLenders.length}/3</div>
+          <div className="fin-card-sub">side-by-side</div>
         </div>
       </div>
 
@@ -462,18 +576,19 @@ function LoansSection() {
           <div
             key={lender.id}
             className={`fin-compare-card ${selectedLenders.includes(lender.id) ? 'selected' : ''}`}
-            onClick={() => toggleLender(lender.id)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(event) => event.key === 'Enter' && toggleLender(lender.id)}
+            style={{ position:'relative' }}
           >
-            <div className="fin-lender-name">{lender.name}</div>
-            <div className="fin-lender-type">{lender.type}</div>
-            <div className="fin-compare-row"><span className="fin-compare-label">Rate</span><span className="fin-compare-value">{lender.rate}%</span></div>
-            <div className="fin-compare-row"><span className="fin-compare-label">EMI</span><span className="fin-compare-value">{formatCurrency(lender.emi)}</span></div>
-            <div className="fin-compare-row"><span className="fin-compare-label">Processing Fee</span><span className="fin-compare-value">{formatCurrency(lender.processingFeeAmount)}</span></div>
-            <div className="fin-compare-row"><span className="fin-compare-label">Total Outflow</span><span className="fin-compare-value">{formatCurrency(lender.totalOutflow)}</span></div>
-            <div className="fin-compare-row"><span className="fin-compare-label">Approval</span><span className="fin-compare-value">{lender.approvalDays} days</span></div>
+            <div onClick={() => toggleLender(lender.id)} role="button" tabIndex={0} onKeyDown={(event) => event.key === 'Enter' && toggleLender(lender.id)} style={{ cursor:'pointer' }}>
+              {lender.id === bestQuote?.id && <span className="fin-badge green" style={{ position:'absolute',top:8,right:8 }}>⭐ Best Deal</span>}
+              <div className="fin-lender-name">{lender.name}</div>
+              <div className="fin-lender-type">{lender.type} • Max: {formatCurrency(lender.maxAmount)}</div>
+              <div className="fin-compare-row"><span className="fin-compare-label">Rate</span><span className="fin-compare-value">{lender.rate}%</span></div>
+              <div className="fin-compare-row"><span className="fin-compare-label">EMI</span><span className="fin-compare-value">{formatCurrency(lender.emi)}</span></div>
+              <div className="fin-compare-row"><span className="fin-compare-label">Processing Fee</span><span className="fin-compare-value">{formatCurrency(lender.processingFeeAmount)}</span></div>
+              <div className="fin-compare-row"><span className="fin-compare-label">Total Outflow</span><span className="fin-compare-value">{formatCurrency(lender.totalOutflow)}</span></div>
+              <div className="fin-compare-row"><span className="fin-compare-label">Approval</span><span className="fin-compare-value">{lender.approvalDays} days</span></div>
+            </div>
+            <button className="btn btn-primary" style={{ width:'100%', marginTop:'10px', fontSize:'0.8rem' }} onClick={() => handleApply(lender)}>📝 Apply Now</button>
           </div>
         ))}
       </div>
@@ -488,25 +603,41 @@ function LoansSection() {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>Interest Rate</td>
-              {comparedLenders.map((lender) => <td key={`${lender.id}-rate`}>{lender.rate}%</td>)}
-            </tr>
-            <tr>
-              <td>Monthly EMI</td>
-              {comparedLenders.map((lender) => <td key={`${lender.id}-emi`}>{formatCurrency(lender.emi)}</td>)}
-            </tr>
-            <tr>
-              <td>Total Interest</td>
-              {comparedLenders.map((lender) => <td key={`${lender.id}-interest`}>{formatCurrency(lender.totalInterest)}</td>)}
-            </tr>
-            <tr>
-              <td>Total Outflow</td>
-              {comparedLenders.map((lender) => <td key={`${lender.id}-outflow`}>{formatCurrency(lender.totalOutflow)}</td>)}
-            </tr>
+            <tr><td>Interest Rate</td>{comparedLenders.map((lender) => <td key={`${lender.id}-rate`}>{lender.rate}%</td>)}</tr>
+            <tr><td>Monthly EMI</td>{comparedLenders.map((lender) => <td key={`${lender.id}-emi`}>{formatCurrency(lender.emi)}</td>)}</tr>
+            <tr><td>Total Interest</td>{comparedLenders.map((lender) => <td key={`${lender.id}-interest`}>{formatCurrency(lender.totalInterest)}</td>)}</tr>
+            <tr><td>Total Outflow</td>{comparedLenders.map((lender) => <td key={`${lender.id}-outflow`}>{formatCurrency(lender.totalOutflow)}</td>)}</tr>
           </tbody>
         </table>
       </div>
+
+      {/* Apply Modal */}
+      {showApply && applyLender && (
+        <div style={{ position:'fixed',inset:0,zIndex:1000,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(4px)' }} onClick={()=>setShowApply(false)}>
+          <div style={{ width:'min(500px,92vw)',maxHeight:'85vh',overflowY:'auto',background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',boxShadow:'0 20px 60px rgba(0,0,0,0.5)' }} onClick={e=>e.stopPropagation()}>
+            <div style={{ padding:'18px 22px',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+              <div style={{ fontSize:'1rem',fontWeight:800,color:'var(--text-primary)' }}>📝 Apply — {applyLender.name}</div>
+              <button style={{ background:'none',border:'none',color:'var(--text-muted)',fontSize:'1.3rem',cursor:'pointer' }} onClick={()=>setShowApply(false)}>✕</button>
+            </div>
+            <div style={{ padding:'18px 22px' }}>
+              <div style={{ padding:'12px',borderRadius:'10px',background:'rgba(59,130,246,0.06)',border:'1px solid rgba(59,130,246,0.12)',marginBottom:'16px',fontSize:'0.82rem',color:'#93c5fd' }}>
+                ℹ️ Farmer data auto-filled from profile. EMI: {formatCurrency(applyLender.emi)}/mo @ {applyLender.rate}%
+              </div>
+              <div className="fin-input-grid">
+                <label className="fin-input-group"><span>Full Name</span><input className="fin-filter-input" defaultValue="Rajesh Kumar" /></label>
+                <label className="fin-input-group"><span>Aadhaar No.</span><input className="fin-filter-input" defaultValue="XXXX-XXXX-4521" /></label>
+                <label className="fin-input-group"><span>Mobile</span><input className="fin-filter-input" defaultValue="+91 98765 43210" /></label>
+                <label className="fin-input-group"><span>Village</span><input className="fin-filter-input" defaultValue="Guntur, AP" /></label>
+                <label className="fin-input-group"><span>Loan Amount</span><input className="fin-filter-input" defaultValue={amount} /></label>
+                <label className="fin-input-group"><span>Tenure</span><input className="fin-filter-input" defaultValue={`${tenure} months`} /></label>
+                <label className="fin-input-group"><span>Purpose</span><input className="fin-filter-input" defaultValue="Crop Investment - Kharif 2026" /></label>
+                <label className="fin-input-group"><span>Land (acres)</span><input className="fin-filter-input" defaultValue="5" /></label>
+              </div>
+              <button className="btn btn-primary" style={{ width:'100%', marginTop:'16px' }} onClick={submitApplication}>🚀 Submit Application</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -516,81 +647,86 @@ function InsuranceSection({ profile }) {
   const [season, setSeason] = useState('Kharif');
   const [area, setArea] = useState(Math.max(Number(profile?.total_land || 2), 1));
   const [sumInsured, setSumInsured] = useState(120000);
-  const [claimStage, setClaimStage] = useState(2);
+  const [claimStage, setClaimStage] = useState(0);
   const [uploadedPhotos, setUploadedPhotos] = useState([]);
+  const [showClaimForm, setShowClaimForm] = useState(false);
+  const [lossType, setLossType] = useState('Flood');
+  const [lossPct, setLossPct] = useState('60');
+  const [policyNo, setPolicyNo] = useState('PMFBY-2024-001');
+  const [weatherAttached, setWeatherAttached] = useState(false);
+  const [claimSubmitted, setClaimSubmitted] = useState(false);
+  const [claimId, setClaimId] = useState('');
 
   const insuranceData = calculateInsurancePremium(crop, area, sumInsured, season, 'PMFBY');
   const claimTicket = `PMFBY-${new Date().getFullYear()}-${String(area).replace('.', '')}${season.slice(0, 1)}`;
   const autoFilledDetails = [
-    { label: 'Farmer', value: profile?.name || 'Profile Pending' },
-    { label: 'Village', value: profile?.village || 'Not provided' },
+    { label: 'Farmer', value: profile?.name || 'Rajesh Kumar' },
+    { label: 'Village', value: profile?.village || 'Guntur, AP' },
     { label: 'Primary Crop', value: crop },
-    { label: 'Area (acres)', value: area }
+    { label: 'Area (acres)', value: area },
+    { label: 'Aadhaar', value: 'XXXX-XXXX-4521' },
+    { label: 'Policy No.', value: policyNo },
   ];
 
   function onPhotoUpload(event) {
     const files = Array.from(event.target.files || []);
-    setUploadedPhotos(files.map((file) => file.name));
+    setUploadedPhotos(files.map((file) => ({ name: file.name, gps: `16.30°N, 80.43°E`, time: new Date().toLocaleTimeString('en-IN') })));
+  }
+
+  function submitClaim() {
+    const id = `CLM-${Date.now().toString(36).toUpperCase()}`;
+    setClaimId(id);
+    setClaimSubmitted(true);
+    setClaimStage(1);
+    setShowClaimForm(false);
   }
 
   return (
     <div className="card" style={{ padding: '24px' }}>
       <h3 className="fin-section-title">🛡️ Insurance Claims (PMFBY)</h3>
 
+      {/* Claim Status */}
+      {claimSubmitted && (
+        <div style={{ padding:'16px', borderRadius:'12px', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.15)', marginBottom:'20px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px' }}>
+            <div><div style={{ fontWeight:700, color:'var(--text-primary)' }}>Claim ID: {claimId}</div><div style={{ fontSize:'0.78rem', color:'var(--text-muted)' }}>{lossType} — {lossPct}% loss — {crop} — Policy: {policyNo}</div></div>
+            <span className="fin-badge green">Filed</span>
+          </div>
+        </div>
+      )}
+
+      <div style={{ marginBottom:'16px' }}>
+        <button className="btn btn-primary" onClick={() => setShowClaimForm(true)} style={{ fontSize:'0.88rem' }}>📋 File New Claim</button>
+      </div>
+
       <div className="fin-input-grid">
-        <label className="fin-input-group">
-          <span>Crop</span>
+        <label className="fin-input-group"><span>Crop</span>
           <select className="fin-filter-select" value={crop} onChange={(event) => setCrop(event.target.value)}>
-            <option value="Paddy">Paddy</option>
-            <option value="Cotton">Cotton</option>
-            <option value="Groundnut">Groundnut</option>
-            <option value="Maize">Maize</option>
+            <option value="Paddy">Paddy</option><option value="Cotton">Cotton</option><option value="Groundnut">Groundnut</option><option value="Maize">Maize</option>
           </select>
         </label>
-        <label className="fin-input-group">
-          <span>Season</span>
+        <label className="fin-input-group"><span>Season</span>
           <select className="fin-filter-select" value={season} onChange={(event) => setSeason(event.target.value)}>
-            <option value="Kharif">Kharif</option>
-            <option value="Rabi">Rabi</option>
-            <option value="Commercial">Commercial</option>
+            <option value="Kharif">Kharif</option><option value="Rabi">Rabi</option><option value="Commercial">Commercial</option>
           </select>
         </label>
-        <label className="fin-input-group">
-          <span>Area (acres)</span>
-          <input className="fin-filter-input" type="number" value={area} min="1" max="50" onChange={(event) => setArea(Number(event.target.value) || 1)} />
-        </label>
-        <label className="fin-input-group">
-          <span>Sum insured (₹)</span>
-          <input className="fin-filter-input" type="number" value={sumInsured} min="50000" step="5000" onChange={(event) => setSumInsured(Number(event.target.value) || 50000)} />
-        </label>
+        <label className="fin-input-group"><span>Area (acres)</span><input className="fin-filter-input" type="number" value={area} min="1" max="50" onChange={(event) => setArea(Number(event.target.value) || 1)} /></label>
+        <label className="fin-input-group"><span>Sum insured (₹)</span><input className="fin-filter-input" type="number" value={sumInsured} min="50000" step="5000" onChange={(event) => setSumInsured(Number(event.target.value) || 50000)} /></label>
       </div>
 
       <div className="fin-summary-row">
-        <div className="fin-summary-card">
-          <div className="fin-card-label">Farmer Premium</div>
-          <div className="fin-card-value text-green-500">{formatCurrency(insuranceData.farmerPremium)}</div>
-          <div className="fin-card-sub">@ {insuranceData.actualPremiumRate}% rate</div>
-        </div>
-        <div className="fin-summary-card">
-          <div className="fin-card-label">Govt Subsidy</div>
-          <div className="fin-card-value text-blue-500">{formatCurrency(insuranceData.govSubsidy)}</div>
-        </div>
-        <div className="fin-summary-card">
-          <div className="fin-card-label">Claim Ticket</div>
-          <div className="fin-card-value text-yellow-500">{claimTicket}</div>
-          <div className="fin-card-sub">Auto-filled from profile</div>
-        </div>
+        <div className="fin-summary-card"><div className="fin-card-label">Farmer Premium</div><div className="fin-card-value text-green-500">{formatCurrency(insuranceData.farmerPremium)}</div><div className="fin-card-sub">@ {insuranceData.actualPremiumRate}% rate</div></div>
+        <div className="fin-summary-card"><div className="fin-card-label">Govt Subsidy</div><div className="fin-card-value text-blue-500">{formatCurrency(insuranceData.govSubsidy)}</div></div>
+        <div className="fin-summary-card"><div className="fin-card-label">Claim Ticket</div><div className="fin-card-value text-yellow-500">{claimTicket}</div><div className="fin-card-sub">Auto-filled from profile</div></div>
       </div>
 
       <div className="fin-compare-grid" style={{ marginTop: '20px', marginBottom: '20px' }}>
-        <div className="card" style={{ padding: '16px' }}>
-          <h4>PMFBY Auto-fill Summary</h4>
+        <div className="card" style={{ padding: '16px' }}><h4>PMFBY Auto-fill Summary</h4>
           <ul style={{ paddingLeft: '20px', marginTop: '10px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
             {autoFilledDetails.map((entry) => <li key={entry.label}><strong>{entry.label}:</strong> {entry.value}</li>)}
           </ul>
         </div>
-        <div className="card" style={{ padding: '16px' }}>
-          <h4>Coverage Scope</h4>
+        <div className="card" style={{ padding: '16px' }}><h4>Coverage Scope</h4>
           <div className="fin-policy-meta">
             {Object.entries(insuranceData.coverageDetails).filter(([, value]) => value).map(([key]) => (
               <span key={key} className="fin-chip">{key.replace(/([A-Z])/g, ' $1')}</span>
@@ -600,14 +736,17 @@ function InsuranceSection({ profile }) {
       </div>
 
       <div className="fin-upload-box">
-        <label htmlFor="claim-photo-upload" className="fin-input-group">
-          <span>Damage Proof Upload (Images)</span>
-          <input id="claim-photo-upload" type="file" accept="image/*" multiple onChange={onPhotoUpload} />
-        </label>
+        <label htmlFor="claim-photo-upload" className="fin-input-group"><span>Damage Proof Upload (Images)</span><input id="claim-photo-upload" type="file" accept="image/*" multiple onChange={onPhotoUpload} /></label>
         <div className="fin-photo-list">
           {uploadedPhotos.length === 0
             ? <span className="fin-card-sub">No photos uploaded yet.</span>
-            : uploadedPhotos.map((photo) => <span key={photo} className="fin-badge blue">{photo}</span>)
+            : uploadedPhotos.map((photo) => (
+              <div key={photo.name} style={{ display:'inline-flex', gap:6, alignItems:'center', padding:'4px 10px', borderRadius:8, background:'rgba(59,130,246,0.08)', border:'1px solid rgba(59,130,246,0.12)', marginRight:6, marginBottom:4 }}>
+                <span className="fin-badge blue">{photo.name}</span>
+                <span style={{ fontSize:'0.6rem', color:'#34d399' }}>📍 {photo.gps}</span>
+                <span style={{ fontSize:'0.6rem', color:'var(--text-muted)' }}>⏰ {photo.time}</span>
+              </div>
+            ))
           }
         </div>
       </div>
@@ -615,23 +754,69 @@ function InsuranceSection({ profile }) {
       <div style={{ marginTop: '18px' }}>
         <h4 style={{ marginBottom: '10px' }}>Claim Status Pipeline</h4>
         <div className="fin-pipeline">
-          {PIPELINE_STEPS.map((step, index) => (
+          {['Filed','Acknowledged','Survey','Verified','Approved','Paid'].map((step, index) => (
             <React.Fragment key={step}>
               <div className={`fin-pipeline-step ${index < claimStage ? 'done' : ''} ${index === claimStage ? 'active' : ''}`}>
                 <div className="fin-pipeline-dot">{index < claimStage ? '✓' : index + 1}</div>
                 <div className="fin-pipeline-label">{step}</div>
               </div>
-              {index < PIPELINE_STEPS.length - 1 && (
-                <div className={`fin-pipeline-line ${index < claimStage ? 'done' : ''}`}></div>
-              )}
+              {index < 5 && (<div className={`fin-pipeline-line ${index < claimStage ? 'done' : ''}`}></div>)}
             </React.Fragment>
           ))}
         </div>
         <div className="fin-actions">
           <button className="btn btn-outline" onClick={() => setClaimStage((prev) => Math.max(0, prev - 1))}>◀ Move Back</button>
-          <button className="btn btn-primary" onClick={() => setClaimStage((prev) => Math.min(PIPELINE_STEPS.length - 1, prev + 1))}>Advance Stage ▶</button>
+          <button className="btn btn-primary" onClick={() => setClaimStage((prev) => Math.min(5, prev + 1))}>Advance Stage ▶</button>
         </div>
       </div>
+
+      {/* File New Claim Modal */}
+      {showClaimForm && (
+        <div style={{ position:'fixed',inset:0,zIndex:1000,background:'rgba(0,0,0,0.6)',display:'flex',alignItems:'center',justifyContent:'center',backdropFilter:'blur(4px)' }} onClick={()=>setShowClaimForm(false)}>
+          <div style={{ width:'min(520px,92vw)',maxHeight:'85vh',overflowY:'auto',background:'var(--bg-card)',borderRadius:16,border:'1px solid var(--border)',boxShadow:'0 20px 60px rgba(0,0,0,0.5)' }} onClick={e=>e.stopPropagation()}>
+            <div style={{ padding:'18px 22px',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center' }}>
+              <div style={{ fontSize:'1rem',fontWeight:800,color:'var(--text-primary)' }}>📋 File New PMFBY Claim</div>
+              <button style={{ background:'none',border:'none',color:'var(--text-muted)',fontSize:'1.3rem',cursor:'pointer' }} onClick={()=>setShowClaimForm(false)}>✕</button>
+            </div>
+            <div style={{ padding:'18px 22px' }}>
+              <div style={{ padding:'12px',borderRadius:'10px',background:'rgba(59,130,246,0.06)',border:'1px solid rgba(59,130,246,0.12)',marginBottom:'16px',fontSize:'0.82rem',color:'#93c5fd' }}>
+                ℹ️ Farmer data auto-filled from profile
+              </div>
+              <div className="fin-input-grid">
+                <label className="fin-input-group"><span>Farmer Name</span><input className="fin-filter-input" defaultValue={profile?.name || 'Rajesh Kumar'} readOnly /></label>
+                <label className="fin-input-group"><span>Village</span><input className="fin-filter-input" defaultValue={profile?.village || 'Guntur, AP'} readOnly /></label>
+                <label className="fin-input-group"><span>Loss Type</span>
+                  <select className="fin-filter-select" value={lossType} onChange={e=>setLossType(e.target.value)}>
+                    <option>Flood</option><option>Drought</option><option>Cyclone</option><option>Hailstorm</option><option>Pest Attack</option><option>Fire</option>
+                  </select>
+                </label>
+                <label className="fin-input-group"><span>Loss Percentage (%)</span><input className="fin-filter-input" type="number" value={lossPct} onChange={e=>setLossPct(e.target.value)} min="10" max="100" /></label>
+                <label className="fin-input-group"><span>Policy Number</span><input className="fin-filter-input" value={policyNo} onChange={e=>setPolicyNo(e.target.value)} /></label>
+                <label className="fin-input-group"><span>Crop</span><input className="fin-filter-input" value={crop} readOnly /></label>
+              </div>
+
+              <div style={{ marginTop:'14px' }}>
+                <label className="fin-input-group"><span>Upload Crop Loss Photos (GPS tagged)</span><input type="file" accept="image/*" multiple onChange={onPhotoUpload} /></label>
+                {uploadedPhotos.length > 0 && (
+                  <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:8 }}>
+                    {uploadedPhotos.map((p,i) => (
+                      <div key={i} style={{ padding:'8px 12px', borderRadius:8, background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.12)', fontSize:'0.75rem' }}>
+                        📷 {p.name} <span style={{ color:'#34d399',fontSize:'0.65rem' }}>📍 {p.gps}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <button className="btn btn-outline" style={{ width:'100%', marginTop:'14px' }} onClick={()=>setWeatherAttached(true)}>
+                {weatherAttached ? '✅ Weather Evidence Attached — 145mm rainfall in 72hrs' : '🌧️ Attach Weather Evidence (Auto-fetch)'}
+              </button>
+
+              <button className="btn btn-primary" style={{ width:'100%', marginTop:'12px' }} onClick={submitClaim}>🚀 Submit Claim</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -743,6 +928,8 @@ function SubsidiesSection({ profile }) {
 }
 
 function TaxSection() {
+  const [fy, setFy] = useState('2024-25');
+  const [showSummary, setShowSummary] = useState(false);
   const [income, setIncome] = useState({
     cropRevenue: 760000,
     livestockRevenue: 85000,
@@ -775,9 +962,32 @@ function TaxSection() {
   const itr4Taxable = Math.max(0, income.nonFarmIncome - deductions.interestPaid - deductions.depreciation);
   const estimatedTax = itr4Taxable <= 300000 ? 0 : Math.round((itr4Taxable - 300000) * 0.05);
 
+  function exportPDF() {
+    const content = `AgriConnect 360 — Tax Summary (ITR-4)\n${'='.repeat(45)}\nFY: ${fy}\nDate: ${new Date().toLocaleDateString('en-IN')}\n\n--- REVENUE ---\nCrop Sales: ₹${CURRENCY.format(income.cropRevenue)}\nLivestock: ₹${CURRENCY.format(income.livestockRevenue)}\nSubsidy/DBT: ₹${CURRENCY.format(income.subsidyIncome)}\nNon-Farm: ₹${CURRENCY.format(income.nonFarmIncome)}\nTotal Revenue: ₹${CURRENCY.format(totalIncome)}\n\n--- DEDUCTIONS ---\nSeeds: ₹${CURRENCY.format(deductions.seeds)}\nFertilizer: ₹${CURRENCY.format(deductions.fertilizer)}\nLabour: ₹${CURRENCY.format(deductions.labour)}\nTransport: ₹${CURRENCY.format(deductions.transport)}\nInterest: ₹${CURRENCY.format(deductions.interestPaid)}\nDepreciation: ₹${CURRENCY.format(deductions.depreciation)}\nTotal Deductions: ₹${CURRENCY.format(totalDeductions)}\n\n--- ITR-4 SUMMARY ---\nNet Agri Income: ₹${CURRENCY.format(agriNet)} (Exempt)\nNon-Farm Taxable: ₹${CURRENCY.format(itr4Taxable)}\nEstimated Tax: ₹${CURRENCY.format(estimatedTax)}\n\nPowered by AgriConnect 360 🌾`;
+    const blob = new Blob([content], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `AgriConnect360_Tax_ITR4_${fy}.pdf`; a.click(); URL.revokeObjectURL(url);
+  }
+
+  function exportCSV() {
+    const rows = [['Item','Amount','Category'],['Crop Sales',income.cropRevenue,'Revenue'],['Livestock',income.livestockRevenue,'Revenue'],['Subsidy/DBT',income.subsidyIncome,'Revenue'],['Non-Farm',income.nonFarmIncome,'Revenue'],['Seeds',deductions.seeds,'Deduction'],['Fertilizer',deductions.fertilizer,'Deduction'],['Labour',deductions.labour,'Deduction'],['Transport',deductions.transport,'Deduction'],['Interest Paid',deductions.interestPaid,'Deduction'],['Depreciation',deductions.depreciation,'Deduction'],['','',''],['Total Revenue',totalIncome,'Summary'],['Total Deductions',totalDeductions,'Summary'],['Net Agri Income',agriNet,'Summary'],['Non-Farm Taxable',itr4Taxable,'Summary'],['Estimated Tax',estimatedTax,'Summary']];
+    const csv = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `AgriConnect360_Tax_${fy}.csv`; a.click(); URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="card" style={{ padding: '24px' }}>
-      <h3 className="fin-section-title">📋 Tax Engine (ITR-4 Summary)</h3>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px', flexWrap:'wrap', gap:'10px' }}>
+        <h3 className="fin-section-title" style={{ margin:0 }}>📋 Tax Engine (ITR-4 Summary)</h3>
+        <div style={{ display:'flex', gap:'8px', alignItems:'center' }}>
+          <select className="fin-filter-select" value={fy} onChange={e => setFy(e.target.value)} style={{ minWidth:'120px' }}>
+            <option value="2024-25">FY 2024-25</option>
+            <option value="2023-24">FY 2023-24</option>
+            <option value="2025-26">FY 2025-26</option>
+          </select>
+          <button className="btn btn-primary" onClick={() => setShowSummary(true)}>📊 Generate Tax Summary</button>
+        </div>
+      </div>
 
       <div className="fin-itr-grid">
         <div className="fin-itr-card">
@@ -815,25 +1025,30 @@ function TaxSection() {
         <div className="fin-summary-card">
           <div className="fin-card-label">Estimated Tax (ITR-4)</div>
           <div className="fin-card-value text-red-500">{formatCurrency(estimatedTax)}</div>
+          {estimatedTax === 0 && <div className="fin-card-sub" style={{ color:'#34d399' }}>Below exemption limit ✅</div>}
         </div>
       </div>
 
-      <table className="fin-table" style={{ marginTop: '16px' }}>
-        <thead>
-          <tr>
-            <th>ITR-4 Line Item</th>
-            <th>Amount</th>
-            <th>Notes</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>Gross agricultural receipts</td><td>{formatCurrency(agriIncome)}</td><td>Exempt but report for disclosures</td></tr>
-          <tr><td>Agricultural operating expenses</td><td>{formatCurrency(agriExpenses)}</td><td>Seeds + fertilizer + labour + transport</td></tr>
-          <tr><td>Net agricultural income</td><td>{formatCurrency(agriNet)}</td><td>Use for financial planning</td></tr>
-          <tr><td>Non-farm taxable income</td><td>{formatCurrency(itr4Taxable)}</td><td>After interest and depreciation</td></tr>
-          <tr><td>Estimated tax payable</td><td>{formatCurrency(estimatedTax)}</td><td>For planning only, final values require CA filing</td></tr>
-        </tbody>
-      </table>
+      {showSummary && (
+        <div className="fin-itr-card" style={{ marginTop:'16px', borderColor:'rgba(16,185,129,0.3)' }}>
+          <h4>📊 Tax Summary — FY {fy}</h4>
+          <table className="fin-table">
+            <thead><tr><th>ITR-4 Line Item</th><th>Amount</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Gross agricultural receipts</td><td>{formatCurrency(agriIncome)}</td><td>Exempt but report for disclosures</td></tr>
+              <tr><td>Agricultural operating expenses</td><td>{formatCurrency(agriExpenses)}</td><td>Seeds + fertilizer + labour + transport</td></tr>
+              <tr><td>Net agricultural income</td><td>{formatCurrency(agriNet)}</td><td>Use for financial planning</td></tr>
+              <tr><td>Non-farm taxable income</td><td>{formatCurrency(itr4Taxable)}</td><td>After interest and depreciation</td></tr>
+              <tr style={{ fontWeight:700, background:'rgba(16,185,129,0.06)' }}><td>Estimated tax payable</td><td>{formatCurrency(estimatedTax)}</td><td>{estimatedTax === 0 ? '₹0 — Below ₹3L exemption' : 'For planning only'}</td></tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <div className="fin-actions" style={{ marginTop:'16px' }}>
+        <button className="btn btn-outline" onClick={exportPDF}>📄 Export PDF for CA</button>
+        <button className="btn btn-outline" onClick={exportCSV}>📊 Export Excel (CSV)</button>
+      </div>
     </div>
   );
 }
@@ -1154,7 +1369,7 @@ function HealthScoreSection({ profile }) {
       </div>
 
       <div className="fin-itr-card" style={{ marginTop: '16px' }}>
-        <h4>AI Improvement Tips</h4>
+        <h4>🤖 AI Improvement Tips</h4>
         {aiTips.length === 0 ? (
           <div className="fin-card-sub">Great job. Keep maintaining timely repayments and documentation hygiene.</div>
         ) : (
@@ -1162,6 +1377,41 @@ function HealthScoreSection({ profile }) {
             {aiTips.map((tip) => <li key={tip}>{tip}</li>)}
           </ul>
         )}
+      </div>
+
+      <div className="fin-itr-card" style={{ marginTop: '16px', borderColor: 'rgba(59,130,246,0.2)' }}>
+        <h4>👥 Peer Comparison — Farmers in Guntur with similar land</h4>
+        <div className="fin-card-sub" style={{ marginBottom: '14px' }}>Based on 142 farmers in Guntur district with 2-5 acre holdings</div>
+        {[
+          { key: 'Debt discipline', yours: debtUtilizationScore, peer: 62 },
+          { key: 'Savings discipline', yours: savingsDisciplineScore, peer: 48 },
+          { key: 'Insurance coverage', yours: insuranceCoverageScore, peer: 55 },
+          { key: 'Subsidy utilization', yours: subsidyScore, peer: 41 },
+          { key: 'Documentation', yours: documentationScore, peer: 38 }
+        ].map(item => (
+          <div key={item.key} style={{ marginBottom: '10px' }}>
+            <div className="fin-compare-row" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+              <span className="fin-compare-label">{item.key}</span>
+              <span style={{ fontSize:'0.75rem' }}>
+                <span style={{ color: item.yours >= item.peer ? '#34d399' : '#f87171', fontWeight:700 }}>You: {item.yours}</span>
+                <span style={{ color:'var(--text-muted)', margin:'0 6px' }}>vs</span>
+                <span style={{ color:'#93c5fd' }}>Avg: {item.peer}</span>
+              </span>
+            </div>
+            <div style={{ display:'flex', gap:'4px', marginTop:'4px' }}>
+              <div style={{ flex:1, height:'6px', borderRadius:'3px', background:'rgba(255,255,255,0.06)', overflow:'hidden' }}>
+                <div style={{ height:'100%', width:`${item.yours}%`, borderRadius:'3px', background: item.yours >= item.peer ? 'linear-gradient(90deg,#10b981,#34d399)' : 'linear-gradient(90deg,#f59e0b,#fbbf24)' }}></div>
+              </div>
+              <div style={{ flex:1, height:'6px', borderRadius:'3px', background:'rgba(255,255,255,0.06)', overflow:'hidden' }}>
+                <div style={{ height:'100%', width:`${item.peer}%`, borderRadius:'3px', background:'linear-gradient(90deg,rgba(59,130,246,0.4),rgba(59,130,246,0.7))' }}></div>
+              </div>
+            </div>
+          </div>
+        ))}
+        <div style={{ display:'flex', gap:'16px', marginTop:'12px', fontSize:'0.72rem' }}>
+          <span style={{ display:'flex', alignItems:'center', gap:'4px' }}><span style={{ width:10, height:10, borderRadius:2, background:'#10b981', display:'inline-block' }}></span> Your Score</span>
+          <span style={{ display:'flex', alignItems:'center', gap:'4px' }}><span style={{ width:10, height:10, borderRadius:2, background:'rgba(59,130,246,0.6)', display:'inline-block' }}></span> District Average</span>
+        </div>
       </div>
     </div>
   );

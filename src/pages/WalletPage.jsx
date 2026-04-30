@@ -1,137 +1,217 @@
 import React, { useState } from 'react';
 
-const WALLET_DATA = {
-  balance: 12450,
-  coins: 340,
-  transactions: [
-    { id: 1, type: 'credit', amount: 6000, description: 'PM-KISAN Installment (Apr 2025)', date: '2025-04-15', status: 'completed', method: 'DBT' },
-    { id: 2, type: 'debit', amount: 2800, description: 'Fertilizer Purchase — Urea 50kg', date: '2025-04-10', status: 'completed', method: 'UPI' },
-    { id: 3, type: 'credit', amount: 1500, description: 'Crop Insurance Claim Payout', date: '2025-03-28', status: 'completed', method: 'NEFT' },
-    { id: 4, type: 'credit', amount: 500, description: 'Referral Bonus — Invited 5 farmers', date: '2025-03-15', status: 'completed', method: 'Reward' },
-    { id: 5, type: 'debit', amount: 4200, description: 'Transport Booking — Mysuru APMC', date: '2025-03-10', status: 'completed', method: 'Wallet' },
-    { id: 6, type: 'credit', amount: 8000, description: 'Cotton Sale Advance — Hubli Mandi', date: '2025-02-25', status: 'completed', method: 'UPI' },
-    { id: 7, type: 'debit', amount: 3500, description: 'Seeds Purchase — BPT-5204', date: '2025-02-15', status: 'pending', method: 'UPI' },
-  ]
-};
-
-const REWARDS = [
-  { id: 1, title: 'First Sale Bonus', coins: 50, icon: '🎉', earned: true },
-  { id: 2, title: 'Refer a Farmer', coins: 100, icon: '👨‍🌾', earned: true },
-  { id: 3, title: 'Complete Profile', coins: 30, icon: '✅', earned: true },
-  { id: 4, title: 'Soil Test Done', coins: 40, icon: '🧪', earned: false },
-  { id: 5, title: 'First Insurance', coins: 75, icon: '🛡️', earned: false },
-  { id: 6, title: 'Use AI Advisory', coins: 25, icon: '🤖', earned: true },
-  { id: 7, title: '10 Transactions', coins: 100, icon: '💳', earned: false },
-  { id: 8, title: 'Join Community', coins: 20, icon: '🤝', earned: true },
+const COIN_HISTORY = [
+  { id:1, type:'earn', amount:50, desc:'Referred Ramesh Kumar', date:'2026-04-28', icon:'👨‍🌾' },
+  { id:2, type:'earn', amount:50, desc:'Referred Lakshmi Devi', date:'2026-04-22', icon:'👨‍🌾' },
+  { id:3, type:'earn', amount:30, desc:'Posted farming video on Knowledge', date:'2026-04-18', icon:'🎬' },
+  { id:4, type:'spend', amount:-200, desc:'Converted to ₹200 wallet balance', date:'2026-04-15', icon:'💸' },
+  { id:5, type:'earn', amount:30, desc:'Posted paddy tutorial video', date:'2026-04-10', icon:'🎬' },
+  { id:6, type:'earn', amount:50, desc:'Referred Suresh Reddy', date:'2026-04-05', icon:'👨‍🌾' },
+  { id:7, type:'spend', amount:-500, desc:'Purchased Pro Plan (1 Month)', date:'2026-03-28', icon:'💎' },
+  { id:8, type:'earn', amount:30, desc:'Posted cotton harvest video', date:'2026-03-20', icon:'🎬' },
 ];
 
-const REDEEM_OPTIONS = [
-  { label: '₹100 off Seeds', coins: 50, icon: '🌱' },
-  { label: '₹200 off Fertilizer', coins: 100, icon: '🧪' },
-  { label: 'Free Soil Test', coins: 150, icon: '🔬' },
-  { label: '₹500 off Transport', coins: 200, icon: '🚛' },
+const REWARDS = [
+  { id:1, name:'Convert to ₹100', cost:100, icon:'💸', desc:'Convert 100 coins to ₹100 in your bank account' },
+  { id:2, name:'Convert to ₹500', cost:500, icon:'💰', desc:'Convert 500 coins to ₹500 in your bank account' },
+  { id:3, name:'Pro Plan 1 Month', cost:500, icon:'💎', desc:'Unlock AI Advisory + Priority Support + All Premium features' },
+  { id:4, name:'Pro Plan 3 Months', cost:1200, icon:'👑', desc:'3 months premium access at discounted rate (save 300 coins)' },
+  { id:5, name:'₹200 Equipment Rent Off', cost:200, icon:'🚜', desc:'₹200 discount on any equipment rental booking' },
+  { id:6, name:'Free Soil Test', cost:300, icon:'🧪', desc:'Redeem for 1 free soil testing at any partnered lab' },
+];
+
+// ONLY 2 ways to earn — referral and posting knowledge videos
+const EARN_WAYS = [
+  { action:'Refer a new farmer (verified signup)', coins:'+50 🪙', icon:'👨‍🌾', difficulty:'🟡 Medium', desc:'Referred farmer must complete profile and use the app for 7 days' },
+  { action:'Post a farming video on Knowledge hub', coins:'+30 🪙', icon:'🎬', difficulty:'🟡 Medium', desc:'Video must be original, 30sec+, and approved by moderators (24-48hr review)' },
 ];
 
 export default function WalletPage() {
-  const [activeTab, setActiveTab] = useState('transactions');
+  const [tab, setTab] = useState('overview');
+  const [balance] = useState(90);
+  const [totalEarned] = useState(270);
+  const [redeemModal, setRedeemModal] = useState(null);
+  const [referralCode] = useState('AGRI-' + Math.random().toString(36).substring(2,6).toUpperCase());
 
   const tabs = [
-    { id: 'transactions', icon: '💳', label: 'Transactions' },
-    { id: 'rewards', icon: '🏆', label: 'Rewards & Coins' },
-    { id: 'redeem', icon: '🎁', label: 'Redeem' },
+    { id:'overview', label:'🪙 My Coins' },
+    { id:'earn', label:'💰 How to Earn' },
+    { id:'rewards', label:'🎁 Spend Coins' },
+    { id:'history', label:'📋 History' },
   ];
 
   return (
     <div className="animated">
       <div className="section-header">
         <div>
-          <div className="section-title">💳 Credit Wallet & Rewards</div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>Balance management • Coin rewards • Redeemable offers</div>
-        </div>
-        <button className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>+ Add Money</button>
-      </div>
-
-      {/* Wallet Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 20 }}>
-        <div className="card" style={{ padding: '24px', background: 'linear-gradient(135deg, #22c55e15, #3b82f610)', borderLeft: '3px solid #22c55e' }}>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 4 }}>Wallet Balance</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#22c55e' }}>₹{WALLET_DATA.balance.toLocaleString()}</div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>Available for withdrawal</div>
-        </div>
-        <div className="card" style={{ padding: '24px', background: 'linear-gradient(135deg, #f59e0b15, #f97316 10)', borderLeft: '3px solid #f59e0b' }}>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 4 }}>🪙 Agri Coins</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#f59e0b' }}>{WALLET_DATA.coins}</div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>Earn more by completing tasks</div>
-        </div>
-        <div className="card" style={{ padding: '24px', background: 'linear-gradient(135deg, #8b5cf615, #6366f110)', borderLeft: '3px solid #8b5cf6' }}>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 4 }}>Cashback Earned</div>
-          <div style={{ fontSize: '2rem', fontWeight: 800, color: '#8b5cf6' }}>₹1,240</div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>Lifetime rewards</div>
+          <div className="section-title">🪙 Kisan Wallet</div>
+          <div style={{ fontSize:'0.75rem', color:'var(--text-muted)', marginTop:2 }}>Earn by referrals & knowledge videos • Spend on Pro plan & cash</div>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
+      {/* Balance Card */}
+      <div style={{ background:'linear-gradient(135deg, #065f46, #0369a1)', borderRadius:14, padding:'24px 20px', marginBottom:16, position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute', top:-20, right:-20, width:120, height:120, borderRadius:'50%', background:'rgba(255,255,255,0.08)' }} />
+        <div style={{ fontSize:'0.82rem', color:'rgba(255,255,255,0.7)' }}>Available Balance</div>
+        <div style={{ fontSize:'2.8rem', fontWeight:900, color:'#fbbf24', marginTop:4 }}>🪙 {balance}</div>
+        <div style={{ display:'flex', gap:20, marginTop:12 }}>
+          <div>
+            <div style={{ fontSize:'0.72rem', color:'rgba(255,255,255,0.6)' }}>Total Earned</div>
+            <div style={{ fontSize:'1rem', fontWeight:700, color:'#34d399' }}>+{totalEarned} 🪙</div>
+          </div>
+          <div>
+            <div style={{ fontSize:'0.72rem', color:'rgba(255,255,255,0.6)' }}>Spent</div>
+            <div style={{ fontSize:'1rem', fontWeight:700, color:'#f87171' }}>-{totalEarned - balance} 🪙</div>
+          </div>
+        </div>
+        <div style={{ marginTop:10, padding:'6px 14px', background:'rgba(255,255,255,0.1)', borderRadius:8, display:'inline-block', fontSize:'0.75rem', color:'rgba(255,255,255,0.8)' }}>
+          💡 Coins are hard to earn — only by referrals & knowledge videos
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display:'flex', gap:4, marginBottom:16, background:'var(--bg-primary)', borderRadius:10, padding:4 }}>
         {tabs.map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)}
-            style={{ padding: '10px 18px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', border: 'none', fontSize: '0.82rem', fontWeight: 600, background: activeTab === t.id ? 'var(--text-primary)' : 'var(--bg-card)', color: activeTab === t.id ? '#fff' : 'var(--text-muted)', transition: 'all 0.2s' }}>
-            {t.icon} {t.label}
+          <button key={t.id} onClick={() => setTab(t.id)} style={{ flex:1, padding:'8px 4px', borderRadius:8, border:'none', fontSize:'0.75rem', fontWeight:tab === t.id ? 700 : 500, cursor:'pointer', background: tab === t.id ? 'var(--bg-card)' : 'transparent', color: tab === t.id ? '#fbbf24' : 'var(--text-muted)' }}>
+            {t.label}
           </button>
         ))}
       </div>
 
-      {activeTab === 'transactions' && (
-        <div className="card" style={{ padding: '20px' }}>
-          {WALLET_DATA.transactions.map(tx => (
-            <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: tx.type === 'credit' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
-                  {tx.type === 'credit' ? '⬇️' : '⬆️'}
-                </div>
+      {/* OVERVIEW */}
+      {tab === 'overview' && (
+        <div>
+          <div style={{ fontWeight:700, fontSize:'0.9rem', marginBottom:10 }}>🔥 What You Can Do</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginBottom:16 }}>
+            <div className="card" style={{ padding:14, textAlign:'center', cursor:'pointer' }} onClick={() => setTab('earn')}>
+              <div style={{ fontSize:'1.8rem', marginBottom:6 }}>👨‍🌾</div>
+              <div style={{ fontWeight:700, fontSize:'0.82rem' }}>Refer & Earn</div>
+              <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>+50 per referral</div>
+            </div>
+            <div className="card" style={{ padding:14, textAlign:'center', cursor:'pointer' }} onClick={() => setTab('rewards')}>
+              <div style={{ fontSize:'1.8rem', marginBottom:6 }}>💸</div>
+              <div style={{ fontWeight:700, fontSize:'0.82rem' }}>Convert to Cash</div>
+              <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>100 coins = ₹100</div>
+            </div>
+            <div className="card" style={{ padding:14, textAlign:'center', cursor:'pointer' }} onClick={() => setTab('rewards')}>
+              <div style={{ fontSize:'1.8rem', marginBottom:6 }}>💎</div>
+              <div style={{ fontWeight:700, fontSize:'0.82rem' }}>Buy Pro Plan</div>
+              <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>500 coins</div>
+            </div>
+          </div>
+
+          {/* Referral Code */}
+          <div className="card" style={{ padding:16, marginBottom:16, background:'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(139,92,246,0.06))', border:'1px solid rgba(245,158,11,0.2)' }}>
+            <div style={{ fontWeight:700, fontSize:'0.88rem', marginBottom:6 }}>🎟️ Your Referral Code</div>
+            <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+              <div style={{ flex:1, padding:'10px 14px', background:'var(--bg-primary)', borderRadius:8, fontWeight:800, fontSize:'1.1rem', color:'#fbbf24', letterSpacing:2, textAlign:'center' }}>{referralCode}</div>
+              <button onClick={() => { navigator.clipboard?.writeText(referralCode); }} style={{ padding:'10px 14px', borderRadius:8, border:'none', background:'linear-gradient(135deg,#f59e0b,#d97706)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:'0.82rem' }}>📋 Copy</button>
+              <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Join AgriConnect 360! Use my code ${referralCode}. Earn 50 coins each!`)}`)} style={{ padding:'10px 14px', borderRadius:8, border:'none', background:'#25D366', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:'0.82rem' }}>💬 Share</button>
+            </div>
+          </div>
+
+          <div style={{ fontWeight:700, fontSize:'0.9rem', marginBottom:10 }}>📋 Recent Activity</div>
+          {COIN_HISTORY.slice(0, 5).map(h => (
+            <div key={h.id} className="card" style={{ padding:'10px 14px', marginBottom:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                <span style={{ fontSize:'1.3rem' }}>{h.icon}</span>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.88rem' }}>{tx.description}</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{new Date(tx.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} • {tx.method}</div>
+                  <div style={{ fontWeight:600, fontSize:'0.82rem' }}>{h.desc}</div>
+                  <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{new Date(h.date).toLocaleDateString('en-IN')}</div>
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontWeight: 700, fontSize: '1rem', color: tx.type === 'credit' ? '#22c55e' : '#ef4444' }}>
-                  {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+              <span style={{ fontWeight:800, fontSize:'0.9rem', color: h.amount > 0 ? '#34d399' : '#f87171' }}>{h.amount > 0 ? '+' : ''}{h.amount} 🪙</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* EARN — only 2 ways */}
+      {tab === 'earn' && (
+        <div>
+          <div style={{ background:'rgba(245,158,11,0.08)', border:'1px solid rgba(245,158,11,0.2)', borderRadius:12, padding:14, marginBottom:16 }}>
+            <div style={{ fontWeight:700, fontSize:'0.88rem', color:'#fbbf24', marginBottom:4 }}>⚠️ Coins are Exclusive</div>
+            <div style={{ fontSize:'0.78rem', color:'var(--text-muted)', lineHeight:1.6 }}>
+              Kisan Coins are not easy to earn. There are only <strong style={{ color:'#fbbf24' }}>2 ways</strong> to get them — by referring new farmers to the platform, or by posting original farming knowledge videos. This makes coins truly valuable.
+            </div>
+          </div>
+
+          <div style={{ fontWeight:700, fontSize:'0.9rem', marginBottom:10 }}>💰 Ways to Earn Kisan Coins</div>
+          {EARN_WAYS.map((e, i) => (
+            <div key={i} className="card" style={{ padding:18, marginBottom:12 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 }}>
+                <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                  <span style={{ fontSize:'2rem' }}>{e.icon}</span>
+                  <div>
+                    <div style={{ fontWeight:700, fontSize:'0.9rem' }}>{e.action}</div>
+                    <div style={{ fontSize:'0.75rem', color:'var(--text-muted)', marginTop:2 }}>{e.desc}</div>
+                  </div>
                 </div>
-                <span className={`badge ${tx.status === 'completed' ? 'badge-success' : 'badge-warning'}`} style={{ fontSize: '0.65rem' }}>{tx.status}</span>
+                <span style={{ fontWeight:900, fontSize:'1rem', color:'#fbbf24', whiteSpace:'nowrap' }}>{e.coins}</span>
+              </div>
+              <div style={{ display:'flex', gap:8, fontSize:'0.72rem' }}>
+                <span style={{ padding:'3px 10px', borderRadius:8, background:'rgba(245,158,11,0.1)', color:'#f59e0b', fontWeight:600 }}>{e.difficulty}</span>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {activeTab === 'rewards' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
-          {REWARDS.map(r => (
-            <div key={r.id} className="card" style={{ padding: '18px', textAlign: 'center', opacity: r.earned ? 1 : 0.5, transition: 'transform 0.2s' }}
-              onMouseEnter={ev => { ev.currentTarget.style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={ev => { ev.currentTarget.style.transform = ''; }}>
-              <div style={{ fontSize: '2rem', marginBottom: 8 }}>{r.icon}</div>
-              <div style={{ fontWeight: 700, fontSize: '0.85rem', marginBottom: 4 }}>{r.title}</div>
-              <div style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.9rem' }}>🪙 {r.coins}</div>
-              {r.earned ? <span className="badge badge-success" style={{ marginTop: 8, fontSize: '0.65rem' }}>✓ Earned</span> :
-                <span className="badge badge-warning" style={{ marginTop: 8, fontSize: '0.65rem' }}>Locked</span>}
+      {/* REWARDS / SPEND */}
+      {tab === 'rewards' && (
+        <div>
+          <div style={{ fontWeight:700, fontSize:'0.9rem', marginBottom:10 }}>🎁 Spend Your Coins</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(260px, 1fr))', gap:12 }}>
+            {REWARDS.map(r => (
+              <div key={r.id} className="card" style={{ padding:16 }}>
+                <div style={{ textAlign:'center', fontSize:'2.5rem', marginBottom:8 }}>{r.icon}</div>
+                <div style={{ fontWeight:700, fontSize:'0.9rem', textAlign:'center' }}>{r.name}</div>
+                <div style={{ fontSize:'0.75rem', color:'var(--text-muted)', textAlign:'center', marginTop:4 }}>{r.desc}</div>
+                <div style={{ textAlign:'center', marginTop:8 }}>
+                  <span style={{ fontWeight:800, fontSize:'1rem', color:'#fbbf24' }}>{r.cost} 🪙</span>
+                </div>
+                <button onClick={() => setRedeemModal(r)} disabled={balance < r.cost}
+                  style={{ width:'100%', marginTop:10, padding:'8px', borderRadius:8, border:'none', fontWeight:700, fontSize:'0.82rem', cursor: balance >= r.cost ? 'pointer' : 'not-allowed', background: balance >= r.cost ? 'linear-gradient(135deg,#f59e0b,#d97706)' : 'rgba(255,255,255,0.05)', color: balance >= r.cost ? '#fff' : 'var(--text-muted)' }}>
+                  {balance >= r.cost ? '🎁 Redeem' : `🔒 Need ${r.cost - balance} more`}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* HISTORY */}
+      {tab === 'history' && (
+        <div>
+          <div style={{ fontWeight:700, fontSize:'0.9rem', marginBottom:10 }}>📋 Full Transaction History</div>
+          {COIN_HISTORY.map(h => (
+            <div key={h.id} className="card" style={{ padding:'10px 14px', marginBottom:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+                <span style={{ fontSize:'1.3rem' }}>{h.icon}</span>
+                <div>
+                  <div style={{ fontWeight:600, fontSize:'0.82rem' }}>{h.desc}</div>
+                  <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{new Date(h.date).toLocaleDateString('en-IN')}</div>
+                </div>
+              </div>
+              <span style={{ fontWeight:800, fontSize:'0.9rem', color: h.amount > 0 ? '#34d399' : '#f87171' }}>{h.amount > 0 ? '+' : ''}{h.amount} 🪙</span>
             </div>
           ))}
         </div>
       )}
 
-      {activeTab === 'redeem' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
-          {REDEEM_OPTIONS.map(r => (
-            <div key={r.label} className="card" style={{ padding: '20px', textAlign: 'center', transition: 'transform 0.2s' }}
-              onMouseEnter={ev => { ev.currentTarget.style.transform = 'translateY(-2px)'; }}
-              onMouseLeave={ev => { ev.currentTarget.style.transform = ''; }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: 10 }}>{r.icon}</div>
-              <div style={{ fontWeight: 700, fontSize: '0.9rem', marginBottom: 6 }}>{r.label}</div>
-              <div style={{ color: '#f59e0b', fontWeight: 700, fontSize: '0.85rem', marginBottom: 12 }}>🪙 {r.coins} coins</div>
-              <button className="btn btn-primary" style={{ width: '100%', padding: '8px', fontSize: '0.82rem' }}
-                disabled={WALLET_DATA.coins < r.coins}>Redeem</button>
+      {/* Redeem Modal */}
+      {redeemModal && (
+        <div style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,0.65)', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)' }} onClick={() => setRedeemModal(null)}>
+          <div className="card" style={{ width:360, padding:24, textAlign:'center' }} onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize:'3rem', marginBottom:12 }}>{redeemModal.icon}</div>
+            <div style={{ fontWeight:800, fontSize:'1.1rem', marginBottom:6 }}>{redeemModal.name}</div>
+            <div style={{ fontSize:'0.82rem', color:'var(--text-muted)', marginBottom:12 }}>{redeemModal.desc}</div>
+            <div style={{ fontSize:'1.2rem', fontWeight:800, color:'#fbbf24', marginBottom:16 }}>{redeemModal.cost} 🪙</div>
+            <div style={{ display:'flex', gap:8 }}>
+              <button onClick={() => { alert('✅ Reward redeemed! Check your notifications.'); setRedeemModal(null); }} style={{ flex:1, padding:10, borderRadius:8, border:'none', background:'linear-gradient(135deg,#f59e0b,#d97706)', color:'#fff', fontWeight:700, cursor:'pointer' }}>✅ Confirm</button>
+              <button onClick={() => setRedeemModal(null)} style={{ flex:1, padding:10, borderRadius:8, border:'1px solid var(--border)', background:'transparent', color:'var(--text-primary)', cursor:'pointer' }}>Cancel</button>
             </div>
-          ))}
+          </div>
         </div>
       )}
     </div>

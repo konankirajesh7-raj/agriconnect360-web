@@ -1,14 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+const AP_DISTRICTS = ['All Locations','Guntur','Krishna','Anantapur','Chittoor','Kurnool','Prakasam','Nellore','East Godavari','West Godavari','Visakhapatnam','Vizianagaram','Srikakulam','Kadapa'];
+const DISTRICT_COORDS = [
+  { n:'Guntur', lat:16.3067, lon:80.4365 }, { n:'Krishna', lat:16.5062, lon:80.6480 },
+  { n:'Anantapur', lat:14.6819, lon:77.6006 }, { n:'Chittoor', lat:13.2172, lon:79.1003 },
+  { n:'Kurnool', lat:15.8281, lon:78.0373 }, { n:'Prakasam', lat:15.5057, lon:80.0499 },
+  { n:'Nellore', lat:14.4426, lon:79.9865 }, { n:'East Godavari', lat:17.0005, lon:81.8040 },
+  { n:'West Godavari', lat:16.9174, lon:81.3399 }, { n:'Visakhapatnam', lat:17.6868, lon:83.2185 },
+  { n:'Vizianagaram', lat:18.1067, lon:83.3956 }, { n:'Srikakulam', lat:18.2949, lon:83.8935 },
+  { n:'Kadapa', lat:14.4674, lon:78.8241 },
+];
 
 const EQ = [
-  { id:1, name:'Tractor (45HP)', type:'Tractor', brand:'Mahindra 575', rate:1200, unit:'hr', available:true, condition:'Excellent', location:'Guntur', owner:'Rajesh K.', phone:'98765 00001', rating:4.7, reviews:23, totalHours:1240, desc:'Heavy-duty Mahindra tractor ideal for deep plowing, land preparation and transportation. Comes with operator.' },
-  { id:2, name:'Power Sprayer', type:'Spraying', brand:'Honda GX35', rate:450, unit:'hr', available:true, condition:'Good', location:'Narasaraopet', owner:'Suresh M.', phone:'98765 00002', rating:4.5, reviews:15, totalHours:340, desc:'Motorized power sprayer with 20L tank capacity. Suitable for pesticide and fertilizer spraying on all crops.' },
-  { id:3, name:'Rotavator', type:'Tillage', brand:'Fieldking FKROT', rate:900, unit:'hr', available:true, condition:'Good', location:'Tenali', owner:'Anil P.', phone:'98765 00003', rating:4.3, reviews:8, totalHours:580, desc:'6-foot rotavator for fine seedbed preparation. Compatible with 45HP+ tractors.' },
-  { id:4, name:'Harvester (Custom)', type:'Harvesting', brand:'John Deere W70', rate:2800, unit:'acre', available:true, condition:'Excellent', location:'Kurnool', owner:'Vijay D.', phone:'98765 00004', rating:4.9, reviews:31, totalHours:2100, desc:'Self-propelled combine harvester for paddy and wheat. Includes grain tank and straw spreader.' },
-  { id:5, name:'Seed Drill', type:'Sowing', brand:'National Agro ND9', rate:600, unit:'hr', available:false, condition:'Good', location:'Ongole', owner:'Ramesh B.', phone:'98765 00005', rating:4.2, reviews:6, totalHours:210, desc:'9-row seed drill with fertilizer attachment. Suitable for paddy, wheat, maize.' },
-  { id:6, name:'Thresher', type:'Harvesting', brand:'VST ST-1500', rate:800, unit:'hr', available:true, condition:'Fair', location:'Nellore', owner:'Mohan S.', phone:'98765 00006', rating:4.0, reviews:12, totalHours:460, desc:'Paddy thresher with 1500kg/hr capacity. Reduces post-harvest losses.' },
-  { id:7, name:'Mini Tractor (25HP)', type:'Tractor', brand:'Kubota B2441', rate:800, unit:'hr', available:true, condition:'Excellent', location:'Guntur', owner:'Lakshmi A.', phone:'98765 00007', rating:4.6, reviews:19, totalHours:890, desc:'Compact tractor for garden, orchard and inter-cultivation operations. Easy to maneuver.' },
-  { id:8, name:'Drip Irrigation Kit', type:'Irrigation', brand:'Jain Irrigation', rate:300, unit:'hr', available:true, condition:'Good', location:'Vijayawada', owner:'Krishna R.', phone:'98765 00008', rating:4.4, reviews:11, totalHours:120, desc:'Complete drip irrigation setup for 1 acre. Includes pumps, pipes, drippers and filter.' },
+  { id:1, name:'Tractor (45HP)', type:'Tractor', brand:'Mahindra 575', rate:1200, unit:'hr', available:true, condition:'Excellent', location:'Guntur', district:'Guntur', owner:'Rajesh K.', phone:'98765 00001', rating:4.7, reviews:23, totalHours:1240, desc:'Heavy-duty Mahindra tractor ideal for deep plowing, land preparation and transportation. Comes with operator.' },
+  { id:2, name:'Power Sprayer', type:'Spraying', brand:'Honda GX35', rate:450, unit:'hr', available:true, condition:'Good', location:'Narasaraopet', district:'Guntur', owner:'Suresh M.', phone:'98765 00002', rating:4.5, reviews:15, totalHours:340, desc:'Motorized power sprayer with 20L tank capacity. Suitable for pesticide and fertilizer spraying on all crops.' },
+  { id:3, name:'Rotavator', type:'Tillage', brand:'Fieldking FKROT', rate:900, unit:'hr', available:true, condition:'Good', location:'Tenali', district:'Guntur', owner:'Anil P.', phone:'98765 00003', rating:4.3, reviews:8, totalHours:580, desc:'6-foot rotavator for fine seedbed preparation. Compatible with 45HP+ tractors.' },
+  { id:4, name:'Harvester (Custom)', type:'Harvesting', brand:'John Deere W70', rate:2800, unit:'acre', available:true, condition:'Excellent', location:'Kurnool', district:'Kurnool', owner:'Vijay D.', phone:'98765 00004', rating:4.9, reviews:31, totalHours:2100, desc:'Self-propelled combine harvester for paddy and wheat. Includes grain tank and straw spreader.' },
+  { id:5, name:'Seed Drill', type:'Sowing', brand:'National Agro ND9', rate:600, unit:'hr', available:false, condition:'Good', location:'Ongole', district:'Prakasam', owner:'Ramesh B.', phone:'98765 00005', rating:4.2, reviews:6, totalHours:210, desc:'9-row seed drill with fertilizer attachment. Suitable for paddy, wheat, maize.' },
+  { id:6, name:'Thresher', type:'Harvesting', brand:'VST ST-1500', rate:800, unit:'hr', available:true, condition:'Fair', location:'Nellore', district:'Nellore', owner:'Mohan S.', phone:'98765 00006', rating:4.0, reviews:12, totalHours:460, desc:'Paddy thresher with 1500kg/hr capacity. Reduces post-harvest losses.' },
+  { id:7, name:'Mini Tractor (25HP)', type:'Tractor', brand:'Kubota B2441', rate:800, unit:'hr', available:true, condition:'Excellent', location:'Guntur', district:'Guntur', owner:'Lakshmi A.', phone:'98765 00007', rating:4.6, reviews:19, totalHours:890, desc:'Compact tractor for garden, orchard and inter-cultivation operations. Easy to maneuver.' },
+  { id:8, name:'Drip Irrigation Kit', type:'Irrigation', brand:'Jain Irrigation', rate:300, unit:'hr', available:true, condition:'Good', location:'Vijayawada', district:'Krishna', owner:'Krishna R.', phone:'98765 00008', rating:4.4, reviews:11, totalHours:120, desc:'Complete drip irrigation setup for 1 acre. Includes pumps, pipes, drippers and filter.' },
+  { id:9, name:'Power Tiller', type:'Tillage', brand:'VST Shakti 130DI', rate:700, unit:'hr', available:true, condition:'Good', location:'Vizianagaram', district:'Vizianagaram', owner:'Srinivasa R.', phone:'98765 00009', rating:4.3, reviews:9, totalHours:420, desc:'Versatile power tiller for wetland and dryland. Ideal for small paddy fields.' },
+  { id:10, name:'Boom Sprayer', type:'Spraying', brand:'Bayer CropScience', rate:600, unit:'hr', available:true, condition:'Excellent', location:'Visakhapatnam', district:'Visakhapatnam', owner:'Durga P.', phone:'98765 00010', rating:4.6, reviews:14, totalHours:280, desc:'Tractor-mounted boom sprayer covering 12m width. Perfect for large-scale operations.' },
+  { id:11, name:'Mango Harvester', type:'Harvesting', brand:'Custom Build', rate:500, unit:'hr', available:true, condition:'Good', location:'Chittoor', district:'Chittoor', owner:'Subramanyam K.', phone:'98765 00011', rating:4.5, reviews:18, totalHours:350, desc:'Specialized mango harvesting tool with telescopic poles and cushioned nets.' },
+  { id:12, name:'Coconut Climber', type:'Harvesting', brand:'Kera-Bot V2', rate:400, unit:'hr', available:true, condition:'Excellent', location:'Kakinada', district:'East Godavari', owner:'Nageswara R.', phone:'98765 00012', rating:4.7, reviews:22, totalHours:180, desc:'Robotic coconut tree climbing machine. Safe and efficient coconut harvesting.' },
+  { id:13, name:'Tractor (35HP)', type:'Tractor', brand:'Sonalika DI-35', rate:900, unit:'hr', available:true, condition:'Good', location:'Anantapur', district:'Anantapur', owner:'Nagappa M.', phone:'98765 00013', rating:4.2, reviews:7, totalHours:560, desc:'Compact tractor suitable for dryland farming. Fuel efficient and reliable.' },
+  { id:14, name:'Groundnut Digger', type:'Harvesting', brand:'Agromaster GD200', rate:650, unit:'hr', available:true, condition:'Good', location:'Kadapa', district:'Kadapa', owner:'Obul Reddy', phone:'98765 00014', rating:4.4, reviews:10, totalHours:290, desc:'Tractor-operated groundnut digger for efficient harvesting. Minimal crop damage.' },
 ];
 const CATS = ['All','Tractor','Tillage','Spraying','Sowing','Harvesting','Irrigation'];
 const ICONS = { Tractor:'🚜', Tillage:'⚙️', Spraying:'💧', Sowing:'🌱', Harvesting:'🌾', Irrigation:'🔧', All:'📋' };
@@ -33,12 +50,25 @@ export default function EquipmentPage() {
   const [confirmed, setConfirmed] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [sort, setSort] = useState('rating');
+  const [locFilter, setLocFilter] = useState('All Locations');
+  const [gpsDistrict, setGpsDistrict] = useState('');
   const [bookingHistory, setBookingHistory] = useState([
     { ref:'EQ-DEMO01', equipment:'Harvester (Custom)', type:'Harvesting', date:'2026-04-18', days:'3 acres', total:8400, payment:'upi', status:'confirmed', owner:'Vijay D.' },
     { ref:'EQ-DEMO02', equipment:'Power Sprayer', type:'Spraying', date:'2026-04-10', days:'2d × 4h', total:3600, payment:'cash', status:'confirmed', owner:'Suresh M.' },
   ]);
 
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const lat = pos.coords.latitude, lon = pos.coords.longitude;
+      let best = DISTRICT_COORDS[0], minD = Infinity;
+      DISTRICT_COORDS.forEach(d => { const dd = (d.lat-lat)**2 + (d.lon-lon)**2; if (dd < minD) { minD = dd; best = d; } });
+      setGpsDistrict(best.n); setLocFilter(best.n);
+    }, () => {}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+  }, []);
+
   let list = filter==='All' ? EQ : EQ.filter(e=>e.type===filter);
+  if (locFilter !== 'All Locations') list = list.filter(e => e.district === locFilter);
   if (search) list = list.filter(e=>e.name.toLowerCase().includes(search.toLowerCase())||e.location.toLowerCase().includes(search.toLowerCase())||e.brand.toLowerCase().includes(search.toLowerCase()));
   if (sort==='rating') list = [...list].sort((a,b)=>b.rating-a.rating);
   if (sort==='price_asc') list = [...list].sort((a,b)=>a.rate-b.rate);
@@ -151,7 +181,12 @@ export default function EquipmentPage() {
 
       {/* Search + Filter + Sort */}
       <div style={{ display:'flex', gap:10, marginBottom:20, flexWrap:'wrap', alignItems:'center' }}>
-        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search equipment, location, brand..." style={{ ...INP, flex:'1 1 220px', minWidth:200 }}/>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Search equipment, location, brand..." style={{ ...INP, flex:'1 1 180px', minWidth:160 }}/>
+        <select value={locFilter} onChange={e => setLocFilter(e.target.value)}
+          style={{ ...INP, width:160 }}>
+          {AP_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+        {gpsDistrict && <span style={{ fontSize:'0.72rem', color:'#22c55e', fontWeight:600 }}>📍 {gpsDistrict}</span>}
         <select value={sort} onChange={e=>setSort(e.target.value)} style={{ ...INP, width:160 }}>
           <option value="rating">Sort: Top Rated</option>
           <option value="price_asc">Sort: Price ↑</option>

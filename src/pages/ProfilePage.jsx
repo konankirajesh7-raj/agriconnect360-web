@@ -1,5 +1,5 @@
-﻿/**
- * Phase 11B — Farmer Profile Page (10 tasks)
+/**
+ * Phase 11B � Farmer Profile Page (10 tasks)
  * - Profile photo upload (Cloudinary)
  * - Edit profile info
  * - Farm summary card (acres, crops, income)
@@ -22,29 +22,29 @@ import {
   setStoredFPOMember,
 } from '../lib/phase11Persistence';
 
-// ── Constants ────────────────────────────────────────────────────────
+// -- Constants --------------------------------------------------------
 const BADGES = [
-  { id: 'first_login', icon: '🌱', label: 'First Login', desc: 'Welcome to AgriConnect 360', earned: true },
-  { id: 'profile_complete', icon: '✅', label: 'Profile Complete', desc: 'Completed onboarding wizard', earned: true },
-  { id: '5_crops', icon: '🌾', label: 'Crop Master', desc: 'Track 5+ crops', earned: false },
-  { id: 'ai_user', icon: '🤖', label: 'AI Explorer', desc: 'Asked 10+ AI questions', earned: false },
-  { id: 'market_watcher', icon: '📈', label: 'Market Watcher', desc: 'Checked prices 50+ times', earned: true },
-  { id: 'community_star', icon: '⭐', label: 'Community Star', desc: 'Posted 5+ in community', earned: false },
-  { id: 'scheme_pro', icon: '🏛️', label: 'Scheme Pro', desc: 'Applied for 3+ schemes', earned: true },
-  { id: 'top_earner', icon: '💰', label: 'Top Earner', desc: 'Revenue ₹1 Lakh+', earned: false },
-  { id: 'green_farmer', icon: '🌿', label: 'Green Farmer', desc: 'Used organic methods', earned: true },
-  { id: 'tech_savvy', icon: '📱', label: 'Tech Savvy', desc: 'Used all app features', earned: false },
+  { id: 'first_login', icon: '??', label: 'First Login', desc: 'Welcome to AgriConnect 360', earned: true },
+  { id: 'profile_complete', icon: '?', label: 'Profile Complete', desc: 'Completed onboarding wizard', earned: true },
+  { id: '5_crops', icon: '??', label: 'Crop Master', desc: 'Track 5+ crops', earned: false },
+  { id: 'ai_user', icon: '??', label: 'AI Explorer', desc: 'Asked 10+ AI questions', earned: false },
+  { id: 'market_watcher', icon: '??', label: 'Market Watcher', desc: 'Checked prices 50+ times', earned: true },
+  { id: 'community_star', icon: '?', label: 'Community Star', desc: 'Posted 5+ in community', earned: false },
+  { id: 'scheme_pro', icon: '???', label: 'Scheme Pro', desc: 'Applied for 3+ schemes', earned: true },
+  { id: 'top_earner', icon: '??', label: 'Top Earner', desc: 'Revenue ?1 Lakh+', earned: false },
+  { id: 'green_farmer', icon: '??', label: 'Green Farmer', desc: 'Used organic methods', earned: true },
+  { id: 'tech_savvy', icon: '??', label: 'Tech Savvy', desc: 'Used all app features', earned: false },
 ];
 
 const TIMELINE_EVENTS = [
-  { date: '2026-04-20', icon: '🌱', title: 'Joined AgriConnect 360', type: 'milestone' },
-  { date: '2026-04-18', icon: '🌾', title: 'Registered 3 fields (12.5 acres)', type: 'farm' },
-  { date: '2026-04-15', icon: '🌿', title: 'Paddy sowing completed — North Field', type: 'crop' },
-  { date: '2026-04-10', icon: '💰', title: 'Sold Cotton — ₹72,000 at Guntur APMC', type: 'sale' },
-  { date: '2026-04-05', icon: '🧪', title: 'Soil test — pH 6.8, Good health', type: 'test' },
-  { date: '2026-03-28', icon: '🛡️', title: 'PMFBY claim approved — ₹42,000', type: 'scheme' },
-  { date: '2026-03-15', icon: '🌧️', title: 'Heavy rain alert — crops safe', type: 'weather' },
-  { date: '2026-03-01', icon: '🚜', title: 'Equipment rental — Tractor for plowing', type: 'service' },
+  { date: '2026-04-20', icon: '??', title: 'Joined AgriConnect 360', type: 'milestone' },
+  { date: '2026-04-18', icon: '??', title: 'Registered 3 fields (12.5 acres)', type: 'farm' },
+  { date: '2026-04-15', icon: '??', title: 'Paddy sowing completed � North Field', type: 'crop' },
+  { date: '2026-04-10', icon: '??', title: 'Sold Cotton � ?72,000 at Guntur APMC', type: 'sale' },
+  { date: '2026-04-05', icon: '??', title: 'Soil test � pH 6.8, Good health', type: 'test' },
+  { date: '2026-03-28', icon: '???', title: 'PMFBY claim approved � ?42,000', type: 'scheme' },
+  { date: '2026-03-15', icon: '???', title: 'Heavy rain alert � crops safe', type: 'weather' },
+  { date: '2026-03-01', icon: '??', title: 'Equipment rental � Tractor for plowing', type: 'service' },
 ];
 
 const PIE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316'];
@@ -333,19 +333,19 @@ export default function ProfilePage() {
   const update = (k, v) => setForm(prev => ({ ...prev, [k]: v }));
 
   const linkedSchemes = [
-    { name: 'PM-KISAN', status: 'active', amount: '₹6,000/yr', icon: '🏛️' },
-    { name: 'PMFBY', status: 'active', amount: '₹42,000 claimed', icon: '🛡️' },
-    { name: 'KCC', status: 'pending', amount: '₹3,00,000 limit', icon: '🏦' },
-    { name: 'Rythu Bandhu', status: 'active', amount: '₹10,000/season', icon: '🌾' },
+    { name: 'PM-KISAN', status: 'active', amount: '?6,000/yr', icon: '???' },
+    { name: 'PMFBY', status: 'active', amount: '?42,000 claimed', icon: '???' },
+    { name: 'KCC', status: 'pending', amount: '?3,00,000 limit', icon: '??' },
+    { name: 'Rythu Bandhu', status: 'active', amount: '?10,000/season', icon: '??' },
   ];
 
   const farmHealthScore = 78;
   const healthMetrics = [
-    { label: 'Soil Health', score: 82, icon: '🧪' },
-    { label: 'Crop Diversity', score: 70, icon: '🌱' },
-    { label: 'Water Usage', score: 65, icon: '💧' },
-    { label: 'Income Stability', score: 85, icon: '💰' },
-    { label: 'Tech Adoption', score: 88, icon: '📱' },
+    { label: 'Soil Health', score: 82, icon: '??' },
+    { label: 'Crop Diversity', score: 70, icon: '??' },
+    { label: 'Water Usage', score: 65, icon: '??' },
+    { label: 'Income Stability', score: 85, icon: '??' },
+    { label: 'Tech Adoption', score: 88, icon: '??' },
   ];
 
   const monthlyData = [
@@ -499,7 +499,7 @@ export default function ProfilePage() {
         ctx.fillRect(436, 86, 138, 138);
         ctx.drawImage(qrImage, 440, 90, 130, 130);
       } catch {
-        ctx.fillStyle = '#1e2533';
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
         ctx.fillRect(440, 90, 130, 130);
         ctx.fillStyle = '#64748b';
         ctx.font = '12px Inter, sans-serif';
@@ -571,37 +571,37 @@ export default function ProfilePage() {
   const rc=ROLE_COLOR[role]||'#22c55e';
   const ROLE_LABEL={farmer:'Farmer',fpo:'FPO Manager',industrial:'Industrial Buyer',supplier:'Input Supplier',broker:'Broker/Trader',labour:'Farm Labour'};
   const SCORE_METRICS={
-    industrial:[{l:'Procurement',s:87,i:'📦'},{l:'Quality Rate',s:94,i:'🧪'},{l:'Payment Speed',s:82,i:'💳'},{l:'Farmer Relations',s:91,i:'🤝'},{l:'On-Time',s:94,i:'🚚'}],
-    supplier:[{l:'Stock Health',s:78,i:'📊'},{l:'Customer Rating',s:90,i:'⭐'},{l:'Order Fulfillment',s:85,i:'🛒'},{l:'Revenue Growth',s:72,i:'📈'},{l:'Delivery',s:88,i:'🚚'}],
-    broker:[{l:'Deal Success',s:83,i:'🤝'},{l:'Network',s:76,i:'🌐'},{l:'Margin',s:88,i:'💰'},{l:'Farmer Trust',s:92,i:'👨‍🌾'},{l:'Market Coverage',s:79,i:'📍'}],
-    labour:[{l:'Attendance',s:95,i:'📅'},{l:'Skill Score',s:80,i:'🎯'},{l:'Employer Rating',s:90,i:'⭐'},{l:'Earnings Growth',s:74,i:'📈'},{l:'Certifications',s:66,i:'📜'}],
-    farmer:[{l:'Soil Health',s:82,i:'🧪'},{l:'Crop Diversity',s:70,i:'🌱'},{l:'Water Usage',s:65,i:'💧'},{l:'Income Stability',s:85,i:'💰'},{l:'Tech Adoption',s:88,i:'📱'}],
+    industrial:[{l:'Procurement',s:87,i:'??'},{l:'Quality Rate',s:94,i:'??'},{l:'Payment Speed',s:82,i:'??'},{l:'Farmer Relations',s:91,i:'??'},{l:'On-Time',s:94,i:'??'}],
+    supplier:[{l:'Stock Health',s:78,i:'??'},{l:'Customer Rating',s:90,i:'?'},{l:'Order Fulfillment',s:85,i:'??'},{l:'Revenue Growth',s:72,i:'??'},{l:'Delivery',s:88,i:'??'}],
+    broker:[{l:'Deal Success',s:83,i:'??'},{l:'Network',s:76,i:'??'},{l:'Margin',s:88,i:'??'},{l:'Farmer Trust',s:92,i:'?????'},{l:'Market Coverage',s:79,i:'??'}],
+    labour:[{l:'Attendance',s:95,i:'??'},{l:'Skill Score',s:80,i:'??'},{l:'Employer Rating',s:90,i:'?'},{l:'Earnings Growth',s:74,i:'??'},{l:'Certifications',s:66,i:'??'}],
+    farmer:[{l:'Soil Health',s:82,i:'??'},{l:'Crop Diversity',s:70,i:'??'},{l:'Water Usage',s:65,i:'??'},{l:'Income Stability',s:85,i:'??'},{l:'Tech Adoption',s:88,i:'??'}],
   };
   const sm=SCORE_METRICS[role]||SCORE_METRICS.farmer;
   const healthScore=Math.round(sm.reduce((a,m)=>a+m.s,0)/sm.length);
   const scoreLabel={farmer:'Farm Health',fpo:'FPO Health',industrial:'Business Score',supplier:'Shop Score',broker:'Deal Score',labour:'Work Score'}[role]||'Score';
 
   const ROLE_OVERVIEW={
-    industrial:{stats:[{v:'₹4.82Cr',l:'Procurement FY26'},{v:'847',l:'Farmer Partners'},{v:'87%',l:'Grade A Rate'}],groups:[{t:'Procurement Targets',i:'📦',items:['Cotton: 3,200/5,000 Q (64%)','Sugarcane: 14,500/20,000 T (72%)','Paddy: 7,100/8,000 Q (89%)']},{t:'Payment Summary',i:'💳',items:['Confirmed: ₹2,17,600','Processing: ₹6,63,700','Total: ₹8,81,300']},{t:'Factory Info',i:'🏭',items:['Sri Venkateshwara Cotton Inds.','Guntur, Andhra Pradesh','ISO 9001 · FSSAI · BIS']}]},
-    supplier:{stats:[{v:'₹2.45L',l:'Revenue MTD'},{v:'5',l:'Products Listed'},{v:'⭐4.5',l:'Rating'}],groups:[{t:'Inventory',i:'📦',items:['Cotton Seeds: 340 pkts ✅','DAP 50kg: 120 bags ✅','Neem Oil: 85 bottles ⚠️']},{t:'Recent Orders',i:'🛒',items:['ORD-501: Ramaiah Naidu ₹3,498','ORD-502: Lakshmi Devi ₹4,250','ORD-503: Suresh Kumar ₹5,760']},{t:'Shop Info',i:'🏪',items:['Sri Sai Agri Centre, Guntur','Delivery: 25 km radius','Hours: 8 AM – 7 PM']}]},
-    broker:{stats:[{v:'₹6.1L',l:'Commission MTD'},{v:'4',l:'Active Deals'},{v:'⭐4.7',l:'Rating'}],groups:[{t:'Active Deals',i:'🤝',items:['Cotton 80Q → Deccan Foods','Paddy 150Q → AP Rice Mills','Chilli 30Q → Guntur Traders']},{t:'Network',i:'🌐',items:['23 Farmers','11 Buyers','8 Mandis covered']},{t:'Transport',i:'🚛',items:['Guntur→Hyderabad (En Route)','Vijayawada→Chennai (Booked)','Kurnool→Bangalore (Available)']}]},
-    labour:{stats:[{v:'₹25.1K',l:'Earnings MTD'},{v:'18',l:'Days Worked'},{v:'⭐4.8',l:'Rating'}],groups:[{t:'This Week',i:'💼',items:['Apr 25: Paddy Harvesting','Apr 26: Field Ploughing','Apr 27: Sugarcane Cutting']},{t:'Top Skills',i:'🎯',items:['Paddy Harvesting (90%)','Ploughing (85%)','Pesticide Spraying (75%)']},{t:'Welfare',i:'🏛️',items:['PM Shram Yogi: Enrolled','BOCW Fund: Active','e-Shram ID: UW-AP-123456']}]},
+    industrial:{stats:[{v:'?4.82Cr',l:'Procurement FY26'},{v:'847',l:'Farmer Partners'},{v:'87%',l:'Grade A Rate'}],groups:[{t:'Procurement Targets',i:'??',items:['Cotton: 3,200/5,000 Q (64%)','Sugarcane: 14,500/20,000 T (72%)','Paddy: 7,100/8,000 Q (89%)']},{t:'Payment Summary',i:'??',items:['Confirmed: ?2,17,600','Processing: ?6,63,700','Total: ?8,81,300']},{t:'Factory Info',i:'??',items:['Sri Venkateshwara Cotton Inds.','Guntur, Andhra Pradesh','ISO 9001 � FSSAI � BIS']}]},
+    supplier:{stats:[{v:'?2.45L',l:'Revenue MTD'},{v:'5',l:'Products Listed'},{v:'?4.5',l:'Rating'}],groups:[{t:'Inventory',i:'??',items:['Cotton Seeds: 340 pkts ?','DAP 50kg: 120 bags ?','Neem Oil: 85 bottles ??']},{t:'Recent Orders',i:'??',items:['ORD-501: Ramaiah Naidu ?3,498','ORD-502: Lakshmi Devi ?4,250','ORD-503: Suresh Kumar ?5,760']},{t:'Shop Info',i:'??',items:['Sri Sai Agri Centre, Guntur','Delivery: 25 km radius','Hours: 8 AM � 7 PM']}]},
+    broker:{stats:[{v:'?6.1L',l:'Commission MTD'},{v:'4',l:'Active Deals'},{v:'?4.7',l:'Rating'}],groups:[{t:'Active Deals',i:'??',items:['Cotton 80Q ? Deccan Foods','Paddy 150Q ? AP Rice Mills','Chilli 30Q ? Guntur Traders']},{t:'Network',i:'??',items:['23 Farmers','11 Buyers','8 Mandis covered']},{t:'Transport',i:'??',items:['Guntur?Hyderabad (En Route)','Vijayawada?Chennai (Booked)','Kurnool?Bangalore (Available)']}]},
+    labour:{stats:[{v:'?25.1K',l:'Earnings MTD'},{v:'18',l:'Days Worked'},{v:'?4.8',l:'Rating'}],groups:[{t:'This Week',i:'??',items:['Apr 25: Paddy Harvesting','Apr 26: Field Ploughing','Apr 27: Sugarcane Cutting']},{t:'Top Skills',i:'??',items:['Paddy Harvesting (90%)','Ploughing (85%)','Pesticide Spraying (75%)']},{t:'Welfare',i:'???',items:['PM Shram Yogi: Enrolled','BOCW Fund: Active','e-Shram ID: UW-AP-123456']}]},
   };
   const ro=ROLE_OVERVIEW[role];
 
   const ROLE_BADGES={
-    industrial:[{id:'b1',icon:'🏭',label:'First Procurement',desc:'Completed first deal',earned:true},{id:'b2',icon:'📦',label:'Bulk Buyer',desc:'Procured 10,000+ Q',earned:true},{id:'b3',icon:'🧪',label:'Quality Champion',desc:'90%+ acceptance',earned:false},{id:'b4',icon:'👨‍🌾',label:'Farmer Friend',desc:'500+ farmer partners',earned:true},{id:'b5',icon:'✅',label:'On-Time Payer',desc:'100% on-time payments',earned:false},{id:'b6',icon:'🏆',label:'Top Buyer',desc:'₹5Cr+ procurement',earned:true}],
-    supplier:[{id:'b1',icon:'🏪',label:'First Sale',desc:'Made first sale',earned:true},{id:'b2',icon:'⭐',label:'Top Rated',desc:'4.5+ rating',earned:true},{id:'b3',icon:'🚚',label:'Fast Delivery',desc:'Same-day 20+ times',earned:false},{id:'b4',icon:'📊',label:'Stock Master',desc:'Zero stockouts 90d',earned:false},{id:'b5',icon:'📣',label:'Campaign King',desc:'Reached 500+ farmers',earned:true},{id:'b6',icon:'📄',label:'Invoice Pro',desc:'50+ GST invoices',earned:false}],
-    broker:[{id:'b1',icon:'🤝',label:'First Deal',desc:'Closed first deal',earned:true},{id:'b2',icon:'💰',label:'Deal Maker',desc:'10+ deals closed',earned:true},{id:'b3',icon:'📈',label:'Price Guru',desc:'100+ price alerts',earned:false},{id:'b4',icon:'🌐',label:'Network Star',desc:'100+ farmers',earned:false},{id:'b5',icon:'⭐',label:'Reliable Broker',desc:'4.5+ trust rating',earned:true},{id:'b6',icon:'🚛',label:'Logistics King',desc:'50+ transports',earned:false}],
-    labour:[{id:'b1',icon:'💼',label:'First Job',desc:'Completed first job',earned:true},{id:'b2',icon:'📅',label:'Consistent',desc:'20+ days in month',earned:true},{id:'b3',icon:'🎯',label:'Skill Master',desc:'5+ skills at 80%+',earned:false},{id:'b4',icon:'⭐',label:'Top Rated',desc:'4.8+ rating',earned:true},{id:'b5',icon:'📜',label:'Certified',desc:'3+ certifications',earned:false},{id:'b6',icon:'🏛️',label:'Welfare Enrolled',desc:'2+ schemes active',earned:true}],
+    industrial:[{id:'b1',icon:'??',label:'First Procurement',desc:'Completed first deal',earned:true},{id:'b2',icon:'??',label:'Bulk Buyer',desc:'Procured 10,000+ Q',earned:true},{id:'b3',icon:'??',label:'Quality Champion',desc:'90%+ acceptance',earned:false},{id:'b4',icon:'?????',label:'Farmer Friend',desc:'500+ farmer partners',earned:true},{id:'b5',icon:'?',label:'On-Time Payer',desc:'100% on-time payments',earned:false},{id:'b6',icon:'??',label:'Top Buyer',desc:'?5Cr+ procurement',earned:true}],
+    supplier:[{id:'b1',icon:'??',label:'First Sale',desc:'Made first sale',earned:true},{id:'b2',icon:'?',label:'Top Rated',desc:'4.5+ rating',earned:true},{id:'b3',icon:'??',label:'Fast Delivery',desc:'Same-day 20+ times',earned:false},{id:'b4',icon:'??',label:'Stock Master',desc:'Zero stockouts 90d',earned:false},{id:'b5',icon:'??',label:'Campaign King',desc:'Reached 500+ farmers',earned:true},{id:'b6',icon:'??',label:'Invoice Pro',desc:'50+ GST invoices',earned:false}],
+    broker:[{id:'b1',icon:'??',label:'First Deal',desc:'Closed first deal',earned:true},{id:'b2',icon:'??',label:'Deal Maker',desc:'10+ deals closed',earned:true},{id:'b3',icon:'??',label:'Price Guru',desc:'100+ price alerts',earned:false},{id:'b4',icon:'??',label:'Network Star',desc:'100+ farmers',earned:false},{id:'b5',icon:'?',label:'Reliable Broker',desc:'4.5+ trust rating',earned:true},{id:'b6',icon:'??',label:'Logistics King',desc:'50+ transports',earned:false}],
+    labour:[{id:'b1',icon:'??',label:'First Job',desc:'Completed first job',earned:true},{id:'b2',icon:'??',label:'Consistent',desc:'20+ days in month',earned:true},{id:'b3',icon:'??',label:'Skill Master',desc:'5+ skills at 80%+',earned:false},{id:'b4',icon:'?',label:'Top Rated',desc:'4.8+ rating',earned:true},{id:'b5',icon:'??',label:'Certified',desc:'3+ certifications',earned:false},{id:'b6',icon:'???',label:'Welfare Enrolled',desc:'2+ schemes active',earned:true}],
   };
   const activeBadges=ROLE_BADGES[role]||BADGES;
 
   const ROLE_TIMELINE={
-    industrial:[{date:'2026-04-23',icon:'📦',title:'Procured Cotton 3,200Q from 18 farmers'},{date:'2026-04-20',icon:'💳',title:'Payment ₹2,17,600 to Ramaiah Naidu (UPI)'},{date:'2026-04-18',icon:'🧪',title:'Quality Inspection QI-003 Paddy — Grade A'},{date:'2026-04-15',icon:'🤝',title:'New contract: Suresh Kumar — 500T Sugarcane'},{date:'2026-04-10',icon:'🏭',title:'Joined AgriConnect 360 as Industrial Buyer'}],
-    supplier:[{date:'2026-04-23',icon:'🛒',title:'New Order ORD-501: Ramaiah Naidu — ₹3,498'},{date:'2026-04-22',icon:'🚚',title:'Shipped ORD-502: Lakshmi Devi — Cotton Seeds'},{date:'2026-04-20',icon:'✅',title:'Delivered ORD-503: Suresh Kumar — Drip Kit'},{date:'2026-04-18',icon:'📣',title:'SMS Campaign sent to 847 farmers'},{date:'2026-04-15',icon:'🏪',title:'Joined AgriConnect 360 as Supplier'}],
-    broker:[{date:'2026-04-23',icon:'🤝',title:'Deal D-201: Cotton 80Q → Deccan Foods'},{date:'2026-04-22',icon:'✅',title:'Deal D-202 confirmed: Paddy 150Q → AP Rice Mills'},{date:'2026-04-20',icon:'🚛',title:'Transport: Guntur → Hyderabad — Cotton'},{date:'2026-04-18',icon:'💰',title:'Commission received: ₹24,000'},{date:'2026-04-15',icon:'🤝',title:'Joined AgriConnect 360 as Broker'}],
-    labour:[{date:'2026-04-25',icon:'💼',title:'Job J-301: Paddy Harvesting (3 days)'},{date:'2026-04-24',icon:'✅',title:'Completed: Pesticide Spraying — ₹550'},{date:'2026-04-22',icon:'📜',title:'Certification: Safe Pesticide Handling'},{date:'2026-04-20',icon:'🏛️',title:'Enrolled in PM Shram Yogi Maan-Dhan'},{date:'2026-04-15',icon:'👷',title:'Joined AgriConnect 360 as Farm Labour'}],
+    industrial:[{date:'2026-04-23',icon:'??',title:'Procured Cotton 3,200Q from 18 farmers'},{date:'2026-04-20',icon:'??',title:'Payment ?2,17,600 to Ramaiah Naidu (UPI)'},{date:'2026-04-18',icon:'??',title:'Quality Inspection QI-003 Paddy � Grade A'},{date:'2026-04-15',icon:'??',title:'New contract: Suresh Kumar � 500T Sugarcane'},{date:'2026-04-10',icon:'??',title:'Joined AgriConnect 360 as Industrial Buyer'}],
+    supplier:[{date:'2026-04-23',icon:'??',title:'New Order ORD-501: Ramaiah Naidu � ?3,498'},{date:'2026-04-22',icon:'??',title:'Shipped ORD-502: Lakshmi Devi � Cotton Seeds'},{date:'2026-04-20',icon:'?',title:'Delivered ORD-503: Suresh Kumar � Drip Kit'},{date:'2026-04-18',icon:'??',title:'SMS Campaign sent to 847 farmers'},{date:'2026-04-15',icon:'??',title:'Joined AgriConnect 360 as Supplier'}],
+    broker:[{date:'2026-04-23',icon:'??',title:'Deal D-201: Cotton 80Q ? Deccan Foods'},{date:'2026-04-22',icon:'?',title:'Deal D-202 confirmed: Paddy 150Q ? AP Rice Mills'},{date:'2026-04-20',icon:'??',title:'Transport: Guntur ? Hyderabad � Cotton'},{date:'2026-04-18',icon:'??',title:'Commission received: ?24,000'},{date:'2026-04-15',icon:'??',title:'Joined AgriConnect 360 as Broker'}],
+    labour:[{date:'2026-04-25',icon:'??',title:'Job J-301: Paddy Harvesting (3 days)'},{date:'2026-04-24',icon:'?',title:'Completed: Pesticide Spraying � ?550'},{date:'2026-04-22',icon:'??',title:'Certification: Safe Pesticide Handling'},{date:'2026-04-20',icon:'???',title:'Enrolled in PM Shram Yogi Maan-Dhan'},{date:'2026-04-15',icon:'??',title:'Joined AgriConnect 360 as Farm Labour'}],
   };
   const activeTimeline=ROLE_TIMELINE[role]||TIMELINE_EVENTS;
 
@@ -609,13 +609,13 @@ export default function ProfilePage() {
     industrial:[{label:'Full Name',key:'name',type:'text'},{label:'Mobile',key:'mobile',type:'tel'},{label:'Email',key:'email',type:'email'},{label:'Company Name',key:'business_name',type:'text'},{label:'GSTIN',key:'kisan_id',type:'text'},{label:'Location',key:'district',type:'text'},{label:'Payment Terms',key:'irrigation_type',type:'text'}],
     supplier:[{label:'Full Name',key:'name',type:'text'},{label:'Mobile',key:'mobile',type:'tel'},{label:'Email',key:'email',type:'email'},{label:'Shop Name',key:'business_name',type:'text'},{label:'GSTIN',key:'kisan_id',type:'text'},{label:'Location',key:'village',type:'text'},{label:'Business Hours',key:'irrigation_type',type:'text'}],
     broker:[{label:'Full Name',key:'name',type:'text'},{label:'Mobile',key:'mobile',type:'tel'},{label:'Email',key:'email',type:'email'},{label:'Firm Name',key:'business_name',type:'text'},{label:'Primary Mandi',key:'village',type:'text'},{label:'District',key:'district',type:'text'},{label:'Experience (yrs)',key:'age',type:'number'}],
-    labour:[{label:'Full Name',key:'name',type:'text'},{label:'Mobile',key:'mobile',type:'tel'},{label:'Email',key:'email',type:'email'},{label:'Primary Skill',key:'business_type',type:'text'},{label:'Daily Rate (₹)',key:'num_fields',type:'number'},{label:'District',key:'district',type:'text'},{label:'e-Shram ID',key:'kisan_id',type:'text'}],
+    labour:[{label:'Full Name',key:'name',type:'text'},{label:'Mobile',key:'mobile',type:'tel'},{label:'Email',key:'email',type:'email'},{label:'Primary Skill',key:'business_type',type:'text'},{label:'Daily Rate (?)',key:'num_fields',type:'number'},{label:'District',key:'district',type:'text'},{label:'e-Shram ID',key:'kisan_id',type:'text'}],
   };
   const editFields=ROLE_EDIT_FIELDS[role]||[{label:'Full Name',key:'name',type:'text'},{label:'Mobile',key:'mobile',type:'tel'},{label:'Email',key:'email',type:'email'},{label:'Village',key:'village',type:'text'},{label:'Mandal',key:'mandal',type:'text'},{label:'District',key:'district',type:'text'},{label:'Age',key:'age',type:'number'},{label:'Farm Area (Acres)',key:'farm_area_acres',type:'number'},{label:'Soil Type',key:'soil_type',type:'text'},{label:'Irrigation',key:'irrigation_type',type:'text'}];
 
   const TABS=isFarmer
-    ?[{id:'overview',label:'Overview',icon:'📊'},{id:'farm',label:'Farm',icon:'🌾'},{id:'badges',label:'Badges',icon:'🏆'},{id:'timeline',label:'History',icon:'📅'}]
-    :[{id:'overview',label:'Overview',icon:'📊'},{id:'details',label:'Details',icon:'✏️'},{id:'badges',label:'Badges',icon:'🏆'},{id:'timeline',label:'History',icon:'📅'}];
+    ?[{id:'overview',label:'Overview',icon:'??'},{id:'farm',label:'Farm',icon:'??'},{id:'badges',label:'Badges',icon:'??'},{id:'timeline',label:'History',icon:'??'}]
+    :[{id:'overview',label:'Overview',icon:'??'},{id:'details',label:'Details',icon:'??'},{id:'badges',label:'Badges',icon:'??'},{id:'timeline',label:'History',icon:'??'}];
 
   const G={glass:{background:'rgba(255,255,255,0.03)',backdropFilter:'blur(20px)',border:'1px solid rgba(255,255,255,0.08)',borderRadius:14}};
 
@@ -623,7 +623,7 @@ export default function ProfilePage() {
     <div className="animated profile-page">
       {viewingMember && (
         <div className="card" style={{marginBottom:16,border:'1px solid rgba(59,130,246,0.35)',background:'rgba(59,130,246,0.08)',display:'flex',justifyContent:'space-between',alignItems:'center',gap:12}}>
-          <div style={{fontSize:'0.86rem',color:'var(--text-primary)'}}>👥 Viewing FPO member profile from FPO Mode</div>
+          <div style={{fontSize:'0.86rem',color:'var(--text-primary)'}}>?? Viewing FPO member profile from FPO Mode</div>
           <button className="btn btn-outline" onClick={handleReturnToOwnProfile}>Back to My Profile</button>
         </div>
       )}
@@ -637,22 +637,22 @@ export default function ProfilePage() {
         <div className="prof-hero-content">
           <div className="prof-avatar-wrap" onClick={()=>!viewingMember&&fileInputRef.current?.click()}>
             {profilePhoto?<img src={profilePhoto} alt="Profile" className="prof-avatar-img"/>:<div className="prof-avatar-placeholder">{form.name.charAt(0).toUpperCase()}</div>}
-            <div className="prof-avatar-overlay">{viewingMember?'👁️':(photoUploading?'⏳':'📷')}</div>
+            <div className="prof-avatar-overlay">{viewingMember?'???':(photoUploading?'?':'??')}</div>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} style={{display:'none'}} disabled={viewingMember}/>
           </div>
           <div className="prof-hero-info">
             <h2 className="prof-hero-name">{form.name}</h2>
-            <p className="prof-hero-loc">📍 {form.village||form.mandal||form.district}, {form.state}</p>
+            <p className="prof-hero-loc">?? {form.village||form.mandal||form.district}, {form.state}</p>
             <div className="prof-hero-tags">
               <span className="prof-tag" style={{background:rc+'22',color:rc,border:'1px solid '+rc+'44'}}>{ROLE_LABEL[role]||role}</span>
-              <span className="prof-tag blue">📍 {form.district}</span>
-              {isFarmer&&<span className="prof-tag green">🌾 {form.farm_area_acres} Acres</span>}
-              {!isFarmer&&form.business_name&&<span className="prof-tag amber">🏢 {form.business_name}</span>}
+              <span className="prof-tag blue">?? {form.district}</span>
+              {isFarmer&&<span className="prof-tag green">?? {form.farm_area_acres} Acres</span>}
+              {!isFarmer&&form.business_name&&<span className="prof-tag amber">?? {form.business_name}</span>}
             </div>
           </div>
           <div className="prof-hero-actions">
-            {!viewingMember&&<button className="btn btn-primary" onClick={()=>editing?handleSaveProfile():setEditing(true)}>{editing?'💾 Save':'✏️ Edit Profile'}</button>}
-            <button className="btn btn-outline" onClick={downloadIDCard} disabled={idCardGenerating}>{idCardGenerating?'⏳ Generating...':'🪪 Download ID Card'}</button>
+            {!viewingMember&&<button className="btn btn-primary" onClick={()=>editing?handleSaveProfile():setEditing(true)}>{editing?'?? Save':'?? Edit Profile'}</button>}
+            <button className="btn btn-outline" onClick={downloadIDCard} disabled={idCardGenerating}>{idCardGenerating?'? Generating...':'?? Download ID Card'}</button>
           </div>
         </div>
       </div>
@@ -690,7 +690,7 @@ export default function ProfilePage() {
       {tab==='overview'&&isFarmer&&(
         <div className="prof-grid">
           <div className="card prof-summary-card">
-            <h4>🌾 Farm Summary</h4>
+            <h4>?? Farm Summary</h4>
             <div className="prof-summary-stats">
               <div className="prof-sstat"><span className="prof-sstat-val">{farmSummary.totalAcres}</span><span className="prof-sstat-label">Acres</span></div>
               <div className="prof-sstat"><span className="prof-sstat-val">{farmSummary.totalFields}</span><span className="prof-sstat-label">Fields</span></div>
@@ -698,7 +698,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <div className="card prof-pie-card">
-            <h4>🥧 Crop Portfolio</h4>
+            <h4>?? Crop Portfolio</h4>
             <div className="prof-pie-wrap">
               <svg viewBox="0 0 200 200" className="prof-pie-svg">
                 {(()=>{let offset=0;return cropPortfolio.map((c,i)=>{const dashLen=c.pct*5.65;const dashGap=565-dashLen;const el=<circle key={c.name} cx="100" cy="100" r="80" fill="none" stroke={PIE_COLORS[i]} strokeWidth="30" strokeDasharray={`${dashLen} ${dashGap}`} strokeDashoffset={-offset} transform="rotate(-90 100 100)"/>;offset+=dashLen;return el;});})()}
@@ -709,11 +709,11 @@ export default function ProfilePage() {
             </div>
           </div>
           <div className="card prof-income-card">
-            <h4>💰 Income vs Expense (6 Months)</h4>
+            <h4>?? Income vs Expense (6 Months)</h4>
             <div className="prof-income-summary">
-              <div className="prof-income-box green"><span>₹{(farmSummary.totalIncome/1000).toFixed(0)}K</span><small>Income</small></div>
-              <div className="prof-income-box red"><span>₹{(farmSummary.totalExpenses/1000).toFixed(0)}K</span><small>Expenses</small></div>
-              <div className="prof-income-box blue"><span>₹{(farmSummary.profit/1000).toFixed(0)}K</span><small>Profit</small></div>
+              <div className="prof-income-box green"><span>?{(farmSummary.totalIncome/1000).toFixed(0)}K</span><small>Income</small></div>
+              <div className="prof-income-box red"><span>?{(farmSummary.totalExpenses/1000).toFixed(0)}K</span><small>Expenses</small></div>
+              <div className="prof-income-box blue"><span>?{(farmSummary.profit/1000).toFixed(0)}K</span><small>Profit</small></div>
             </div>
             <div className="prof-chart-bars">
               {monthlyData.map(d=><div key={d.month} className="prof-chart-col"><div className="prof-bar-pair"><div className="prof-bar income" style={{height:`${(d.income/maxVal)*100}%`}}/><div className="prof-bar expense" style={{height:`${(d.expense/maxVal)*100}%`}}/></div><span className="prof-bar-label">{d.month}</span></div>)}
@@ -721,7 +721,7 @@ export default function ProfilePage() {
             <div className="prof-chart-legend"><span><span className="prof-ldot" style={{background:'#22c55e'}}/> Income</span><span><span className="prof-ldot" style={{background:'#ef4444'}}/> Expense</span></div>
           </div>
           <div className="card prof-schemes-card">
-            <h4>🏛️ Linked Schemes</h4>
+            <h4>??? Linked Schemes</h4>
             <div className="prof-scheme-list">
               {linkedSchemes.map(s=><div key={s.name} className="prof-scheme-item"><span className="prof-scheme-icon">{s.icon}</span><div className="prof-scheme-info"><span className="prof-scheme-name">{s.name}</span><span className="prof-scheme-amount">{s.amount}</span></div><span className={`badge ${s.status==='active'?'badge-green':'badge-amber'}`}>{s.status}</span></div>)}
             </div>
@@ -750,7 +750,7 @@ export default function ProfilePage() {
       {(tab==='farm'||tab==='details')&&(
         <div className="prof-edit-section">
           <div className="card" style={{padding:24}}>
-            <h4 style={{marginBottom:20}}>✏️ Edit {isFarmer?'Farm':'Business'} Details</h4>
+            <h4 style={{marginBottom:20}}>?? Edit {isFarmer?'Farm':'Business'} Details</h4>
             <div className="prof-edit-grid">
               {editFields.map(f=><div key={f.key} className="prof-edit-field">
                 <label>{f.label}</label>
@@ -758,7 +758,7 @@ export default function ProfilePage() {
               </div>)}
             </div>
             <div style={{display:'flex',gap:10,marginTop:20}}>
-              {!viewingMember&&<button className="btn btn-primary" onClick={()=>editing?handleSaveProfile():setEditing(true)}>{editing?'💾 Save Changes':'✏️ Edit'}</button>}
+              {!viewingMember&&<button className="btn btn-primary" onClick={()=>editing?handleSaveProfile():setEditing(true)}>{editing?'?? Save Changes':'?? Edit'}</button>}
               {editing&&!viewingMember&&<button className="btn btn-outline" onClick={()=>setEditing(false)}>Cancel</button>}
             </div>
           </div>
@@ -769,7 +769,7 @@ export default function ProfilePage() {
       {tab==='badges'&&(
         <div className="prof-badges-section">
           <div className="prof-badges-header">
-            <h4>🏆 Achievement Badges</h4>
+            <h4>?? Achievement Badges</h4>
             <span className="prof-badge-count">{activeBadges.filter(b=>b.earned).length}/{activeBadges.length} Earned</span>
           </div>
           <div className="prof-badges-grid">
@@ -777,7 +777,7 @@ export default function ProfilePage() {
               <span className="prof-badge-icon">{b.icon}</span>
               <span className="prof-badge-label">{b.label}</span>
               <span className="prof-badge-desc">{b.desc}</span>
-              {!b.earned&&<span className="prof-badge-lock">🔒</span>}
+              {!b.earned&&<span className="prof-badge-lock">??</span>}
             </div>)}
           </div>
         </div>
@@ -786,7 +786,7 @@ export default function ProfilePage() {
       {/* Timeline Tab */}
       {tab==='timeline'&&(
         <div className="prof-timeline-section">
-          <h4 style={{marginBottom:20}}>📅 {ROLE_LABEL[role]||'Activity'} History</h4>
+          <h4 style={{marginBottom:20}}>?? {ROLE_LABEL[role]||'Activity'} History</h4>
           <div className="prof-timeline">
             {activeTimeline.map((ev,i)=><div key={i} className="prof-tl-item">
               <div className="prof-tl-dot">{ev.icon}</div>

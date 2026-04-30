@@ -156,6 +156,7 @@ export default function LoginPage() {
 
   const DEMO_ROLES = [
     { id: 'farmer', icon: '👨‍🌾', label: 'Farmer', color: '#10b981', dash: '/dashboard' },
+    { id: 'customer', icon: '🛍️', label: 'Customer', color: '#ec4899', dash: '/customer-dashboard' },
     { id: 'industrial', icon: '🏭', label: 'Industrial Buyer', color: '#3b82f6', dash: '/industrial-dashboard' },
     { id: 'broker', icon: '🤝', label: 'Broker / Trader', color: '#f59e0b', dash: '/broker-dashboard' },
     { id: 'supplier', icon: '🏪', label: 'Supplier', color: '#8b5cf6', dash: '/supplier-dashboard' },

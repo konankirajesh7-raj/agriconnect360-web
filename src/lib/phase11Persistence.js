@@ -42,7 +42,7 @@ export function getOnboardingStatus() {
     return getStorageItem(PHASE11_STORAGE_KEYS.onboardingStatus);
 }
 
-const NON_FARMER_ROLES = ['admin', 'fpo', 'industrial', 'broker', 'supplier', 'labour'];
+const NON_FARMER_ROLES = ['admin', 'fpo', 'customer', 'industrial', 'broker', 'supplier', 'labour'];
 
 export function isOnboardingComplete(profile = {}) {
     // Non-farmer roles skip the farmer onboarding flow entirely

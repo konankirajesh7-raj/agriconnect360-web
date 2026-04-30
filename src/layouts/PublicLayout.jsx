@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import DownloadAppPrompt from '../components/DownloadAppPrompt';
 
 /* ── Responsive CSS that inline styles can't handle ── */
 const responsiveCSS = `
@@ -7,17 +8,24 @@ const responsiveCSS = `
   .pub-hamburger { display: none !important; }
   .pub-cta-desktop { display: flex; }
   .pub-footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr 1fr; }
-  .pub-page-root { overflow-x: hidden; }
+  .pub-page-root { overflow-x: hidden !important; max-width: 100vw !important; width: 100% !important; }
+  .pub-page-root * { max-width: 100vw; }
+  .pub-page-root nav { overflow: visible; }
+  .pub-page-root nav > div { max-width: 100% !important; overflow: hidden; }
   @media (max-width: 768px) {
     .pub-nav-links { display: none !important; }
     .pub-hamburger { display: flex !important; align-items: center; justify-content: center; }
     .pub-cta-desktop { display: none !important; }
     .pub-footer-grid { grid-template-columns: 1fr 1fr !important; gap: 24px !important; }
     .pub-footer-bottom { flex-direction: column; text-align: center; }
-    .pub-footer-wrap { padding: 40px 20px 24px !important; }
+    .pub-footer-wrap { padding: 40px 16px 24px !important; }
+    .pub-page-root nav > div { padding: 0 16px !important; }
+    .pub-page-root section { max-width: 100vw !important; overflow-x: hidden !important; }
+    .pub-page-root section > div { max-width: 100% !important; overflow-x: hidden !important; }
   }
   @media (max-width: 480px) {
     .pub-footer-grid { grid-template-columns: 1fr !important; }
+    .pub-page-root nav > div { padding: 0 12px !important; }
   }
 `;
 
@@ -93,6 +101,7 @@ export default function PublicLayout() {
 
           {/* CTA Buttons — desktop */}
           <div className="pub-cta-desktop" style={{ alignItems: 'center', gap: 10 }}>
+            <DownloadAppPrompt variant="button" />
             <Link to="/login" style={{
               padding: '10px 18px', borderRadius: 8, textDecoration: 'none',
               fontSize: '0.85rem', fontWeight: 600, color: '#94a3b8',
@@ -132,6 +141,7 @@ export default function PublicLayout() {
               </Link>
             ))}
             <div style={{ paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <DownloadAppPrompt variant="button" />
               <Link to="/login" style={{ display: 'block', textAlign: 'center', padding: '11px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#94a3b8', textDecoration: 'none', fontWeight: 600 }}>Login</Link>
               <Link to="/login" style={{ display: 'block', textAlign: 'center', padding: '11px', background: '#22c55e', borderRadius: 8, color: '#000', textDecoration: 'none', fontWeight: 700 }}>🌾 Get Started Free</Link>
             </div>

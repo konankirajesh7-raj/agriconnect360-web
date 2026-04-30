@@ -24,17 +24,17 @@ export function useAuth() {
   return {
     user: demoToken ? { id: 'demo', role: (typeof window !== 'undefined' && localStorage.getItem('agri_demo_role')) || 'admin' } : null,
     session: null,
-    farmerProfile: demoToken ? { id: 'demo', name: ({ farmer: 'Farmer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' })[(typeof window !== 'undefined' && localStorage.getItem('agri_demo_role')) || 'admin'], role: (typeof window !== 'undefined' && localStorage.getItem('agri_demo_role')) || 'admin', district: DEFAULT_DISTRICT, state: DEFAULT_STATE } : null,
+    farmerProfile: demoToken ? { id: 'demo', name: ({ farmer: 'Farmer (Demo)', customer: 'Customer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' })[(typeof window !== 'undefined' && localStorage.getItem('agri_demo_role')) || 'admin'], role: (typeof window !== 'undefined' && localStorage.getItem('agri_demo_role')) || 'admin', district: DEFAULT_DISTRICT, state: DEFAULT_STATE } : null,
     loading: false,
     isDemoMode: !!demoToken,
     isAuthenticated: !!demoToken,
-    isAdmin: !!demoToken,
+    isAdmin: ((typeof window !== 'undefined' && localStorage.getItem('agri_demo_role')) || 'admin') === 'admin',
     signInWithOTP: async () => ({ success: false, error: 'AuthProvider not mounted' }),
     verifyOTP: async () => ({ success: false, error: 'AuthProvider not mounted' }),
     signInWithPassword: async () => ({ success: false, error: 'AuthProvider not mounted' }),
     signUp: async () => ({ success: false, error: 'AuthProvider not mounted' }),
     demoLogin: (role = 'admin') => {
-      const DEMO_NAMES = { farmer: 'Farmer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' };
+      const DEMO_NAMES = { farmer: 'Farmer (Demo)', customer: 'Customer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' };
       localStorage.setItem('agri_admin_token', 'demo_admin_token_2024');
       localStorage.setItem('agri_demo_role', role);
       window.location.reload();
@@ -88,7 +88,7 @@ function useAuthProvider() {
     const checkDemo = () => {
       if (localStorage.getItem('agri_admin_token')) {
         const demoRole = localStorage.getItem('agri_demo_role') || 'admin';
-        const DEMO_NAMES = { farmer: 'Farmer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' };
+        const DEMO_NAMES = { farmer: 'Farmer (Demo)', customer: 'Customer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' };
         setIsDemoMode(true);
         setUser({ id: 'demo', email: `${demoRole}@agriconnect360.in`, role: demoRole });
         setFarmerProfile({ id: 'demo', name: DEMO_NAMES[demoRole] || demoRole, role: demoRole, district: DEFAULT_DISTRICT, state: DEFAULT_STATE, onboarding_completed: true });
@@ -119,7 +119,7 @@ function useAuthProvider() {
     return () => clearInterval(iv);
   }, [session, isDemoMode]);
 
-  const NON_FARMER_ROLES = ['admin', 'fpo', 'industrial', 'broker', 'supplier', 'labour'];
+  const NON_FARMER_ROLES = ['admin', 'fpo', 'customer', 'industrial', 'broker', 'supplier', 'labour'];
 
   const loadProfile = async (uid) => {
     try {
@@ -337,7 +337,7 @@ function useAuthProvider() {
   }, [loadProfile]);
 
   const demoLogin = useCallback((role = 'admin') => {
-    const DEMO_NAMES = { farmer: 'Farmer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' };
+    const DEMO_NAMES = { farmer: 'Farmer (Demo)', customer: 'Customer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' };
     localStorage.setItem('agri_admin_token', 'demo_admin_token_2024');
     localStorage.setItem('agri_demo_role', role);
     localStorage.setItem('agri_admin_user', JSON.stringify({ name: DEMO_NAMES[role] || role, role }));
@@ -373,12 +373,13 @@ function useAuthProvider() {
     try {
       if (!isDemoMode) await supabase.auth.signOut();
       setSession(null); setUser(null); setFarmerProfile(null); setIsDemoMode(false);
-      // Clear ALL auth-related localStorage
-      const authKeys = Object.keys(localStorage).filter(k =>
-        k.startsWith('sb-') || k.startsWith('agri_admin') || k.startsWith('lock:') ||
-        k.includes('auth-token') || k.startsWith('agri360_') || k.startsWith('ac360_')
-      );
-      authKeys.forEach(k => localStorage.removeItem(k));
+      // Clear ONLY auth-related keys — preserve user preferences (language, location cache)
+      const AUTH_PREFIXES = ['sb-', 'agri_admin', 'agri_demo_', 'lock:', 'auth-token', 'ac360_auth', 'login_fails_', 'otp_attempts_'];
+      Object.keys(localStorage).forEach(k => {
+        if (AUTH_PREFIXES.some(p => k.startsWith(p)) || k.includes('auth-token')) {
+          localStorage.removeItem(k);
+        }
+      });
       return { success: true };
     } catch (e) { return { success: false, error: e.message }; }
   }, [isDemoMode]);
@@ -429,7 +430,7 @@ function useAuthProvider() {
       if (profileError) throw profileError;
 
       // Non-farmer roles: skip farmers table entirely — only profiles table is updated
-      const NON_FARMER = ['admin', 'fpo', 'industrial', 'broker', 'supplier', 'labour'];
+      const NON_FARMER = ['admin', 'fpo', 'customer', 'industrial', 'broker', 'supplier', 'labour'];
       let savedProfile;
       if (NON_FARMER.includes(role)) {
         savedProfile = {
@@ -456,12 +457,12 @@ function useAuthProvider() {
 
   const userRole = farmerProfile?.role || 'farmer';
   const hasRole = useCallback((...roles) => roles.includes(userRole) || userRole === 'admin', [userRole]);
-  const isStakeholder = ['industrial', 'broker', 'supplier', 'labour'].includes(userRole);
+  const isStakeholder = ['customer', 'industrial', 'broker', 'supplier', 'labour'].includes(userRole);
 
   return {
     user, session, farmerProfile, loading, isDemoMode,
     isAuthenticated: !!user || !!session || isDemoMode,
-    isAdmin: userRole === 'admin' || isDemoMode,
+    isAdmin: userRole === 'admin',
     userRole,
     hasRole,
     isStakeholder,
@@ -486,6 +487,6 @@ function useAuthProvider() {
 }
 
 /** Valid platform roles */
-export const VALID_ROLES = ['farmer', 'admin', 'fpo', 'industrial', 'broker', 'supplier', 'labour'];
+export const VALID_ROLES = ['farmer', 'admin', 'fpo', 'customer', 'industrial', 'broker', 'supplier', 'labour'];
 
 export default useAuth;

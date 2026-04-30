@@ -251,11 +251,20 @@ function LeaderboardTab() {
   const [category, setCategory] = useState('Coins');
   const [geo, setGeo] = useState('District');
   const [period, setPeriod] = useState('This Month');
+  const [hidden, setHidden] = useState(false);
   const data = useMemo(() => getLeaderboard(category, geo, period), [category, geo, period]);
 
   return (
     <div className="card" style={{ padding: '24px' }}>
-      <h3 className="fin-section-title">🏆 Leaderboards</h3>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:'8px' }}>
+        <h3 className="fin-section-title" style={{ margin: 0 }}>🏆 Leaderboards</h3>
+        <label style={{ display:'flex', alignItems:'center', gap:'8px', fontSize:'0.78rem', color:'var(--text-secondary)', cursor:'pointer' }}>
+          <span>🙈 Don't show me</span>
+          <div onClick={() => setHidden(!hidden)} style={{ width:40, height:22, borderRadius:11, background: hidden ? '#10b981' : 'rgba(255,255,255,0.12)', position:'relative', cursor:'pointer', transition:'background 0.3s' }}>
+            <div style={{ width:18, height:18, borderRadius:9, background:'#fff', position:'absolute', top:2, left: hidden ? 20 : 2, transition:'left 0.3s', boxShadow:'0 1px 3px rgba(0,0,0,0.3)' }}></div>
+          </div>
+        </label>
+      </div>
       <div className="gam-board-summary">
         <span className="fin-badge blue">{LB_CATEGORIES.length} categories</span>
         <span className="fin-badge yellow">{GEO_TIERS.length} geo tiers</span>
@@ -272,19 +281,32 @@ function LeaderboardTab() {
           {TIME_PERIODS.map(p => <option key={p}>{p}</option>)}
         </select>
       </div>
+      {hidden && (
+        <div style={{ textAlign:'center', padding:'10px', marginBottom:'10px', borderRadius:'8px', background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.2)', fontSize:'0.82rem', color:'#34d399' }}>
+          🙈 You are hidden from public rankings. Toggle off to show your rank again.
+        </div>
+      )}
       <table className="fin-table" style={{ marginTop: 16 }}>
         <thead><tr><th>#</th><th>Farmer</th><th>Location</th><th>{category}</th></tr></thead>
         <tbody>
-          {data.map(entry => (
-            <tr key={entry.rank} style={entry.isCurrentUser ? { background: 'rgba(16,185,129,0.08)' } : {}}>
-              <td style={{ fontWeight: 700 }}>{entry.rank <= 3 ? ['🥇','🥈','🥉'][entry.rank-1] : entry.rank}</td>
-              <td style={{ fontWeight: entry.isCurrentUser ? 700 : 400 }}>{entry.name} {entry.isCurrentUser && '(You)'}</td>
-              <td style={{ color: 'var(--text-muted)' }}>{entry.village}</td>
-              <td style={{ fontWeight: 700, color: '#10b981' }}>{fmt(entry.score)}</td>
-            </tr>
-          ))}
+          {data.map(entry => {
+            if (hidden && entry.isCurrentUser) return null;
+            return (
+              <tr key={entry.rank} style={entry.isCurrentUser ? { background: 'rgba(16,185,129,0.08)' } : {}}>
+                <td style={{ fontWeight: 700 }}>{entry.rank <= 3 ? ['🥇','🥈','🥉'][entry.rank-1] : entry.rank}</td>
+                <td style={{ fontWeight: entry.isCurrentUser ? 700 : 400 }}>{entry.name} {entry.isCurrentUser && '(You)'}</td>
+                <td style={{ color: 'var(--text-muted)' }}>{entry.village}</td>
+                <td style={{ fontWeight: 700, color: '#10b981' }}>{fmt(entry.score)}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
+      {!hidden && data.find(e => e.isCurrentUser) && (
+        <div style={{ marginTop:'12px', padding:'10px', borderRadius:'8px', background:'rgba(16,185,129,0.06)', fontSize:'0.82rem', color:'#34d399', textAlign:'center' }}>
+          🎯 Your Rank: #{data.find(e => e.isCurrentUser).rank} in {geo}
+        </div>
+      )}
     </div>
   );
 }
