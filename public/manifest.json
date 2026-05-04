@@ -1,6 +1,6 @@
 {
-  "name": "AgriConnect 360",
-  "short_name": "Agri360",
+  "name": "RythuSphere",
+  "short_name": "RythuSphere",
   "description": "Smart Farming Platform — Market Prices, Weather, AI Advisory, Crop Tracking for Andhra Pradesh Farmers",
   "start_url": "/",
   "display": "standalone",

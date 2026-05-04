@@ -1,5 +1,5 @@
 /**
- * AgriConnect 360 — Advanced AI Engine (Phase 14B)
+ * RythuSphere — Advanced AI Engine (Phase 14B)
  * Gemini-powered agricultural intelligence utilities
  */
 import { supabase } from '../supabase';

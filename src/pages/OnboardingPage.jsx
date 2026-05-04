@@ -211,8 +211,8 @@ export default function OnboardingPage() {
 
       // Register phone as taken
       if (form.phone && form.phone.length === 10) {
-        const reg = JSON.parse(localStorage.getItem('ac360_registered_users') || '[]');
-        if (!reg.includes(form.phone)) { reg.push(form.phone); localStorage.setItem('ac360_registered_users', JSON.stringify(reg)); }
+        const reg = JSON.parse(localStorage.getItem('rs_registered_users') || '[]');
+        if (!reg.includes(form.phone)) { reg.push(form.phone); localStorage.setItem('rs_registered_users', JSON.stringify(reg)); }
       }
 
       const profileResult = await updateProfile(payload);
@@ -249,7 +249,7 @@ export default function OnboardingPage() {
   };
 
   const handleSkip = async () => {
-    localStorage.setItem('agri360_onboarding_complete', 'skipped');
+    localStorage.setItem('rythusphere_onboarding_complete', 'skipped');
     // Save selected role even when skipping so dashboard shows correct portal
     if (form.role && form.role !== 'farmer') {
       try {
@@ -277,7 +277,7 @@ export default function OnboardingPage() {
     <div className="onb-step-content">
       <div className="onb-welcome-hero">
         <div className="onb-hero-icon">🌾</div>
-        <h2 className="onb-hero-title">Welcome to AgriConnect 360</h2>
+        <h2 className="onb-hero-title">Welcome to RythuSphere</h2>
         <p className="onb-hero-sub">Your complete farming companion for Andhra Pradesh</p>
       </div>
       <div className="onb-lang-grid">
@@ -300,7 +300,7 @@ export default function OnboardingPage() {
   const renderRoleStep = () => (
     <div className="onb-step-content">
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>How will you use AgriConnect 360?</div>
+        <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)' }}>How will you use RythuSphere?</div>
         <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 4 }}>Choose your primary role — you can change this later in Settings</div>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 14 }}>
@@ -746,7 +746,7 @@ export default function OnboardingPage() {
         <div className="onb-header">
           <div className="onb-logo">
             <div className="onb-logo-icon">🌾</div>
-            <span>AgriConnect 360</span>
+            <span>RythuSphere</span>
           </div>
           <button className="onb-skip-btn" onClick={handleSkip}>Skip for now →</button>
         </div>

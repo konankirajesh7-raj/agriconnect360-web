@@ -222,7 +222,7 @@ export default function AdminDashboardPage(){
           </div>
           <div className="role-panel"><div className="panel-title">Top Features</div>
             {[{f:'Weather Forecast',h:12450},{f:'Market Prices',h:9870},{f:'AI Advisory',h:6230},{f:'Crop Tracking',h:5100},{f:'Expense Tracker',h:4320}].map(x=>(<div key={x.f} className="role-stat-row"><span>{x.f}</span><b>{x.h.toLocaleString()} hits</b></div>))}
-            <button className="btn btn-outline" onClick={()=>{const b=new Blob(['AgriConnect360 Analytics Report\n\nTotal Users: '+(userCount||5000)+'\nDAU: 1,247\nRetention: 68%\nRevenue: ₹12.4L'],{type:'application/pdf'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='analytics_report.pdf';a.click();flash('📥 Report exported')}} style={{marginTop:10,padding:'8px 14px',fontSize:'0.78rem',width:'100%'}}>📥 Export Analytics Report</button>
+            <button className="btn btn-outline" onClick={()=>{const b=new Blob(['RythuSphere Analytics Report\n\nTotal Users: '+(userCount||5000)+'\nDAU: 1,247\nRetention: 68%\nRevenue: ₹12.4L'],{type:'application/pdf'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='analytics_report.pdf';a.click();flash('📥 Report exported')}} style={{marginTop:10,padding:'8px 14px',fontSize:'0.78rem',width:'100%'}}>📥 Export Analytics Report</button>
           </div>
         </div>
       </div>)}

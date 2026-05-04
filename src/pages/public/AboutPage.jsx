@@ -37,7 +37,7 @@ export default function AboutPage() {
           <span style={{ color: '#22c55e' }}>for AP Farmers</span>
         </h1>
         <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: 1.8, maxWidth: 650, margin: '0 auto' }}>
-          AgriConnect 360 was born in Guntur in 2022 with a single mission: give every Andhra Pradesh farmer the same data and technology advantages that large agribusinesses have. We built the first mandi price tracker in Telugu. Today, we're the state's most comprehensive agricultural platform with 47,000+ farmers across 13 districts.
+          RythuSphere was born in Guntur in 2022 with a single mission: give every Andhra Pradesh farmer the same data and technology advantages that large agribusinesses have. We built the first mandi price tracker in Telugu. Today, we're the state's most comprehensive agricultural platform with 47,000+ farmers across 13 districts.
         </p>
       </section>
 
@@ -115,7 +115,7 @@ export default function AboutPage() {
       <section style={{ padding: '60px 40px', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
           <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.8rem', fontWeight: 800, marginBottom: 8 }}>Our Partners & Integrations</h2>
-          <p style={{ color: '#64748b', marginBottom: 40 }}>Trusted integrations that power AgriConnect 360</p>
+          <p style={{ color: '#64748b', marginBottom: 40 }}>Trusted integrations that power RythuSphere</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 16 }}>
             {PARTNERS.map((p, i) => (
               <div key={i} style={{
@@ -137,7 +137,7 @@ export default function AboutPage() {
       {/* CTA */}
       <section style={{ padding: '80px 40px', textAlign: 'center' }}>
         <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '2rem', fontWeight: 800, marginBottom: 16 }}>Join Our Growing Community</h2>
-        <p style={{ color: '#64748b', marginBottom: 32 }}>47,000+ farmers trust AgriConnect 360. Be the next success story from your district.</p>
+        <p style={{ color: '#64748b', marginBottom: 32 }}>47,000+ farmers trust RythuSphere. Be the next success story from your district.</p>
         <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link to="/login" style={{
             background: 'linear-gradient(135deg, #22c55e, #16a34a)', color: '#000',

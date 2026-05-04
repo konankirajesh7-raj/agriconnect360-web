@@ -1,5 +1,5 @@
 /**
- * AgriConnect 360 — Lightweight i18n System
+ * RythuSphere — Lightweight i18n System
  * Supports: English (en), Telugu (te), Hindi (hi), Kannada (kn), Tamil (ta)
  * No external dependencies — pure React context-based translation
  */

@@ -1,5 +1,5 @@
 /**
- * AgriConnect 360 — Gamification Service (Phase 12I)
+ * RythuSphere — Gamification Service (Phase 12I)
  * Coin economy, streak logic, badge engine, leaderboards, challenges
  */
 

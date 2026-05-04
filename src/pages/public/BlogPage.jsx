@@ -64,7 +64,7 @@ export default function BlogPage() {
         <div className="pub-cta-box">
           <h3>✍️ Want personalized farming knowledge?</h3>
           <p>Login to access AI-curated content based on your crops, soil, and region.</p>
-          <button className="btn btn-primary" onClick={() => navigate('/login')}>Join AgriConnect 360 →</button>
+          <button className="btn btn-primary" onClick={() => navigate('/login')}>Join RythuSphere →</button>
         </div>
       </div>
     </div>

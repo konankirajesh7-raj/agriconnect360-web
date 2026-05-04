@@ -236,7 +236,7 @@ export function useShare() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: data.title || 'AgriConnect 360',
+          title: data.title || 'RythuSphere',
           text: data.text,
           url: data.url || window.location.href,
         });

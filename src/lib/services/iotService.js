@@ -1,5 +1,5 @@
 /**
- * AgriConnect 360 — IoT Integration Service (Phase 14C)
+ * RythuSphere — IoT Integration Service (Phase 14C)
  * Manages sensor data, smart irrigation, weather stations, field cameras, and drone NDVI
  */
 

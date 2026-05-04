@@ -53,7 +53,7 @@ export default function BugTracker() {
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12 }}>
           <div>
             <h1 style={{ color:'#fff', fontSize:24, fontWeight:800, margin:0 }}>🐛 Bug Tracker</h1>
-            <p style={{ color:'rgba(255,255,255,0.5)', fontSize:13, margin:'4px 0 0' }}>Internal QA Dashboard — AgriConnect 360 Team</p>
+            <p style={{ color:'rgba(255,255,255,0.5)', fontSize:13, margin:'4px 0 0' }}>Internal QA Dashboard — RythuSphere Team</p>
           </div>
           <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
             {statCards.map(s => (

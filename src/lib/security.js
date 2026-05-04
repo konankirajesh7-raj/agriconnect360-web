@@ -1,5 +1,5 @@
 /**
- * AgriConnect 360 — Security Utilities (Phase 15A)
+ * RythuSphere — Security Utilities (Phase 15A)
  * Input sanitization, rate limiting, CSRF protection, XSS prevention
  */
 

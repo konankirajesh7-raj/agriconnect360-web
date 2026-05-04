@@ -20,28 +20,28 @@ export function useAuth() {
   const ctx = useContext(AuthContext);
   if (ctx) return ctx;
   // Fallback: standalone usage
-  const demoToken = typeof window !== 'undefined' && localStorage.getItem('agri_admin_token');
+  const demoToken = typeof window !== 'undefined' && localStorage.getItem('rythu_admin_token');
   return {
-    user: demoToken ? { id: 'demo', role: (typeof window !== 'undefined' && localStorage.getItem('agri_demo_role')) || 'admin' } : null,
+    user: demoToken ? { id: 'demo', role: (typeof window !== 'undefined' && localStorage.getItem('rythu_demo_role')) || 'admin' } : null,
     session: null,
-    farmerProfile: demoToken ? { id: 'demo', name: ({ farmer: 'Farmer (Demo)', customer: 'Customer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' })[(typeof window !== 'undefined' && localStorage.getItem('agri_demo_role')) || 'admin'], role: (typeof window !== 'undefined' && localStorage.getItem('agri_demo_role')) || 'admin', district: DEFAULT_DISTRICT, state: DEFAULT_STATE } : null,
+    farmerProfile: demoToken ? { id: 'demo', name: ({ farmer: 'Farmer (Demo)', customer: 'Customer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' })[(typeof window !== 'undefined' && localStorage.getItem('rythu_demo_role')) || 'admin'], role: (typeof window !== 'undefined' && localStorage.getItem('rythu_demo_role')) || 'admin', district: DEFAULT_DISTRICT, state: DEFAULT_STATE } : null,
     loading: false,
     isDemoMode: !!demoToken,
     isAuthenticated: !!demoToken,
-    isAdmin: ((typeof window !== 'undefined' && localStorage.getItem('agri_demo_role')) || 'admin') === 'admin',
+    isAdmin: ((typeof window !== 'undefined' && localStorage.getItem('rythu_demo_role')) || 'admin') === 'admin',
     signInWithOTP: async () => ({ success: false, error: 'AuthProvider not mounted' }),
     verifyOTP: async () => ({ success: false, error: 'AuthProvider not mounted' }),
     signInWithPassword: async () => ({ success: false, error: 'AuthProvider not mounted' }),
     signUp: async () => ({ success: false, error: 'AuthProvider not mounted' }),
     demoLogin: (role = 'admin') => {
       const DEMO_NAMES = { farmer: 'Farmer (Demo)', customer: 'Customer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' };
-      localStorage.setItem('agri_admin_token', 'demo_admin_token_2024');
-      localStorage.setItem('agri_demo_role', role);
+      localStorage.setItem('rythu_admin_token', 'demo_admin_token_2024');
+      localStorage.setItem('rythu_demo_role', role);
       window.location.reload();
     },
     signOut: async () => {
-      localStorage.removeItem('agri_admin_token');
-      localStorage.removeItem('agri_admin_user');
+      localStorage.removeItem('rythu_admin_token');
+      localStorage.removeItem('rythu_admin_user');
     },
     signOutAll: async () => { },
     updateProfile: async () => ({ success: false }),
@@ -86,11 +86,11 @@ function useAuthProvider() {
       }
     };
     const checkDemo = () => {
-      if (localStorage.getItem('agri_admin_token')) {
-        const demoRole = localStorage.getItem('agri_demo_role') || 'admin';
+      if (localStorage.getItem('rythu_admin_token')) {
+        const demoRole = localStorage.getItem('rythu_demo_role') || 'admin';
         const DEMO_NAMES = { farmer: 'Farmer (Demo)', customer: 'Customer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' };
         setIsDemoMode(true);
-        setUser({ id: 'demo', email: `${demoRole}@agriconnect360.in`, role: demoRole });
+        setUser({ id: 'demo', email: `${demoRole}@rythusphere.in`, role: demoRole });
         setFarmerProfile({ id: 'demo', name: DEMO_NAMES[demoRole] || demoRole, role: demoRole, district: DEFAULT_DISTRICT, state: DEFAULT_STATE, onboarding_completed: true });
       }
     };
@@ -103,7 +103,7 @@ function useAuthProvider() {
         if (s?.user) await loadProfile(s.user.id);
       } else if (event === 'SIGNED_OUT') {
         setSession(null); setUser(null); setFarmerProfile(null); setIsDemoMode(false);
-        localStorage.removeItem('agri_admin_token');
+        localStorage.removeItem('rythu_admin_token');
       }
     });
     return () => { mounted = false; subscription?.unsubscribe(); };
@@ -338,11 +338,11 @@ function useAuthProvider() {
 
   const demoLogin = useCallback((role = 'admin') => {
     const DEMO_NAMES = { farmer: 'Farmer (Demo)', customer: 'Customer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' };
-    localStorage.setItem('agri_admin_token', 'demo_admin_token_2024');
-    localStorage.setItem('agri_demo_role', role);
-    localStorage.setItem('agri_admin_user', JSON.stringify({ name: DEMO_NAMES[role] || role, role }));
+    localStorage.setItem('rythu_admin_token', 'demo_admin_token_2024');
+    localStorage.setItem('rythu_demo_role', role);
+    localStorage.setItem('rythu_admin_user', JSON.stringify({ name: DEMO_NAMES[role] || role, role }));
     setIsDemoMode(true);
-    setUser({ id: 'demo', email: `${role}@agriconnect360.in`, role });
+    setUser({ id: 'demo', email: `${role}@rythusphere.in`, role });
     setFarmerProfile({ id: 'demo', name: DEMO_NAMES[role] || role, role, district: DEFAULT_DISTRICT, state: DEFAULT_STATE, onboarding_completed: true });
     return { success: true };
   }, []);
@@ -374,7 +374,7 @@ function useAuthProvider() {
       if (!isDemoMode) await supabase.auth.signOut();
       setSession(null); setUser(null); setFarmerProfile(null); setIsDemoMode(false);
       // Clear ONLY auth-related keys — preserve user preferences (language, location cache)
-      const AUTH_PREFIXES = ['sb-', 'agri_admin', 'agri_demo_', 'lock:', 'auth-token', 'ac360_auth', 'login_fails_', 'otp_attempts_'];
+      const AUTH_PREFIXES = ['sb-', 'rythu_admin', 'rythu_demo_', 'lock:', 'auth-token', 'rs_auth', 'login_fails_', 'otp_attempts_'];
       Object.keys(localStorage).forEach(k => {
         if (AUTH_PREFIXES.some(p => k.startsWith(p)) || k.includes('auth-token')) {
           localStorage.removeItem(k);
@@ -388,8 +388,8 @@ function useAuthProvider() {
     try {
       await supabase.auth.signOut({ scope: 'global' });
       setSession(null); setUser(null); setFarmerProfile(null); setIsDemoMode(false);
-      localStorage.removeItem('agri_admin_token');
-      localStorage.removeItem('agri_admin_user');
+      localStorage.removeItem('rythu_admin_token');
+      localStorage.removeItem('rythu_admin_user');
       return { success: true };
     } catch (e) { return { success: false, error: e.message }; }
   }, []);

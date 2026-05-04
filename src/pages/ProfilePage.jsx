@@ -1,5 +1,5 @@
 /**
- * Phase 11B — Farmer Profile Page (10 tasks)
+ * Phase 11B ï¿½ Farmer Profile Page (10 tasks)
  * - Profile photo upload (Cloudinary)
  * - Edit profile info
  * - Farm summary card (acres, crops, income)
@@ -24,7 +24,7 @@ import {
 
 // -- Constants --------------------------------------------------------
 const BADGES = [
-  { id: 'first_login', icon: '??', label: 'First Login', desc: 'Welcome to AgriConnect 360', earned: true },
+  { id: 'first_login', icon: '??', label: 'First Login', desc: 'Welcome to RythuSphere', earned: true },
   { id: 'profile_complete', icon: '?', label: 'Profile Complete', desc: 'Completed onboarding wizard', earned: true },
   { id: '5_crops', icon: '??', label: 'Crop Master', desc: 'Track 5+ crops', earned: false },
   { id: 'ai_user', icon: '??', label: 'AI Explorer', desc: 'Asked 10+ AI questions', earned: false },
@@ -37,14 +37,14 @@ const BADGES = [
 ];
 
 const TIMELINE_EVENTS = [
-  { date: '2026-04-20', icon: '??', title: 'Joined AgriConnect 360', type: 'milestone' },
+  { date: '2026-04-20', icon: '??', title: 'Joined RythuSphere', type: 'milestone' },
   { date: '2026-04-18', icon: '??', title: 'Registered 3 fields (12.5 acres)', type: 'farm' },
-  { date: '2026-04-15', icon: '??', title: 'Paddy sowing completed — North Field', type: 'crop' },
-  { date: '2026-04-10', icon: '??', title: 'Sold Cotton — ?72,000 at Guntur APMC', type: 'sale' },
-  { date: '2026-04-05', icon: '??', title: 'Soil test — pH 6.8, Good health', type: 'test' },
-  { date: '2026-03-28', icon: '???', title: 'PMFBY claim approved — ?42,000', type: 'scheme' },
-  { date: '2026-03-15', icon: '???', title: 'Heavy rain alert — crops safe', type: 'weather' },
-  { date: '2026-03-01', icon: '??', title: 'Equipment rental — Tractor for plowing', type: 'service' },
+  { date: '2026-04-15', icon: '??', title: 'Paddy sowing completed ï¿½ North Field', type: 'crop' },
+  { date: '2026-04-10', icon: '??', title: 'Sold Cotton ï¿½ ?72,000 at Guntur APMC', type: 'sale' },
+  { date: '2026-04-05', icon: '??', title: 'Soil test ï¿½ pH 6.8, Good health', type: 'test' },
+  { date: '2026-03-28', icon: '???', title: 'PMFBY claim approved ï¿½ ?42,000', type: 'scheme' },
+  { date: '2026-03-15', icon: '???', title: 'Heavy rain alert ï¿½ crops safe', type: 'weather' },
+  { date: '2026-03-01', icon: '??', title: 'Equipment rental ï¿½ Tractor for plowing', type: 'service' },
 ];
 
 const PIE_COLORS = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316'];
@@ -284,7 +284,7 @@ async function uploadProfilePhoto(file, authToken) {
   const cloudinaryFormData = new FormData();
   cloudinaryFormData.append('file', file);
   cloudinaryFormData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-  cloudinaryFormData.append('folder', 'agri360/profiles');
+  cloudinaryFormData.append('folder', 'rythusphere/profiles');
 
   const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
     method: 'POST',
@@ -375,8 +375,8 @@ export default function ProfilePage() {
   }, [form.farm_area_acres, form.num_fields, cropPortfolio, monthlyData]);
 
   const photoStorageKey = viewingMember
-    ? `agri360_profile_photo_member_${activeMember?.id || activeMember?.phone || 'active'}`
-    : 'agri360_profile_photo';
+    ? `rythusphere_profile_photo_member_${activeMember?.id || activeMember?.phone || 'active'}`
+    : 'rythusphere_profile_photo';
   const profilePhoto = localStorage.getItem(photoStorageKey) || form.avatar_url || '';
 
   const handleReturnToOwnProfile = useCallback(() => {
@@ -401,7 +401,7 @@ export default function ProfilePage() {
     setPhotoError('');
     setPhotoUploading(true);
     try {
-      const authToken = localStorage.getItem('agri_admin_token') || session?.access_token || '';
+      const authToken = localStorage.getItem('rythu_admin_token') || session?.access_token || '';
       const photoUrl = await uploadProfilePhoto(file, authToken);
       const localOnlyPhoto = String(photoUrl || '').startsWith('data:');
 
@@ -449,7 +449,7 @@ export default function ProfilePage() {
       // Header
       ctx.fillStyle = '#22c55e';
       ctx.font = 'bold 18px Inter, sans-serif';
-      ctx.fillText('AgriConnect 360 - Farmer ID Card', 20, 38);
+      ctx.fillText('RythuSphere - Farmer ID Card', 20, 38);
 
       // Green bar
       ctx.fillStyle = '#22c55e';
@@ -515,13 +515,13 @@ export default function ProfilePage() {
       ctx.fillRect(0, 340, 600, 40);
       ctx.fillStyle = '#64748b';
       ctx.font = '11px Inter, sans-serif';
-      ctx.fillText('Verified by AgriConnect 360 | www.agriconnect360.in | Powered by Supabase', 30, 365);
+      ctx.fillText('Verified by RythuSphere | www.rythusphere.in | Powered by Supabase', 30, 365);
 
       const jpegBytes = dataUrlToBytes(canvas.toDataURL('image/jpeg', 0.92));
       const pdfBlob = buildPdfFromJpeg(jpegBytes, canvas.width, canvas.height);
 
       const link = document.createElement('a');
-      link.download = `AgriConnect360_ID_${String(form.name || 'Farmer').replace(/\s+/g, '_')}.pdf`;
+      link.download = `RythuSphere_ID_${String(form.name || 'Farmer').replace(/\s+/g, '_')}.pdf`;
       const objectUrl = URL.createObjectURL(pdfBlob);
       link.href = objectUrl;
       link.click();
@@ -582,8 +582,8 @@ export default function ProfilePage() {
   const scoreLabel={farmer:'Farm Health',fpo:'FPO Health',industrial:'Business Score',supplier:'Shop Score',broker:'Deal Score',labour:'Work Score'}[role]||'Score';
 
   const ROLE_OVERVIEW={
-    industrial:{stats:[{v:'?4.82Cr',l:'Procurement FY26'},{v:'847',l:'Farmer Partners'},{v:'87%',l:'Grade A Rate'}],groups:[{t:'Procurement Targets',i:'??',items:['Cotton: 3,200/5,000 Q (64%)','Sugarcane: 14,500/20,000 T (72%)','Paddy: 7,100/8,000 Q (89%)']},{t:'Payment Summary',i:'??',items:['Confirmed: ?2,17,600','Processing: ?6,63,700','Total: ?8,81,300']},{t:'Factory Info',i:'??',items:['Sri Venkateshwara Cotton Inds.','Guntur, Andhra Pradesh','ISO 9001 · FSSAI · BIS']}]},
-    supplier:{stats:[{v:'?2.45L',l:'Revenue MTD'},{v:'5',l:'Products Listed'},{v:'?4.5',l:'Rating'}],groups:[{t:'Inventory',i:'??',items:['Cotton Seeds: 340 pkts ?','DAP 50kg: 120 bags ?','Neem Oil: 85 bottles ??']},{t:'Recent Orders',i:'??',items:['ORD-501: Ramaiah Naidu ?3,498','ORD-502: Lakshmi Devi ?4,250','ORD-503: Suresh Kumar ?5,760']},{t:'Shop Info',i:'??',items:['Sri Sai Agri Centre, Guntur','Delivery: 25 km radius','Hours: 8 AM – 7 PM']}]},
+    industrial:{stats:[{v:'?4.82Cr',l:'Procurement FY26'},{v:'847',l:'Farmer Partners'},{v:'87%',l:'Grade A Rate'}],groups:[{t:'Procurement Targets',i:'??',items:['Cotton: 3,200/5,000 Q (64%)','Sugarcane: 14,500/20,000 T (72%)','Paddy: 7,100/8,000 Q (89%)']},{t:'Payment Summary',i:'??',items:['Confirmed: ?2,17,600','Processing: ?6,63,700','Total: ?8,81,300']},{t:'Factory Info',i:'??',items:['Sri Venkateshwara Cotton Inds.','Guntur, Andhra Pradesh','ISO 9001 ï¿½ FSSAI ï¿½ BIS']}]},
+    supplier:{stats:[{v:'?2.45L',l:'Revenue MTD'},{v:'5',l:'Products Listed'},{v:'?4.5',l:'Rating'}],groups:[{t:'Inventory',i:'??',items:['Cotton Seeds: 340 pkts ?','DAP 50kg: 120 bags ?','Neem Oil: 85 bottles ??']},{t:'Recent Orders',i:'??',items:['ORD-501: Ramaiah Naidu ?3,498','ORD-502: Lakshmi Devi ?4,250','ORD-503: Suresh Kumar ?5,760']},{t:'Shop Info',i:'??',items:['Sri Sai Agri Centre, Guntur','Delivery: 25 km radius','Hours: 8 AM ï¿½ 7 PM']}]},
     broker:{stats:[{v:'?6.1L',l:'Commission MTD'},{v:'4',l:'Active Deals'},{v:'?4.7',l:'Rating'}],groups:[{t:'Active Deals',i:'??',items:['Cotton 80Q ? Deccan Foods','Paddy 150Q ? AP Rice Mills','Chilli 30Q ? Guntur Traders']},{t:'Network',i:'??',items:['23 Farmers','11 Buyers','8 Mandis covered']},{t:'Transport',i:'??',items:['Guntur?Hyderabad (En Route)','Vijayawada?Chennai (Booked)','Kurnool?Bangalore (Available)']}]},
     labour:{stats:[{v:'?25.1K',l:'Earnings MTD'},{v:'18',l:'Days Worked'},{v:'?4.8',l:'Rating'}],groups:[{t:'This Week',i:'??',items:['Apr 25: Paddy Harvesting','Apr 26: Field Ploughing','Apr 27: Sugarcane Cutting']},{t:'Top Skills',i:'??',items:['Paddy Harvesting (90%)','Ploughing (85%)','Pesticide Spraying (75%)']},{t:'Welfare',i:'???',items:['PM Shram Yogi: Enrolled','BOCW Fund: Active','e-Shram ID: UW-AP-123456']}]},
   };
@@ -598,10 +598,10 @@ export default function ProfilePage() {
   const activeBadges=ROLE_BADGES[role]||BADGES;
 
   const ROLE_TIMELINE={
-    industrial:[{date:'2026-04-23',icon:'??',title:'Procured Cotton 3,200Q from 18 farmers'},{date:'2026-04-20',icon:'??',title:'Payment ?2,17,600 to Ramaiah Naidu (UPI)'},{date:'2026-04-18',icon:'??',title:'Quality Inspection QI-003 Paddy — Grade A'},{date:'2026-04-15',icon:'??',title:'New contract: Suresh Kumar — 500T Sugarcane'},{date:'2026-04-10',icon:'??',title:'Joined AgriConnect 360 as Industrial Buyer'}],
-    supplier:[{date:'2026-04-23',icon:'??',title:'New Order ORD-501: Ramaiah Naidu — ?3,498'},{date:'2026-04-22',icon:'??',title:'Shipped ORD-502: Lakshmi Devi — Cotton Seeds'},{date:'2026-04-20',icon:'?',title:'Delivered ORD-503: Suresh Kumar — Drip Kit'},{date:'2026-04-18',icon:'??',title:'SMS Campaign sent to 847 farmers'},{date:'2026-04-15',icon:'??',title:'Joined AgriConnect 360 as Supplier'}],
-    broker:[{date:'2026-04-23',icon:'??',title:'Deal D-201: Cotton 80Q ? Deccan Foods'},{date:'2026-04-22',icon:'?',title:'Deal D-202 confirmed: Paddy 150Q ? AP Rice Mills'},{date:'2026-04-20',icon:'??',title:'Transport: Guntur ? Hyderabad — Cotton'},{date:'2026-04-18',icon:'??',title:'Commission received: ?24,000'},{date:'2026-04-15',icon:'??',title:'Joined AgriConnect 360 as Broker'}],
-    labour:[{date:'2026-04-25',icon:'??',title:'Job J-301: Paddy Harvesting (3 days)'},{date:'2026-04-24',icon:'?',title:'Completed: Pesticide Spraying — ?550'},{date:'2026-04-22',icon:'??',title:'Certification: Safe Pesticide Handling'},{date:'2026-04-20',icon:'???',title:'Enrolled in PM Shram Yogi Maan-Dhan'},{date:'2026-04-15',icon:'??',title:'Joined AgriConnect 360 as Farm Labour'}],
+    industrial:[{date:'2026-04-23',icon:'??',title:'Procured Cotton 3,200Q from 18 farmers'},{date:'2026-04-20',icon:'??',title:'Payment ?2,17,600 to Ramaiah Naidu (UPI)'},{date:'2026-04-18',icon:'??',title:'Quality Inspection QI-003 Paddy ï¿½ Grade A'},{date:'2026-04-15',icon:'??',title:'New contract: Suresh Kumar ï¿½ 500T Sugarcane'},{date:'2026-04-10',icon:'??',title:'Joined RythuSphere as Industrial Buyer'}],
+    supplier:[{date:'2026-04-23',icon:'??',title:'New Order ORD-501: Ramaiah Naidu ï¿½ ?3,498'},{date:'2026-04-22',icon:'??',title:'Shipped ORD-502: Lakshmi Devi ï¿½ Cotton Seeds'},{date:'2026-04-20',icon:'?',title:'Delivered ORD-503: Suresh Kumar ï¿½ Drip Kit'},{date:'2026-04-18',icon:'??',title:'SMS Campaign sent to 847 farmers'},{date:'2026-04-15',icon:'??',title:'Joined RythuSphere as Supplier'}],
+    broker:[{date:'2026-04-23',icon:'??',title:'Deal D-201: Cotton 80Q ? Deccan Foods'},{date:'2026-04-22',icon:'?',title:'Deal D-202 confirmed: Paddy 150Q ? AP Rice Mills'},{date:'2026-04-20',icon:'??',title:'Transport: Guntur ? Hyderabad ï¿½ Cotton'},{date:'2026-04-18',icon:'??',title:'Commission received: ?24,000'},{date:'2026-04-15',icon:'??',title:'Joined RythuSphere as Broker'}],
+    labour:[{date:'2026-04-25',icon:'??',title:'Job J-301: Paddy Harvesting (3 days)'},{date:'2026-04-24',icon:'?',title:'Completed: Pesticide Spraying ï¿½ ?550'},{date:'2026-04-22',icon:'??',title:'Certification: Safe Pesticide Handling'},{date:'2026-04-20',icon:'???',title:'Enrolled in PM Shram Yogi Maan-Dhan'},{date:'2026-04-15',icon:'??',title:'Joined RythuSphere as Farm Labour'}],
   };
   const activeTimeline=ROLE_TIMELINE[role]||TIMELINE_EVENTS;
 

@@ -11,9 +11,9 @@ const FAST2SMS_BASE = 'https://www.fast2sms.com/dev/bulkV2';
 // ── OTP Templates (English, Telugu, Hindi) ────────────────────────────────────
 
 const OTP_TEMPLATES = {
-  en: (otp) => `Your AgriConnect 360 OTP is: ${otp}. Valid for 5 minutes. Do not share with anyone.`,
-  te: (otp) => `మీ AgriConnect 360 OTP: ${otp}. 5 నిమిషాలు చెల్లుబాటు. ఎవరికీ చెప్పకండి.`,
-  hi: (otp) => `आपका AgriConnect 360 OTP: ${otp}. 5 मिनट तक मान्य। किसी के साथ साझा न करें।`,
+  en: (otp) => `Your RythuSphere OTP is: ${otp}. Valid for 5 minutes. Do not share with anyone.`,
+  te: (otp) => `మీ RythuSphere OTP: ${otp}. 5 నిమిషాలు చెల్లుబాటు. ఎవరికీ చెప్పకండి.`,
+  hi: (otp) => `आपका RythuSphere OTP: ${otp}. 5 मिनट तक मान्य। किसी के साथ साझा न करें।`,
 };
 
 /**

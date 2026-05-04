@@ -88,7 +88,7 @@ const PLANS = [
 ];
 
 const FAQ = [
-  { q: 'Is AgriConnect 360 really free for farmers?', a: 'Yes! All 18 core modules are completely free forever for individual farmers. No credit card required, no hidden fees. We believe every AP farmer deserves access to data and AI tools.' },
+  { q: 'Is RythuSphere really free for farmers?', a: 'Yes! All 18 core modules are completely free forever for individual farmers. No credit card required, no hidden fees. We believe every AP farmer deserves access to data and AI tools.' },
   { q: 'Does it work in Telugu?', a: 'Absolutely. Weather advisory, AI crop recommendations, expert responses, and support are all available in Telugu (తెలుగు). We are the only platform built Telugu-first for AP farmers.' },
   { q: 'Which districts does it cover?', a: 'All 13 districts of Andhra Pradesh — Guntur, Krishna, Kurnool, Vijayawada, Nellore, Visakhapatnam, Rajahmundry, Tirupati, Anantapur, Kadapa, Eluru, Ongole, and Machilipatnam — with live mandi prices and weather.' },
   { q: 'How accurate is the AI disease detection?', a: 'Our AI disease detection model is trained on 500,000+ AP-specific crop images and achieves 94% accuracy for common diseases like paddy blast, cotton bollworm, and chilli leaf curl. It improves continuously.' },
@@ -172,7 +172,7 @@ export default function PricingPage() {
       <section style={{ padding: '60px 40px 80px', maxWidth: 760, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '2rem', fontWeight: 800, marginBottom: 8 }}>Frequently Asked Questions</h2>
-          <p style={{ color: '#64748b' }}>Got more questions? Reach us at support@agriconnect360.in or call 1800-XXX-XXXX (toll free)</p>
+          <p style={{ color: '#64748b' }}>Got more questions? Reach us at support@rythusphere.in or call 1800-XXX-XXXX (toll free)</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {FAQ.map((item, i) => (

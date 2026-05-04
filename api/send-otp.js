@@ -27,7 +27,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         route: 'q',
-        message: message || 'Your AgriConnect 360 OTP is ready.',
+        message: message || 'Your RythuSphere OTP is ready.',
         language: 'english',
         flash: 0,
         numbers: phone,

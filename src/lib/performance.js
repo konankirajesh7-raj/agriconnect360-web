@@ -1,5 +1,5 @@
 /**
- * AgriConnect 360 — Performance Utilities (Phase 15B)
+ * RythuSphere — Performance Utilities (Phase 15B)
  * Image optimization, caching, lazy loading, bundle analysis helpers
  */
 

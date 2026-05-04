@@ -84,7 +84,7 @@ export default function PublicStorePage() {
           <button
             className="btn btn-primary"
             style={{ padding: '9px 12px', fontSize: '0.8rem' }}
-            onClick={() => window.open('https://wa.me/919876543210?text=Hi%20AgriConnect%20360%2C%20I%20want%20to%20place%20a%20bulk%20institutional%20order.', '_blank')}
+            onClick={() => window.open('https://wa.me/919876543210?text=Hi%20RythuSphere%20360%2C%20I%20want%20to%20place%20a%20bulk%20institutional%20order.', '_blank')}
           >
             🏢 Institutional bulk order
           </button>

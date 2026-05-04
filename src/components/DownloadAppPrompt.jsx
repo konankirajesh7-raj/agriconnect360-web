@@ -133,7 +133,7 @@ export default function DownloadAppPrompt({ variant = 'fab' }) {
             <DownloadIcon size={24} />
           </div>
           <div className="dhc-text">
-            <div className="dhc-title">📲 Download AgriConnect 360</div>
+            <div className="dhc-title">📲 Download RythuSphere</div>
             <div className="dhc-sub">Install free • Works offline • No app store needed</div>
           </div>
           <div className="dhc-arrow">→</div>
@@ -171,7 +171,7 @@ function InstallModal({ platform, onClose, canInstall, triggerInstall }) {
         <div className="install-modal-icon">
           <PhoneIcon size={32} />
         </div>
-        <h3>Install AgriConnect 360</h3>
+        <h3>Install RythuSphere</h3>
         <p>
           Get the full app experience — works offline, fast loading, 
           push notifications, and home screen access.

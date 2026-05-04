@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import T, { navT as navTranslate } from './translations';
 
 const LanguageContext = createContext(null);
-const STORAGE_KEY = 'agri360_language';
+const STORAGE_KEY = 'rythusphere_language';
 
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(() => {

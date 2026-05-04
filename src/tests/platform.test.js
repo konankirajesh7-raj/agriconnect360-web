@@ -1,5 +1,5 @@
 /**
- * AgriConnect 360 — Test Suite (Phase 15C)
+ * RythuSphere — Test Suite (Phase 15C)
  * Unit tests, integration tests, and E2E test specifications
  * Run with: npx vitest run
  */

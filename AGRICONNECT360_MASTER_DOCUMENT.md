@@ -1,13 +1,13 @@
-# 🌾 AgriConnect 360 — Complete Master Document
+# �xR� RythuSphere � Complete Master Document
 ## Zero-to-Hero Project Blueprint | Version 1.0 FINAL
 
-> **Live URL**: https://agriconnect360-web.vercel.app
-> **Repository**: `e:\OneDrive\Desktop\AGRI_360\AGRI_360_PROGRAMS\AgriConnect360Web`
+> **Live URL**: https://rythusphere-web.vercel.app
+> **Repository**: `e:\OneDrive\Desktop\AGRI_360\AGRI_360_PROGRAMS\RythuSphereWeb`
 > **Date**: 2026-04-28 | **Author**: Konan Rajesh
 
 ---
 
-## 📋 TABLE OF CONTENTS
+## �x9 TABLE OF CONTENTS
 
 1. [Project Overview](#1-project-overview)
 2. [Architecture](#2-architecture)
@@ -26,7 +26,7 @@
 
 ## 1. PROJECT OVERVIEW
 
-**AgriConnect 360** is India's most comprehensive agritech platform built specifically for **Andhra Pradesh** farmers. It integrates 22+ modules covering the entire agricultural lifecycle — from soil testing to market sales.
+**RythuSphere** is India's most comprehensive agritech platform built specifically for **Andhra Pradesh** farmers. It integrates 22+ modules covering the entire agricultural lifecycle � from soil testing to market sales.
 
 ### Key Stats
 | Metric | Value |
@@ -43,12 +43,12 @@
 | Build Time | **~3.5 seconds** |
 
 ### Target Users
-- 🧑‍🌾 **Small & marginal farmers** in Andhra Pradesh (80% of users)
-- 🏭 **Agri-industrials** (cotton mills, rice mills)
-- 🚛 **Suppliers** (seeds, fertilizers, pesticides)
-- 📊 **Brokers** (APMC mandi brokers)
-- 👷 **Labour associations** (farm labour)
-- 🏛️ **Administrators** (platform managers)
+- �x�⬍�xR� **Small & marginal farmers** in Andhra Pradesh (80% of users)
+- �x�� **Agri-industrials** (cotton mills, rice mills)
+- �xa: **Suppliers** (seeds, fertilizers, pesticides)
+- �x` **Brokers** (APMC mandi brokers)
+- �x� **Labour associations** (farm labour)
+- �x�:️ **Administrators** (platform managers)
 
 ---
 
@@ -89,61 +89,61 @@ graph TB
 
 ### File Structure
 ```
-AgriConnect360Web/
-├── .env                          # All API keys
-├── .env.example                  # Template for new devs
-├── vercel.json                   # Security headers + CSP
-├── package.json                  # Dependencies
-├── vite.config.js                # Build config
-├── index.html                    # Entry point + SEO meta
-├── public/
-│   ├── farm-video.mp4            # Homepage background (6.6 MB)
-│   ├── manifest.json             # PWA manifest
-│   ├── sw.js                     # Service Worker (offline + cache)
-│   ├── robots.txt                # SEO crawl rules
-│   ├── sitemap.xml               # All public pages
-│   ├── privacy-policy.html       # DPDP Act compliant
-│   ├── terms-of-service.html     # Legal terms
-│   └── icons/                    # PWA icons (192px, 512px)
-├── src/
-│   ├── App.jsx                   # 39 KB — Master router + sidebar + auth
-│   ├── main.jsx                  # React entry
-│   ├── index.css                 # 24 KB — Design system + animations
-│   ├── phase11.css               # 109 KB — Onboarding styles
-│   ├── pages/                    # 47 page components
-│   │   ├── Dashboard.jsx         # Farmer main dashboard
-│   │   ├── AIPage.jsx            # Gemini-powered AI advisory
-│   │   ├── LoginPage.jsx         # OTP + Google OAuth
-│   │   ├── MarketPricesPage.jsx  # Live APMC mandi prices
-│   │   ├── WeatherPage.jsx       # 7-day forecast
-│   │   ├── FinancialServicesPage.jsx # 85 KB — 8-tab finance
-│   │   ├── ... (47 total)
-│   │   └── public/               # Public-facing pages
-│   ├── lib/
-│   │   ├── supabase.js           # DB client + helpers
-│   │   ├── i18n.js               # Telugu/Hindi/Kannada translations
-│   │   ├── security.js           # XSS sanitize + CSRF
-│   │   ├── validation.js         # Form validation rules
-│   │   ├── offlineQueue.js       # Offline sync queue
-│   │   ├── performance.js        # Core Web Vitals monitor
-│   │   ├── smsService.js         # Fast2SMS integration
-│   │   ├── mandiService.js       # data.gov.in parser
-│   │   ├── hooks/
-│   │   │   ├── useAuth.js        # Authentication + RBAC
-│   │   │   ├── useMobile.js      # Responsive + gestures
-│   │   │   ├── useOnboarding.js  # Farmer onboarding wizard
-│   │   │   ├── useSupabaseQuery.js # React Query + Supabase
-│   │   │   ├── useTTS.js         # Text-to-speech
-│   │   │   └── useVoiceInput.js  # Voice recognition
-│   │   └── services/
-│   │       ├── advancedAI.js     # Gemini Vision + context
-│   │       ├── commerceService.js # Marketplace logic
-│   │       ├── financialService.js # KCC + loans + insurance
-│   │       ├── gamificationService.js # XP + badges + levels
-│   │       ├── iotService.js     # IoT sensor data
-│   │       └── mandiService.js   # APMC price aggregation
-│   └── tests/                    # Test utilities
-└── api/                          # Vercel serverless functions
+RythuSphereWeb/
+�S���� .env                          # All API keys
+�S���� .env.example                  # Template for new devs
+�S���� vercel.json                   # Security headers + CSP
+�S���� package.json                  # Dependencies
+�S���� vite.config.js                # Build config
+�S���� index.html                    # Entry point + SEO meta
+�S���� public/
+�   �S���� farm-video.mp4            # Homepage background (6.6 MB)
+�   �S���� manifest.json             # PWA manifest
+�   �S���� sw.js                     # Service Worker (offline + cache)
+�   �S���� robots.txt                # SEO crawl rules
+�   �S���� sitemap.xml               # All public pages
+�   �S���� privacy-policy.html       # DPDP Act compliant
+�   �S���� terms-of-service.html     # Legal terms
+�   ����� icons/                    # PWA icons (192px, 512px)
+�S���� src/
+�   �S���� App.jsx                   # 39 KB � Master router + sidebar + auth
+�   �S���� main.jsx                  # React entry
+�   �S���� index.css                 # 24 KB � Design system + animations
+�   �S���� phase11.css               # 109 KB � Onboarding styles
+�   �S���� pages/                    # 47 page components
+�   �   �S���� Dashboard.jsx         # Farmer main dashboard
+�   �   �S���� AIPage.jsx            # Gemini-powered AI advisory
+�   �   �S���� LoginPage.jsx         # OTP + Google OAuth
+�   �   �S���� MarketPricesPage.jsx  # Live APMC mandi prices
+�   �   �S���� WeatherPage.jsx       # 7-day forecast
+�   �   �S���� FinancialServicesPage.jsx # 85 KB � 8-tab finance
+�   �   �S���� ... (47 total)
+�   �   ����� public/               # Public-facing pages
+�   �S���� lib/
+�   �   �S���� supabase.js           # DB client + helpers
+�   �   �S���� i18n.js               # Telugu/Hindi/Kannada translations
+�   �   �S���� security.js           # XSS sanitize + CSRF
+�   �   �S���� validation.js         # Form validation rules
+�   �   �S���� offlineQueue.js       # Offline sync queue
+�   �   �S���� performance.js        # Core Web Vitals monitor
+�   �   �S���� smsService.js         # Fast2SMS integration
+�   �   �S���� mandiService.js       # data.gov.in parser
+�   �   �S���� hooks/
+�   �   �   �S���� useAuth.js        # Authentication + RBAC
+�   �   �   �S���� useMobile.js      # Responsive + gestures
+�   �   �   �S���� useOnboarding.js  # Farmer onboarding wizard
+�   �   �   �S���� useSupabaseQuery.js # React Query + Supabase
+�   �   �   �S���� useTTS.js         # Text-to-speech
+�   �   �   ����� useVoiceInput.js  # Voice recognition
+�   �   ����� services/
+�   �       �S���� advancedAI.js     # Gemini Vision + context
+�   �       �S���� commerceService.js # Marketplace logic
+�   �       �S���� financialService.js # KCC + loans + insurance
+�   �       �S���� gamificationService.js # XP + badges + levels
+�   �       �S���� iotService.js     # IoT sensor data
+�   �       ����� mandiService.js   # APMC price aggregation
+�   ����� tests/                    # Test utilities
+����� api/                          # Vercel serverless functions
 ```
 
 ---
@@ -185,14 +185,14 @@ AgriConnect360Web/
 
 ## 4. API KEYS & CREDENTIALS
 
-> ⚠️ These are the ACTUAL production keys currently deployed.
+> �a�️ These are the ACTUAL production keys currently deployed.
 
-### 🟢 Active & Working
+### �xx� Active & Working
 
 | Service | Key Variable | Value | Get New Key |
 |---------|-------------|-------|-------------|
 | **Supabase URL** | `VITE_SUPABASE_URL` | `https://gwetaesjkkrtmhnxuekc.supabase.co` | [supabase.com/dashboard](https://supabase.com/dashboard) |
-| **Supabase Anon** | `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIs...hFNMO_V_E3Ua2nf33Zij...` | Same project dashboard → Settings → API |
+| **Supabase Anon** | `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIs...hFNMO_V_E3Ua2nf33Zij...` | Same project dashboard �  Settings �  API |
 | **Gemini AI** | `VITE_GEMINI_API_KEY` | `AIzaSyCfTm4fHtP5FZhaymgQy6WYvHrPzmv4Xd4` | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 | **Groq AI** | `VITE_GROQ_API_KEY` | `gsk_E1wuCuMRZL...` | [console.groq.com](https://console.groq.com) |
 | **OpenWeatherMap** | `VITE_OPENWEATHER_API_KEY` | `cd20cbcdfa10105f8aaaad9e5c69f48b` | [openweathermap.org/api](https://openweathermap.org/api) |
@@ -200,12 +200,12 @@ AgriConnect360Web/
 | **data.gov.in** | `VITE_DATA_GOV_API_KEY` | `579b464db66ec23bdd000001...` | [data.gov.in](https://data.gov.in) |
 | **Fast2SMS** | `VITE_FAST2SMS_API_KEY` | `txy9bMsqhzmFSNg...` | [fast2sms.com](https://fast2sms.com) |
 
-### 🟡 Not Yet Configured (Needed for Full Production)
+### �xx� Not Yet Configured (Needed for Full Production)
 
 | Service | Purpose | Where to Get |
 |---------|---------|-------------|
-| **Razorpay LIVE** | Real payments | [dashboard.razorpay.com](https://dashboard.razorpay.com) → Settings → API Keys |
-| **Sentry DSN** | Error monitoring | [sentry.io](https://sentry.io) → Create Project → Get DSN |
+| **Razorpay LIVE** | Real payments | [dashboard.razorpay.com](https://dashboard.razorpay.com) �  Settings �  API Keys |
+| **Sentry DSN** | Error monitoring | [sentry.io](https://sentry.io) �  Create Project �  Get DSN |
 | **Twilio** | Production SMS | [twilio.com/console](https://twilio.com/console) |
 | **Firebase Cloud Messaging** | Push notifications | [console.firebase.google.com](https://console.firebase.google.com) |
 | **Uptime Robot** | Uptime monitoring | [uptimerobot.com](https://uptimerobot.com) |
@@ -215,19 +215,19 @@ AgriConnect360Web/
 ### Vercel Env Variables (15 configured)
 All keys are encrypted in Vercel dashboard:
 ```
-VITE_SUPABASE_URL          → Production/Preview/Dev
-VITE_SUPABASE_ANON_KEY     → Production
-VITE_GEMINI_API_KEY        → Production/Preview
-VITE_GROQ_API_KEY          → Production/Preview
-VITE_OPENWEATHER_API_KEY   → Production/Preview
-VITE_DATA_GOV_API_KEY      → Production/Preview
-VITE_FAST2SMS_API_KEY      → Production/Preview
-FAST2SMS_API_KEY           → Production (serverless)
-VITE_DEFAULT_STATE         → Production (Andhra Pradesh)
-VITE_DEFAULT_DISTRICT      → Production (Guntur)
-VITE_DEFAULT_LAT/LON       → Production (16.3067/80.4365)
-VITE_APP_NAME/VERSION      → Production
-VITE_API_URL               → Production/Preview/Dev
+VITE_SUPABASE_URL          �  Production/Preview/Dev
+VITE_SUPABASE_ANON_KEY     �  Production
+VITE_GEMINI_API_KEY        �  Production/Preview
+VITE_GROQ_API_KEY          �  Production/Preview
+VITE_OPENWEATHER_API_KEY   �  Production/Preview
+VITE_DATA_GOV_API_KEY      �  Production/Preview
+VITE_FAST2SMS_API_KEY      �  Production/Preview
+FAST2SMS_API_KEY           �  Production (serverless)
+VITE_DEFAULT_STATE         �  Production (Andhra Pradesh)
+VITE_DEFAULT_DISTRICT      �  Production (Guntur)
+VITE_DEFAULT_LAT/LON       �  Production (16.3067/80.4365)
+VITE_APP_NAME/VERSION      �  Production
+VITE_API_URL               �  Production/Preview/Dev
 ```
 
 ---
@@ -239,26 +239,26 @@ VITE_API_URL               → Production/Preview/Dev
 #### Core Tables
 | Table | Purpose | RLS |
 |-------|---------|-----|
-| `profiles` | User profiles (name, role, village, district, aadhaar) | ✅ |
-| `crops` | Farmer crop records (name, area, season, field_id) | ✅ |
-| `fields` | Farm field records (name, area, soil_type, GPS) | ✅ |
-| `expenses` | Expense tracking (category, amount, date, vendor) | ✅ |
-| `sales` | Sales/income records | ✅ |
-| `notifications` | In-app notification queue | ✅ |
-| `community_posts` | Forum posts + replies | ✅ |
-| `marketplace_listings` | Produce buy/sell listings | ✅ |
-| `labour_bookings` | Labour hiring records | ✅ |
-| `equipment_bookings` | Equipment rental records | ✅ |
-| `wallet_transactions` | Payment/wallet history | ✅ |
-| `gamification_scores` | XP, badges, leaderboard | ✅ |
-| `iot_devices` | IoT sensor registrations | ✅ |
-| `iot_readings` | Sensor data time series | ✅ |
-| `fpo_members` | FPO organization membership | ✅ |
-| `schemes` | Government scheme applications | ✅ |
+| `profiles` | User profiles (name, role, village, district, aadhaar) | �S& |
+| `crops` | Farmer crop records (name, area, season, field_id) | �S& |
+| `fields` | Farm field records (name, area, soil_type, GPS) | �S& |
+| `expenses` | Expense tracking (category, amount, date, vendor) | �S& |
+| `sales` | Sales/income records | �S& |
+| `notifications` | In-app notification queue | �S& |
+| `community_posts` | Forum posts + replies | �S& |
+| `marketplace_listings` | Produce buy/sell listings | �S& |
+| `labour_bookings` | Labour hiring records | �S& |
+| `equipment_bookings` | Equipment rental records | �S& |
+| `wallet_transactions` | Payment/wallet history | �S& |
+| `gamification_scores` | XP, badges, leaderboard | �S& |
+| `iot_devices` | IoT sensor registrations | �S& |
+| `iot_readings` | Sensor data time series | �S& |
+| `fpo_members` | FPO organization membership | �S& |
+| `schemes` | Government scheme applications | �S& |
 
 #### Auth Configuration
-- **Email/Password**: ✅ Enabled
-- **Google OAuth**: ✅ Enabled
+- **Email/Password**: �S& Enabled
+- **Google OAuth**: �S& Enabled
 - **Phone OTP**: Via Fast2SMS (not Supabase phone)
 - **JWT expiry**: 3600 seconds
 
@@ -266,7 +266,7 @@ VITE_API_URL               → Production/Preview/Dev
 
 ## 6. ALL 47 PAGES & MODULES
 
-### 🧑‍🌾 Farmer Modules (Core)
+### �x�⬍�xR� Farmer Modules (Core)
 | # | Page File | Route | Size | Description |
 |---|-----------|-------|------|-------------|
 | 1 | `Dashboard.jsx` | `/dashboard` | 21 KB | Stats, journey bar, tasks, tip of day |
@@ -280,12 +280,12 @@ VITE_API_URL               → Production/Preview/Dev
 | 9 | `AIPage.jsx` | `/ai` | 40 KB | Gemini chat, disease detection, yield predict |
 | 10 | `SchemesPage.jsx` | `/schemes` | 28 KB | Govt schemes tracker (PM-KISAN, YSR Rythu) |
 
-### 💰 Finance Modules
+### �x� Finance Modules
 | 11 | `FinancialServicesPage.jsx` | `/financial-services` | 85 KB | 8-tab: KCC, loans, insurance, tax, subsidy |
 | 12 | `WalletPage.jsx` | `/wallet` | 15 KB | UPI payments, premium, invoices |
 | 13 | `InsurancePage.jsx` | `/insurance` | 8 KB | PMFBY crop insurance claims |
 
-### 🏪 Commerce
+### �x�� Commerce
 | 14 | `MarketplacePage.jsx` | `/marketplace` | 20 KB | Farmer-to-farmer produce trading |
 | 15 | `SuppliersPage.jsx` | `/suppliers` | 18 KB | Input supplier directory |
 | 16 | `F2CStorePage.jsx` | `/f2c-store` | 7 KB | Farmer-to-consumer storefront |
@@ -293,36 +293,36 @@ VITE_API_URL               → Production/Preview/Dev
 | 18 | `TransportPage.jsx` | `/transport` | 21 KB | Transport logistics booking |
 | 19 | `LabourPage.jsx` | `/labour` | 17 KB | Labour hiring marketplace |
 
-### 🤝 Social & Community
+### �x�� Social & Community
 | 20 | `CommunityPage.jsx` | `/community` | 19 KB | Forum, Q&A, tips, reporting |
 | 21 | `NetworkPage.jsx` | `/network` | 13 KB | Farmer network, connections |
 | 22 | `FPOPage.jsx` | `/fpo` | 21 KB | FPO organization management |
 | 23 | `KnowledgePage.jsx` | `/knowledge` | 12 KB | Agricultural knowledge base |
 
-### 🏆 Engagement
+### �x�  Engagement
 | 24 | `GamificationPage.jsx` | `/gamification` | 22 KB | XP, badges, leaderboard, quests |
 | 25 | `TaskManagerPage.jsx` | `/tasks` | 18 KB | Farm task planner |
 | 26 | `ReportsPage.jsx` | `/reports` | 17 KB | PDF reports, analytics |
 
-### 📊 Role Dashboards
+### �x` Role Dashboards
 | 27 | `AdminDashboardPage.jsx` | `/admin` | 19 KB | User management, moderation |
 | 28 | `SupplierDashboardPage.jsx` | `/supplier-dashboard` | 45 KB | Order management, inventory |
 | 29 | `BrokerDashboardPage.jsx` | `/broker-dashboard` | 31 KB | Mandi transactions, commission |
 | 30 | `IndustrialDashboardPage.jsx` | `/industrial-dashboard` | 30 KB | Farmer search, bulk procurement |
 | 31 | `LabourDashboardPage.jsx` | `/labour-dashboard` | 18 KB | Booking management, workers |
 
-### 👤 Profile & Settings
+### �x� Profile & Settings
 | 32 | `ProfilePage.jsx` | `/profile` | 42 KB | Farm health score, crop portfolio |
 | 33 | `SettingsPage.jsx` | `/settings` | 12 KB | Theme, language, privacy, export |
 | 34 | `OnboardingPage.jsx` | `/onboarding` | 38 KB | Multi-step registration wizard |
 | 35 | `NotificationsPage.jsx` | `/notifications` | 8 KB | Notification center |
 
-### 🌐 Public Pages
+### �xR� Public Pages
 | 36 | `LandingPage.jsx` | `/` | 14 KB | Hero, features, stats |
 | 37 | `LoginPage.jsx` | `/login` | 49 KB | OTP + Google + demo roles |
 | 38 | `ContactPage.jsx` | `/contact` | 14 KB | Support form |
 
-### 🔬 Advanced/Premium
+### �x� Advanced/Premium
 | 39 | `PremiumUpgradesPage.jsx` | `/premium` | 67 KB | Premium features, IoT, drone |
 | 40 | `IoTDashboardPage.jsx` | `/iot` | 9 KB | IoT sensor monitoring |
 | 41 | `DronePage.jsx` | `/drone` | 8 KB | Drone survey booking |
@@ -378,10 +378,10 @@ VITE_API_URL               → Production/Preview/Dev
 | 7 | **Public** | Read-only | Landing page, contact, login, demo mode |
 
 ### RBAC Implementation
-- **useAuth.js** → `role` from `profiles` table
-- **App.jsx** → `<ProtectedRoute>` wrapper checks role
-- **isAdmin** → ONLY `role === 'admin'` (security fix applied)
-- **Demo mode** → 7 pre-configured demo accounts
+- **useAuth.js** �  `role` from `profiles` table
+- **App.jsx** �  `<ProtectedRoute>` wrapper checks role
+- **isAdmin** �  ONLY `role === 'admin'` (security fix applied)
+- **Demo mode** �  7 pre-configured demo accounts
 
 ---
 
@@ -396,13 +396,13 @@ VITE_API_URL               → Production/Preview/Dev
 - `Referrer-Policy: strict-origin-when-cross-origin`
 
 ### Application Security
-- ✅ **RLS** on all Supabase tables
-- ✅ **XSS sanitization** via `security.js`
-- ✅ **SQL injection** — Supabase parameterized queries
-- ✅ **CSRF** — SameSite cookies
-- ✅ **Aadhaar masking** — XXXX XXXX 9012 format
-- ✅ **Rate limiting** — API-level throttling
-- ✅ **Input validation** — All forms validated
+- �S& **RLS** on all Supabase tables
+- �S& **XSS sanitization** via `security.js`
+- �S& **SQL injection** � Supabase parameterized queries
+- �S& **CSRF** � SameSite cookies
+- �S& **Aadhaar masking** � XXXX XXXX 9012 format
+- �S& **Rate limiting** � API-level throttling
+- �S& **Input validation** � All forms validated
 
 ---
 
@@ -410,7 +410,7 @@ VITE_API_URL               → Production/Preview/Dev
 
 ### Build Pipeline
 ```
-npm run build → Vite → dist/ → Vercel CDN
+npm run build �  Vite �  dist/ �  Vercel CDN
 Build time: ~3.5 seconds
 Bundle: ~170 KB gzipped
 ```
@@ -432,7 +432,7 @@ Bundle: ~170 KB gzipped
 
 ## 11. WHAT'S MISSING & ROADMAP
 
-### 🔴 Critical (Before Public Launch)
+### �x� Critical (Before Public Launch)
 
 | # | Item | Effort | Impact |
 |---|------|--------|--------|
@@ -442,7 +442,7 @@ Bundle: ~170 KB gzipped
 | 4 | **Image upload to Supabase Storage** | 3 hours | Crop photos, profile pics |
 | 5 | **Email verification flow** | 1 hour | Account security |
 
-### 🟡 Important (Week 1 Post-Launch)
+### �xx� Important (Week 1 Post-Launch)
 
 | # | Item | Effort |
 |---|------|--------|
@@ -452,7 +452,7 @@ Bundle: ~170 KB gzipped
 | 9 | Automated backup system | 2 hours |
 | 10 | Google Analytics integration | 1 hour |
 
-### 🟢 Nice to Have (Month 1)
+### �xx� Nice to Have (Month 1)
 
 | # | Item | Effort |
 |---|------|--------|
@@ -467,32 +467,32 @@ Bundle: ~170 KB gzipped
 ## 12. IMPROVEMENT SUGGESTIONS
 
 ### Performance
-1. **Code splitting** — Lazy load all pages (already done with `React.lazy`)
-2. **Image optimization** — Use WebP/AVIF for all images
-3. **Service Worker v2** — Stale-while-revalidate strategy
-4. **Database indexes** — Add compound indexes on frequently queried columns
+1. **Code splitting** � Lazy load all pages (already done with `React.lazy`)
+2. **Image optimization** � Use WebP/AVIF for all images
+3. **Service Worker v2** � Stale-while-revalidate strategy
+4. **Database indexes** � Add compound indexes on frequently queried columns
 
 ### UX/UI
-1. **Onboarding tutorial** — Interactive walkthrough for first-time users
-2. **Dark/Light theme** — Already implemented, test on more devices
-3. **Haptic feedback** — Vibration on key actions (mobile)
-4. **Skeleton screens** — Already using `<PageSkeleton />`
+1. **Onboarding tutorial** � Interactive walkthrough for first-time users
+2. **Dark/Light theme** � Already implemented, test on more devices
+3. **Haptic feedback** � Vibration on key actions (mobile)
+4. **Skeleton screens** � Already using `<PageSkeleton />`
 
 ### Business
-1. **WhatsApp Business API** — Direct order placement via WhatsApp
-2. **UPI Autopay** — Recurring premium subscriptions
-3. **FPO aggregation** — Bulk buying power for small farmers
-4. **Insurance claim automation** — Weather-triggered auto-claims
-5. **Credit scoring** — Farm data-based microfinance
+1. **WhatsApp Business API** � Direct order placement via WhatsApp
+2. **UPI Autopay** � Recurring premium subscriptions
+3. **FPO aggregation** � Bulk buying power for small farmers
+4. **Insurance claim automation** � Weather-triggered auto-claims
+5. **Credit scoring** � Farm data-based microfinance
 
 ### AI Enhancements
-1. **Multilingual voice assistant** — Telugu voice commands
-2. **Pest prediction** — Weather + historical data ML model
-3. **Price forecasting** — Time-series ML for commodity prices
-4. **Satellite crop monitoring** — NDVI analysis from Sentinel-2
+1. **Multilingual voice assistant** � Telugu voice commands
+2. **Pest prediction** � Weather + historical data ML model
+3. **Price forecasting** � Time-series ML for commodity prices
+4. **Satellite crop monitoring** � NDVI analysis from Sentinel-2
 
 ---
 
-> **This document represents the COMPLETE state of AgriConnect 360.**
+> **This document represents the COMPLETE state of RythuSphere.**
 > **Total project value: 47 modules, 7 roles, 800+ tested scenarios.**
-> **Status: PRODUCTION READY ✅**
+> **Status: PRODUCTION READY �S&**

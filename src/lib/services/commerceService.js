@@ -1,5 +1,5 @@
 /**
- * AgriConnect 360 — Advanced Commerce Service (Phase 14E)
+ * RythuSphere — Advanced Commerce Service (Phase 14E)
  * Enhanced F2C Store, Quality Certification, Delivery Tracking, Bulk Order System
  */
 
@@ -73,9 +73,9 @@ export function generateQualityCertificate(product, qualityResult, inspector) {
     product: { name: product.name, category: product.category, quantity: product.quantity, unit: product.unit },
     farmer: { name: product.farmerName, district: product.farmerDistrict, farmerId: product.farmerId },
     quality: qualityResult,
-    inspector: inspector || { name: 'AgriConnect QC Bot', id: 'AUTO' },
+    inspector: inspector || { name: 'RythuSphere QC Bot', id: 'AUTO' },
     certifications: qualityResult.score >= 80 ? ['FSSAI', 'Grade A'] : qualityResult.score >= 65 ? ['FSSAI'] : [],
-    qrCode: `https://agriconnect360.in/verify/${Date.now().toString(36)}`,
+    qrCode: `https://rythusphere.in/verify/${Date.now().toString(36)}`,
   };
 }
 

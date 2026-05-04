@@ -215,7 +215,7 @@ const PREMIUM_API_BASE = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
 
 function getPremiumAuthToken() {
   if (typeof window === 'undefined') return '';
-  return localStorage.getItem('agri_admin_token') || '';
+  return localStorage.getItem('rythu_admin_token') || '';
 }
 
 async function premiumApiRequest(path, { method = 'GET', body, auth = true } = {}) {

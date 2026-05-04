@@ -1,0 +1,24 @@
+{
+  "appId": "com.rythusphere.app",
+  "appName": "RythuSphere",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  },
+  "plugins": {
+    "Camera": {
+      "androidPermissions": ["android.permission.CAMERA"]
+    },
+    "Geolocation": {
+      "androidPermissions": ["android.permission.ACCESS_FINE_LOCATION", "android.permission.ACCESS_COARSE_LOCATION"]
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#10b981"
+    }
+  }
+}

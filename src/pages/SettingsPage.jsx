@@ -17,7 +17,7 @@ const defaultSettings = {
   units: 'metric',
   location: 'Guntur, Andhra Pradesh',
   name: 'Admin User',
-  email: 'admin@agriconnect360.in',
+  email: 'admin@rythusphere.in',
   phone: '+91 9876543210',
   dailyDigestTime: '07:00',
   smartTiming: true,

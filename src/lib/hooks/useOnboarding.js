@@ -7,7 +7,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const OnboardingContext = createContext(null);
-const STORAGE_KEY = 'agri360_onboarding';
+const STORAGE_KEY = 'rythusphere_onboarding';
 
 const STEPS = [
   { id: 'welcome',     label: 'Welcome',      icon: '🌾', index: 0 },

@@ -273,9 +273,9 @@ function KCCSection({ profile }) {
   }
 
   function downloadKCCStatement() {
-    const content = `AgriConnect 360 — KCC Statement\n${'='.repeat(40)}\nDate: ${new Date().toLocaleDateString('en-IN')}\n\nAccount: ${linkedAccounts[0].account}\nBank: ${linkedAccounts[0].bank}\nSanctioned Limit: ₹${CURRENCY.format(sanctioned)}\nDisbursed: ₹${CURRENCY.format(kccLinked?150000:sanctioned)}\nUtilized: ₹${CURRENCY.format(utilized)}\nAvailable: ₹${CURRENCY.format(available)}\nUtilization: ${utilizationPercent}%\nInterest Rate: ${kccLinked?'7':'4'}% p.a.\n\n--- Due Dates ---\n${dueSchedule.map(d=>`${d.label}: ${d.dueDate} — ₹${d.amount>0?CURRENCY.format(d.amount):'N/A'}`).join('\n')}\n\nPowered by AgriConnect 360 🌾`;
+    const content = `RythuSphere — KCC Statement\n${'='.repeat(40)}\nDate: ${new Date().toLocaleDateString('en-IN')}\n\nAccount: ${linkedAccounts[0].account}\nBank: ${linkedAccounts[0].bank}\nSanctioned Limit: ₹${CURRENCY.format(sanctioned)}\nDisbursed: ₹${CURRENCY.format(kccLinked?150000:sanctioned)}\nUtilized: ₹${CURRENCY.format(utilized)}\nAvailable: ₹${CURRENCY.format(available)}\nUtilization: ${utilizationPercent}%\nInterest Rate: ${kccLinked?'7':'4'}% p.a.\n\n--- Due Dates ---\n${dueSchedule.map(d=>`${d.label}: ${d.dueDate} — ₹${d.amount>0?CURRENCY.format(d.amount):'N/A'}`).join('\n')}\n\nPowered by RythuSphere 🌾`;
     const blob = new Blob([content], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'AgriConnect360_KCC_Statement.pdf'; a.click(); URL.revokeObjectURL(url);
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'RythuSphere_KCC_Statement.pdf'; a.click(); URL.revokeObjectURL(url);
   }
 
   return (
@@ -963,16 +963,16 @@ function TaxSection() {
   const estimatedTax = itr4Taxable <= 300000 ? 0 : Math.round((itr4Taxable - 300000) * 0.05);
 
   function exportPDF() {
-    const content = `AgriConnect 360 — Tax Summary (ITR-4)\n${'='.repeat(45)}\nFY: ${fy}\nDate: ${new Date().toLocaleDateString('en-IN')}\n\n--- REVENUE ---\nCrop Sales: ₹${CURRENCY.format(income.cropRevenue)}\nLivestock: ₹${CURRENCY.format(income.livestockRevenue)}\nSubsidy/DBT: ₹${CURRENCY.format(income.subsidyIncome)}\nNon-Farm: ₹${CURRENCY.format(income.nonFarmIncome)}\nTotal Revenue: ₹${CURRENCY.format(totalIncome)}\n\n--- DEDUCTIONS ---\nSeeds: ₹${CURRENCY.format(deductions.seeds)}\nFertilizer: ₹${CURRENCY.format(deductions.fertilizer)}\nLabour: ₹${CURRENCY.format(deductions.labour)}\nTransport: ₹${CURRENCY.format(deductions.transport)}\nInterest: ₹${CURRENCY.format(deductions.interestPaid)}\nDepreciation: ₹${CURRENCY.format(deductions.depreciation)}\nTotal Deductions: ₹${CURRENCY.format(totalDeductions)}\n\n--- ITR-4 SUMMARY ---\nNet Agri Income: ₹${CURRENCY.format(agriNet)} (Exempt)\nNon-Farm Taxable: ₹${CURRENCY.format(itr4Taxable)}\nEstimated Tax: ₹${CURRENCY.format(estimatedTax)}\n\nPowered by AgriConnect 360 🌾`;
+    const content = `RythuSphere — Tax Summary (ITR-4)\n${'='.repeat(45)}\nFY: ${fy}\nDate: ${new Date().toLocaleDateString('en-IN')}\n\n--- REVENUE ---\nCrop Sales: ₹${CURRENCY.format(income.cropRevenue)}\nLivestock: ₹${CURRENCY.format(income.livestockRevenue)}\nSubsidy/DBT: ₹${CURRENCY.format(income.subsidyIncome)}\nNon-Farm: ₹${CURRENCY.format(income.nonFarmIncome)}\nTotal Revenue: ₹${CURRENCY.format(totalIncome)}\n\n--- DEDUCTIONS ---\nSeeds: ₹${CURRENCY.format(deductions.seeds)}\nFertilizer: ₹${CURRENCY.format(deductions.fertilizer)}\nLabour: ₹${CURRENCY.format(deductions.labour)}\nTransport: ₹${CURRENCY.format(deductions.transport)}\nInterest: ₹${CURRENCY.format(deductions.interestPaid)}\nDepreciation: ₹${CURRENCY.format(deductions.depreciation)}\nTotal Deductions: ₹${CURRENCY.format(totalDeductions)}\n\n--- ITR-4 SUMMARY ---\nNet Agri Income: ₹${CURRENCY.format(agriNet)} (Exempt)\nNon-Farm Taxable: ₹${CURRENCY.format(itr4Taxable)}\nEstimated Tax: ₹${CURRENCY.format(estimatedTax)}\n\nPowered by RythuSphere 🌾`;
     const blob = new Blob([content], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `AgriConnect360_Tax_ITR4_${fy}.pdf`; a.click(); URL.revokeObjectURL(url);
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `RythuSphere_Tax_ITR4_${fy}.pdf`; a.click(); URL.revokeObjectURL(url);
   }
 
   function exportCSV() {
     const rows = [['Item','Amount','Category'],['Crop Sales',income.cropRevenue,'Revenue'],['Livestock',income.livestockRevenue,'Revenue'],['Subsidy/DBT',income.subsidyIncome,'Revenue'],['Non-Farm',income.nonFarmIncome,'Revenue'],['Seeds',deductions.seeds,'Deduction'],['Fertilizer',deductions.fertilizer,'Deduction'],['Labour',deductions.labour,'Deduction'],['Transport',deductions.transport,'Deduction'],['Interest Paid',deductions.interestPaid,'Deduction'],['Depreciation',deductions.depreciation,'Deduction'],['','',''],['Total Revenue',totalIncome,'Summary'],['Total Deductions',totalDeductions,'Summary'],['Net Agri Income',agriNet,'Summary'],['Non-Farm Taxable',itr4Taxable,'Summary'],['Estimated Tax',estimatedTax,'Summary']];
     const csv = rows.map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `AgriConnect360_Tax_${fy}.csv`; a.click(); URL.revokeObjectURL(url);
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `RythuSphere_Tax_${fy}.csv`; a.click(); URL.revokeObjectURL(url);
   }
 
   return (

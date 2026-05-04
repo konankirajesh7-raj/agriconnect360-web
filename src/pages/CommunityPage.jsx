@@ -58,7 +58,7 @@ export default function CommunityPage() {
   function toggleLike(id) { setPosts(prev => prev.map(p => p.id === id ? { ...p, likes: p.likes + 1 } : p)); }
   function toggleHelpful(id) { setPosts(prev => prev.map(p => p.id === id ? { ...p, helpful: p.helpful + 1 } : p)); flash('👍 +30 AgriCoins earned by author!'); }
   function toggleBookmark(id) { setPosts(prev => prev.map(p => p.id === id ? { ...p, bookmarked: !p.bookmarked } : p)); flash('🔖 Bookmark toggled'); }
-  function sharePost(p) { const text = `${p.author}: ${p.content.slice(0, 100)}... — AgriConnect 360`; window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank'); flash('📤 Shared via WhatsApp'); }
+  function sharePost(p) { const text = `${p.author}: ${p.content.slice(0, 100)}... — RythuSphere`; window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank'); flash('📤 Shared via WhatsApp'); }
   function submitReply(id) {
     if (!replyText.trim()) return;
     setPosts(prev => prev.map(p => p.id === id ? { ...p, replies: [...p.replies, { id: `r-${Date.now()}`, author: 'You', avatar: '👤', time: 'Just now', content: replyText, likes: 0 }] } : p));

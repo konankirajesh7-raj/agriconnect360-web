@@ -1,5 +1,5 @@
 /**
- * AgriConnect 360 — Cookie Consent & Data Deletion (Phase 15D)
+ * RythuSphere — Cookie Consent & Data Deletion (Phase 15D)
  * DPDP Act 2023 compliant consent management and account deletion workflow
  */
 import React, { useState, useEffect } from 'react';
@@ -144,7 +144,7 @@ export async function exportUserData(supabase, userId) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `agriconnect360_data_export_${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `rythusphere_data_export_${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
 

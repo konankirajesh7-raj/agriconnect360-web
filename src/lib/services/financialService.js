@@ -1,5 +1,5 @@
 /**
- * AgriConnect 360 — Financial Inclusion Service (Phase 14D)
+ * RythuSphere — Financial Inclusion Service (Phase 14D)
  * KCC, Loan EMI, Crop Insurance, Subsidy Tracking, Financial Literacy
  */
 
@@ -84,7 +84,7 @@ export function calculateInsurancePremium(crop, area, sumInsured, season, scheme
     },
     claimProcess: [
       'Report crop loss within 72 hours',
-      'Submit photos via AgriConnect app',
+      'Submit photos via RythuSphere app',
       'Crop cutting experiment by surveyor',
       'Claim settlement within 30 days',
     ],

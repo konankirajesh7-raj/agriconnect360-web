@@ -575,7 +575,7 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{error}</div>
               <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.7 }}>
                 <strong>To fix:</strong><br />
-                1. Open <code>AgriConnect360Web/.env</code><br />
+                1. Open <code>RythuSphereWeb/.env</code><br />
                 2. Set <code>VITE_GEMINI_API_KEY=your_key_here</code><br />
                 3. Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>aistudio.google.com/apikey</a>
               </div>

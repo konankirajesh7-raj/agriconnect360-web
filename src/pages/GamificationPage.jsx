@@ -379,13 +379,13 @@ function ContestsTab() {
 function ReferralsTab() {
   const ref = useMemo(() => getReferralInfo(), []);
   const [copyFeedback, setCopyFeedback] = useState('');
-  const shareUrl = `https://agriconnect360.in/join?ref=${ref.code}`;
+  const shareUrl = `https://rythusphere.in/join?ref=${ref.code}`;
   function copyCode() {
     navigator.clipboard?.writeText(ref.code);
     setCopyFeedback('Referral code copied');
     setTimeout(() => setCopyFeedback(''), 1500);
   }
-  function shareWhatsApp() { window.open(`https://wa.me/?text=${encodeURIComponent(`Join AgriConnect 360! Use my code ${ref.code}. Download: ${shareUrl}`)}`, '_blank'); }
+  function shareWhatsApp() { window.open(`https://wa.me/?text=${encodeURIComponent(`Join RythuSphere! Use my code ${ref.code}. Download: ${shareUrl}`)}`, '_blank'); }
   const nextMilestone = 10;
   const referralPercent = Math.min(100, Math.round((ref.totalReferred / nextMilestone) * 100));
 

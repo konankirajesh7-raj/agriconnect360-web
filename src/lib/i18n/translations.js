@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════════════════
-// AgriConnect 360 — Tri-lingual Translation System
+// RythuSphere — Tri-lingual Translation System
 // Telugu (te) | English (en) | Hindi (hi)
 // ═══════════════════════════════════════════════════════════════════════
 

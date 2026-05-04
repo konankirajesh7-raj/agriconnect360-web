@@ -1,9 +1,9 @@
 /**
- * Service Worker — AgriConnect 360 PWA
+ * Service Worker — RythuSphere PWA
  * Phase 10A: Offline caching, background sync, cache-first for Weather/Prices
  */
 
-const CACHE_NAME = 'agri360-v1';
+const CACHE_NAME = 'rythusphere-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -11,7 +11,7 @@ const STATIC_ASSETS = [
   '/logo.svg',
 ];
 
-const API_CACHE = 'agri360-api-v1';
+const API_CACHE = 'rythusphere-api-v1';
 const API_CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 hours
 
 // ── Install: Pre-cache app shell ────────────────────────────────────────────
@@ -117,7 +117,7 @@ function offlineFallback() {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>AgriConnect 360 — Offline</title>
+      <title>RythuSphere — Offline</title>
       <style>
         body { background: #0a1628; color: #e0e7f1; font-family: Inter, sans-serif;
                display: flex; align-items: center; justify-content: center;
@@ -181,7 +181,7 @@ self.addEventListener('periodicsync', (event) => {
 self.addEventListener('push', (event) => {
   const data = event.data ? event.data.json() : {};
   const options = {
-    body: data.body || 'New update from AgriConnect 360',
+    body: data.body || 'New update from RythuSphere',
     icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-72x72.png',
     vibrate: [100, 50, 100],
@@ -192,7 +192,7 @@ self.addEventListener('push', (event) => {
     ],
   };
   event.waitUntil(
-    self.registration.showNotification(data.title || '🌾 AgriConnect 360', options)
+    self.registration.showNotification(data.title || '🌾 RythuSphere', options)
   );
 });
 

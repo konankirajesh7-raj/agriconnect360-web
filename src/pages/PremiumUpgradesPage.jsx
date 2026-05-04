@@ -293,7 +293,7 @@ export default function PremiumUpgradesPage() {
   const [upiConfig, setUpiConfig] = useState({
     category: 'equipment',
     amount: 1500,
-    payeeVpa: 'agri360@upi',
+    payeeVpa: 'rythusphere@upi',
   });
   const [taxInputs, setTaxInputs] = useState({ income: 850000, expenses: 420000, deductions: 150000 });
 
@@ -539,7 +539,7 @@ export default function PremiumUpgradesPage() {
   function emailReportSummary() {
     const report = buildReportPayload();
     const to = reportConfig.sendToEmail || '';
-    const subject = encodeURIComponent(`AgriConnect360 ${report.periodLabel} Report`);
+    const subject = encodeURIComponent(`RythuSphere ${report.periodLabel} Report`);
     const body = encodeURIComponent(
       `Revenue: ₹${report.revenue}\nCosts: ₹${report.costs}\nProfit: ₹${report.profit}\nComparison: ${report.comparisonSummary}\n\nOpen dashboard for full report.`
     );
@@ -1065,7 +1065,7 @@ export default function PremiumUpgradesPage() {
             <select value={sensorForm.device_provider} onChange={(e) => setSensorForm((p) => ({ ...p, device_provider: e.target.value }))}>
               <option>Fasal</option>
               <option>CropIn</option>
-              <option>Agri360 Sensor</option>
+              <option>RythuSphere Sensor</option>
             </select>
             <input type="number" value={sensorForm.soil_moisture} onChange={(e) => setSensorForm((p) => ({ ...p, soil_moisture: Number(e.target.value) }))} placeholder="Soil moisture %" />
             <input type="number" value={sensorForm.soil_ph} onChange={(e) => setSensorForm((p) => ({ ...p, soil_ph: Number(e.target.value) }))} placeholder="Soil pH" />
@@ -1132,7 +1132,7 @@ export default function PremiumUpgradesPage() {
               <div className="panel-title">📱 UPI Payments</div>
               <input value={upiConfig.payeeVpa} onChange={(e) => setUpiConfig((p) => ({ ...p, payeeVpa: e.target.value }))} placeholder="payee@upi" />
               <input type="number" value={upiConfig.amount} onChange={(e) => setUpiConfig((p) => ({ ...p, amount: Number(e.target.value) }))} placeholder="Amount (₹)" />
-              <button className="btn btn-outline" style={{ padding: '8px 12px', fontSize: '0.78rem', width: '100%' }} onClick={() => window.open(`upi://pay?pa=${encodeURIComponent(upiConfig.payeeVpa)}&pn=AgriConnect360&am=${encodeURIComponent(upiConfig.amount)}&cu=INR&tn=${encodeURIComponent(upiConfig.category)}`)}>
+              <button className="btn btn-outline" style={{ padding: '8px 12px', fontSize: '0.78rem', width: '100%' }} onClick={() => window.open(`upi://pay?pa=${encodeURIComponent(upiConfig.payeeVpa)}&pn=RythuSphere&am=${encodeURIComponent(upiConfig.amount)}&cu=INR&tn=${encodeURIComponent(upiConfig.category)}`)}>
                 📱 Open UPI Intent
               </button>
             </div>

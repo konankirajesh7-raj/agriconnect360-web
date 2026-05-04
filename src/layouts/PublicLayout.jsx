@@ -77,7 +77,7 @@ export default function PublicLayout() {
               fontSize: '1.3rem', boxShadow: '0 0 20px rgba(34,197,94,0.25)',
             }}>🌾</div>
             <div>
-              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.05rem', color: '#e2e8f0', lineHeight: 1 }}>AgriConnect 360</div>
+              <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '1.05rem', color: '#e2e8f0', lineHeight: 1 }}>RythuSphere</div>
               <div style={{ fontSize: '0.75rem', color: '#22c55e', fontWeight: 600 }}>Andhra Pradesh</div>
             </div>
           </Link>
@@ -168,7 +168,7 @@ export default function PublicLayout() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <div style={{ width: 34, height: 34, background: 'linear-gradient(135deg, #22c55e, #16a34a)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>🌾</div>
                 <div>
-                  <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '0.98rem' }}>AgriConnect 360</div>
+                  <div style={{ fontFamily: 'Outfit, sans-serif', fontWeight: 800, fontSize: '0.98rem' }}>RythuSphere</div>
                   <div style={{ fontSize: '0.75rem', color: '#22c55e' }}>Andhra Pradesh</div>
                 </div>
               </div>
@@ -247,7 +247,7 @@ export default function PublicLayout() {
               <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.9 }}>
                 <div>📞 1800-425-3434</div>
                 <div>💬 +91 94400 12345</div>
-                <div>📧 support@agriconnect360.in</div>
+                <div>📧 support@rythusphere.in</div>
                 <div style={{ marginTop: 8 }}>📍 Guntur, AP 522001</div>
                 <div style={{ marginTop: 8, fontSize: '0.78rem', color: '#374151' }}>Mon–Sun, 6 AM – 9 PM</div>
               </div>
@@ -257,7 +257,7 @@ export default function PublicLayout() {
           {/* Bottom bar */}
           <div className="pub-footer-bottom" style={{ borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
             <div style={{ fontSize: '0.78rem', color: '#374151' }}>
-              © 2026 AgriConnect 360 — Built with 💚 for Andhra Pradesh Farmers
+              © 2026 RythuSphere — Built with 💚 for Andhra Pradesh Farmers
             </div>
             <div style={{ display: 'flex', gap: 20 }}>
               {[

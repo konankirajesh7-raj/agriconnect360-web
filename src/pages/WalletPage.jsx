@@ -106,7 +106,7 @@ export default function WalletPage() {
             <div style={{ display:'flex', gap:10, alignItems:'center' }}>
               <div style={{ flex:1, padding:'10px 14px', background:'var(--bg-primary)', borderRadius:8, fontWeight:800, fontSize:'1.1rem', color:'#fbbf24', letterSpacing:2, textAlign:'center' }}>{referralCode}</div>
               <button onClick={() => { navigator.clipboard?.writeText(referralCode); }} style={{ padding:'10px 14px', borderRadius:8, border:'none', background:'linear-gradient(135deg,#f59e0b,#d97706)', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:'0.82rem' }}>📋 Copy</button>
-              <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Join AgriConnect 360! Use my code ${referralCode}. Earn 50 coins each!`)}`)} style={{ padding:'10px 14px', borderRadius:8, border:'none', background:'#25D366', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:'0.82rem' }}>💬 Share</button>
+              <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Join RythuSphere! Use my code ${referralCode}. Earn 50 coins each!`)}`)} style={{ padding:'10px 14px', borderRadius:8, border:'none', background:'#25D366', color:'#fff', fontWeight:700, cursor:'pointer', fontSize:'0.82rem' }}>💬 Share</button>
             </div>
           </div>
 

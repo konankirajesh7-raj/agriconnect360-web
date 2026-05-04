@@ -140,9 +140,9 @@ export default function LandingPage() {
       {/* About */}
       <section id="about" style={{ padding: '60px 40px', background: 'var(--bg-secondary)', borderTop: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
-          <h2 style={{ fontFamily: 'Outfit', fontSize: '1.8rem', fontWeight: 700, marginBottom: 16 }}>About AgriConnect 360</h2>
+          <h2 style={{ fontFamily: 'Outfit', fontSize: '1.8rem', fontWeight: 700, marginBottom: 16 }}>About RythuSphere</h2>
           <p style={{ color: 'var(--text-muted)', lineHeight: 1.8, marginBottom: 20, fontSize: '0.92rem' }}>
-            AgriConnect 360 is built specifically for Andhra Pradesh farmers. Our mission is to empower every farmer with technology — from real-time weather advisories in Telugu to AI-powered crop disease detection. We integrate government schemes like YSR Rythu Bharosa, connect you to the best mandis across India, and provide expert agronomist advice at your fingertips.
+            RythuSphere is built specifically for Andhra Pradesh farmers. Our mission is to empower every farmer with technology — from real-time weather advisories in Telugu to AI-powered crop disease detection. We integrate government schemes like YSR Rythu Bharosa, connect you to the best mandis across India, and provide expert agronomist advice at your fingertips.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             {['🌾 Built in AP', '🤖 AI-Powered', '📱 Mobile Ready', '🔒 Secure', '🌍 Multi-language', '💚 Free Forever'].map(t => (
@@ -157,7 +157,7 @@ export default function LandingPage() {
         <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginBottom: 16 }}>
           {['Privacy Policy', 'Terms of Service', 'Contact Us', 'API Docs'].map(l => <a key={l} href="#" style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.82rem' }}>{l}</a>)}
         </div>
-        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>© 2026 AgriConnect 360 — Built with 💚 for Andhra Pradesh Farmers</div>
+        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>© 2026 RythuSphere — Built with 💚 for Andhra Pradesh Farmers</div>
       </footer>
     </div>
   );

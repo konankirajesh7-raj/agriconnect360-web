@@ -29,7 +29,7 @@ const STATS = [
 const TESTIMONIALS = [
   {
     name: 'Ramaiah Naidu', location: 'Guntur, AP', avatar: 'RN', crop: '🌿 Cotton', rating: 5,
-    quote: 'Market prices feature helped me sell my cotton at ₹200/quintal more than local traders. I got ₹3.2 lakh more profit this season using AgriConnect 360.',
+    quote: 'Market prices feature helped me sell my cotton at ₹200/quintal more than local traders. I got ₹3.2 lakh more profit this season using RythuSphere.',
     district: 'Guntur District'
   },
   {
@@ -206,7 +206,7 @@ export default function HomePage() {
         <div style={{ textAlign: 'center', marginBottom: 60 }}>
           <div style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Complete Farming Journey</div>
           <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(1.8rem, 3vw, 2.8rem)', fontWeight: 800, marginBottom: 12 }}>From Seed to Market — All in One Platform</h2>
-          <p style={{ color: '#64748b', maxWidth: 600, margin: '0 auto', lineHeight: 1.7 }}>AgriConnect 360 guides you through every step of the farming cycle with AI-powered tools and real-time data.</p>
+          <p style={{ color: '#64748b', maxWidth: 600, margin: '0 auto', lineHeight: 1.7 }}>RythuSphere guides you through every step of the farming cycle with AI-powered tools and real-time data.</p>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
@@ -336,7 +336,7 @@ export default function HomePage() {
             <span style={{ color: '#22c55e' }}>Today — It's Free</span>
           </h2>
           <p style={{ color: '#64748b', marginBottom: 40, fontSize: '1rem', lineHeight: 1.7 }}>
-            Join 47,000+ Andhra Pradesh farmers who use AgriConnect 360 to get better prices, save costs, and protect their crops with AI.
+            Join 47,000+ Andhra Pradesh farmers who use RythuSphere to get better prices, save costs, and protect their crops with AI.
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/login" style={{

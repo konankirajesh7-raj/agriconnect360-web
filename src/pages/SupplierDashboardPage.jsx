@@ -10,7 +10,7 @@ const STATUS_STYLE={Pending:{bg:'rgba(251,191,36,0.15)',color:'#fbbf24'},Accepte
 const CAT_COLORS={Seeds:'#22c55e',Fertilizer:'#3b82f6',Fertilizers:'#3b82f6',Pesticide:'#f59e0b',Equipment:'#8b5cf6',Organic:'#10b981'};
 
 function OutreachTab({inp,flash}){
-  const[campName,setCampName]=useState('');const[campType,setCampType]=useState('SMS');const[campTarget,setCampTarget]=useState('Rice Farmers Guntur');const[campDiscount,setCampDiscount]=useState('10');const[campSchedule,setCampSchedule]=useState('');const[campMsg,setCampMsg]=useState('🌱 Kharif 2024 Seed Sale! 10% off on all seeds. Order now on AgriConnect 360!');
+  const[campName,setCampName]=useState('');const[campType,setCampType]=useState('SMS');const[campTarget,setCampTarget]=useState('Rice Farmers Guntur');const[campDiscount,setCampDiscount]=useState('10');const[campSchedule,setCampSchedule]=useState('');const[campMsg,setCampMsg]=useState('🌱 Kharif 2024 Seed Sale! 10% off on all seeds. Order now on RythuSphere!');
   const[campaigns,setCampaigns]=useState([{name:'Monsoon Fertilizer Sale',type:'SMS',target:'All Farmers',status:'Sent',date:'Apr 20',reach:847},{name:'Cotton Season Prep',type:'WhatsApp',target:'Cotton Farmers',status:'Scheduled',date:'Apr 28',reach:312}]);
   const[couponCode,setCouponCode]=useState('');const[couponDisc,setCouponDisc]=useState('20');const[couponMin,setCouponMin]=useState('500');const[couponMax,setCouponMax]=useState('200');const[couponDays,setCouponDays]=useState('30');
   const[coupons,setCoupons]=useState([{code:'MONSOON2026',disc:20,min:500,max:200,days:30,used:14,status:'Active'}]);

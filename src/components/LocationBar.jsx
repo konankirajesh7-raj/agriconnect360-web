@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getFullLocation, stopWatching, checkLocationPermission } from '../lib/services/locationService';
 
-const CACHE_KEY = 'agri360_location_cache';
+const CACHE_KEY = 'rythusphere_location_cache';
 
 export default function LocationBar() {
   const [loc, setLoc] = useState(() => {

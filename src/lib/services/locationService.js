@@ -44,7 +44,7 @@ async function tryNominatim(lat, lng) {
   try {
     const res = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18&accept-language=en`,
-      { headers: { 'User-Agent': 'AgriConnect360-Web/1.0 (agriconnect360-web.vercel.app)' } }
+      { headers: { 'User-Agent': 'RythuSphere-Web/1.0 (rythusphere-web.vercel.app)' } }
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();

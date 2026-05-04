@@ -1,8 +1,8 @@
-# 🌾 AgriConnect 360
+# 🌾 RythuSphere
 
 **Smart Farming Platform for Andhra Pradesh**
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed-Vercel-black)](https://agriconnect360.vercel.app)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed-Vercel-black)](https://rythusphere.vercel.app)
 [![React](https://img.shields.io/badge/React-18-blue)](https://react.dev)
 [![Supabase](https://img.shields.io/badge/Backend-Supabase-green)](https://supabase.com)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
@@ -29,8 +29,8 @@
 ## 🚀 Quick Start
 
 ```bash
-git clone https://github.com/your-org/agriconnect360.git
-cd agriconnect360
+git clone https://github.com/your-org/rythusphere.git
+cd rythusphere
 npm install
 cp .env.example .env    # Add API keys
 npm run dev              # → http://localhost:5173

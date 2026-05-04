@@ -1,10 +1,10 @@
 import { supabase, DEFAULT_STATE, DEFAULT_DISTRICT } from './supabase';
 
 export const PHASE11_STORAGE_KEYS = {
-    onboardingStatus: 'agri360_onboarding_complete',
-    onboardingData: 'agri360_onboarding_data',
-    profileData: 'agri360_profile_data',
-    fpoActiveMember: 'agri360_fpo_active_member',
+    onboardingStatus: 'rythusphere_onboarding_complete',
+    onboardingData: 'rythusphere_onboarding_data',
+    profileData: 'rythusphere_profile_data',
+    fpoActiveMember: 'rythusphere_fpo_active_member',
 };
 
 function hasStorage() {

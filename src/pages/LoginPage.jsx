@@ -56,7 +56,7 @@ export default function LoginPage() {
       const isGoogle = user?.app_metadata?.provider === 'google' || user?.identities?.some(i => i.provider === 'google');
       if (isGoogle) {
         // Check if user already completed onboarding (returning user)
-        const onbStatus = localStorage.getItem('agri360_onboarding_complete');
+        const onbStatus = localStorage.getItem('rythusphere_onboarding_complete');
         if (onbStatus === 'true' || onbStatus === 'skipped') {
           navigate('/dashboard', { replace: true });
         } else {
@@ -83,7 +83,7 @@ export default function LoginPage() {
       setError('Enter a valid 10-digit Indian mobile number'); return;
     }
     // Check if this number is already registered
-    const registered = JSON.parse(localStorage.getItem('ac360_registered_users') || '[]');
+    const registered = JSON.parse(localStorage.getItem('rs_registered_users') || '[]');
     if (registered.includes(mobile)) {
       setError(`📱 This number is already registered! Please use the 🔐 Password tab to sign in.`);
       return;
@@ -126,15 +126,15 @@ export default function LoginPage() {
     if (!fullName.trim()) { setError('Please enter your name'); return; }
     if (!newPassword || newPassword.length < 6) { setError('Password must be at least 6 characters'); return; }
     setLoading(true); setError('');
-    const mobileEmail = `${mobile}@agriconnect360.in`;
+    const mobileEmail = `${mobile}@rythusphere.in`;
     try {
       const result = await signUp(mobileEmail, newPassword, {
         full_name: fullName, role: 'farmer', phone: mobile,
       });
       if (result.success) {
         // Save to localStorage so we know this number is registered
-        const reg = JSON.parse(localStorage.getItem('ac360_registered_users') || '[]');
-        if (!reg.includes(mobile)) { reg.push(mobile); localStorage.setItem('ac360_registered_users', JSON.stringify(reg)); }
+        const reg = JSON.parse(localStorage.getItem('rs_registered_users') || '[]');
+        if (!reg.includes(mobile)) { reg.push(mobile); localStorage.setItem('rs_registered_users', JSON.stringify(reg)); }
         setSuccess('✅ Account created! Redirecting...');
         // /onboarding is a public route — navigate directly, auth session from signUp will propagate
         setTimeout(() => navigate('/onboarding', { replace: true }), 600);
@@ -142,8 +142,8 @@ export default function LoginPage() {
         const errMsg = result.error || '';
         if (errMsg.toLowerCase().includes('already') || errMsg.toLowerCase().includes('exists') || errMsg.toLowerCase().includes('registered')) {
           // User already exists — save to localStorage and redirect to Password tab
-          const reg = JSON.parse(localStorage.getItem('ac360_registered_users') || '[]');
-          if (!reg.includes(mobile)) { reg.push(mobile); localStorage.setItem('ac360_registered_users', JSON.stringify(reg)); }
+          const reg = JSON.parse(localStorage.getItem('rs_registered_users') || '[]');
+          if (!reg.includes(mobile)) { reg.push(mobile); localStorage.setItem('rs_registered_users', JSON.stringify(reg)); }
           setError('This number is already registered. Switching to Password login...');
           setTimeout(() => { switchMode('password'); setLoginId(mobile); }, 1500);
         } else {
@@ -182,7 +182,7 @@ export default function LoginPage() {
     const clean = val.replace(/\D/g, '').slice(0, 10);
     setGooglePhone(clean);
     if (clean.length === 10) {
-      const reg = JSON.parse(localStorage.getItem('ac360_registered_users') || '[]');
+      const reg = JSON.parse(localStorage.getItem('rs_registered_users') || '[]');
       setGooglePhoneError(reg.includes(clean) ? 'This number is already registered!' : '');
     } else {
       setGooglePhoneError('');
@@ -200,8 +200,8 @@ export default function LoginPage() {
       // Set password on Supabase auth
       await updateUserPassword(googlePassword);
       // Save phone to registered list
-      const reg = JSON.parse(localStorage.getItem('ac360_registered_users') || '[]');
-      if (!reg.includes(googlePhone)) { reg.push(googlePhone); localStorage.setItem('ac360_registered_users', JSON.stringify(reg)); }
+      const reg = JSON.parse(localStorage.getItem('rs_registered_users') || '[]');
+      if (!reg.includes(googlePhone)) { reg.push(googlePhone); localStorage.setItem('rs_registered_users', JSON.stringify(reg)); }
       // Update profile with phone + name
       await updateProfile({ name: googleName, full_name: googleName, mobile: googlePhone, phone: googlePhone });
       setSuccess('✅ Account setup complete! Redirecting to onboarding...');
@@ -215,7 +215,7 @@ export default function LoginPage() {
     e.preventDefault();
     if (!loginId || !loginPassword) { setError('Please enter your email/mobile and password'); return; }
     setLoading(true); setError('');
-    const email = loginId.includes('@') ? loginId : `${loginId}@agriconnect360.in`;
+    const email = loginId.includes('@') ? loginId : `${loginId}@rythusphere.in`;
 
     // Aggressively clear ALL stale auth state before attempting login
     const keysToRemove = Object.keys(localStorage).filter(k =>
@@ -264,7 +264,7 @@ export default function LoginPage() {
     e.preventDefault();
     if (!forgotEmail.trim()) { setError('Enter your email or mobile number'); return; }
     setLoading(true); setError('');
-    const email = forgotEmail.includes('@') ? forgotEmail : `${forgotEmail}@agriconnect360.in`;
+    const email = forgotEmail.includes('@') ? forgotEmail : `${forgotEmail}@rythusphere.in`;
     const result = await resetPassword(email);
     if (result.success) {
       setSuccess('📧 Password reset link sent! Check your email inbox (and spam folder).');
@@ -332,7 +332,7 @@ export default function LoginPage() {
             boxShadow: '0 4px 20px rgba(16,185,129,0.3)',
           }}>🌾</div>
           <div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#e2e8f0', letterSpacing: '-0.5px' }}>AgriConnect 360</div>
+            <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#e2e8f0', letterSpacing: '-0.5px' }}>RythuSphere</div>
             <div style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 600, letterSpacing: '0.5px' }}>ANDHRA PRADESH</div>
           </div>
         </Link>
@@ -760,7 +760,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div style={{ textAlign: 'center', fontSize: '0.72rem', color: '#334155', marginTop: 8 }}>
-          🌾 AgriConnect 360 v1.0 · India's #1 Smart Farming Platform
+          🌾 RythuSphere v1.0 · India's #1 Smart Farming Platform
           <br />
           <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 6 }}>
             <Link to="/about" style={{ color: '#475569', textDecoration: 'none' }}>About</Link>

@@ -39,7 +39,7 @@ function PostCard({ post, feed }) {
     if (navigator.share) navigator.share({ title: post.caption, url: window.location.href });
     else navigator.clipboard?.writeText(window.location.href);
   };
-  const handleWhatsApp = () => window.open(`https://wa.me/?text=${encodeURIComponent(post.caption + ' — AgriConnect360')}`);
+  const handleWhatsApp = () => window.open(`https://wa.me/?text=${encodeURIComponent(post.caption + ' — RythuSphere')}`);
 
   return (
     <div ref={cardRef} style={{background:'rgba(10,25,10,0.75)',backdropFilter:'blur(12px)',border:`1px solid rgba(100,220,100,0.12)`,borderLeft:`4px solid ${rc}`,borderRadius:16,marginBottom:16,overflow:'hidden',animation:'fadeUp 0.4s ease'}}>

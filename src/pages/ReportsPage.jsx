@@ -64,8 +64,8 @@ function BarChart({ data, maxVal, barColor, label }) {
 
 function downloadPDF(range, cropData) {
   const content = `
-%PDF-1.4 AgriConnect360 P&L Report
-=== AgriConnect 360 — Profit & Loss Report ===
+%PDF-1.4 RythuSphere P&L Report
+=== RythuSphere — Profit & Loss Report ===
 Period: ${range}
 Generated: ${new Date().toLocaleDateString('en-IN')}
 
@@ -77,16 +77,16 @@ Net Profit: ₹${cropData.reduce((s,c) => s+(c.income-c.expense),0).toLocaleStri
 --- Crop-wise Breakdown ---
 ${cropData.map(c => `${c.crop}: Income ₹${c.income.toLocaleString('en-IN')} | Expense ₹${c.expense.toLocaleString('en-IN')} | Profit ₹${(c.income-c.expense).toLocaleString('en-IN')}`).join('\n')}
 
-Powered by AgriConnect 360 🌾
+Powered by RythuSphere 🌾
   `;
   const blob = new Blob([content], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `AgriConnect360_PL_Report_${range.replace(/\s/g,'_')}.pdf`; a.click();
+  const a = document.createElement('a'); a.href = url; a.download = `RythuSphere_PL_Report_${range.replace(/\s/g,'_')}.pdf`; a.click();
   URL.revokeObjectURL(url);
 }
 
 function downloadExcel(range, incomeData, expenseData, cropData) {
-  let csv = 'AgriConnect 360 - P&L Report\n';
+  let csv = 'RythuSphere - P&L Report\n';
   csv += `Period: ${range}\n\n`;
   csv += 'Month,Paddy Income,Cotton Income,Chilli Income,Other Income,Total Income,Seeds,Fertilizer,Labour,Equipment,Transport,Other Expense,Total Expense,Net Profit\n';
   incomeData.forEach((inc,i) => {
@@ -99,7 +99,7 @@ function downloadExcel(range, incomeData, expenseData, cropData) {
   cropData.forEach(c => { csv += `${c.crop},${c.income},${c.expense},${c.income-c.expense},${c.area},${c.season},${c.yield}\n`; });
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `AgriConnect360_PL_Report_${range.replace(/\s/g,'_')}.csv`; a.click();
+  const a = document.createElement('a'); a.href = url; a.download = `RythuSphere_PL_Report_${range.replace(/\s/g,'_')}.csv`; a.click();
   URL.revokeObjectURL(url);
 }
 

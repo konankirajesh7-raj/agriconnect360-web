@@ -147,7 +147,7 @@ export default function MarketplacePage() {
               <div style={{ display:'flex', gap:8 }}>
                 {!myInterests.includes(detail.id) ? <button onClick={()=>expressInterest(detail.id)} style={{ padding:'10px 24px', borderRadius:10, background:'linear-gradient(135deg,#059669,#10b981)', color:'#fff', border:'none', fontWeight:700, cursor:'pointer' }}>🤝 Express Interest</button>
                 : <span style={{ color:'#34d399', fontWeight:600, fontSize:'0.85rem' }}>✓ Interest Sent</span>}
-                <a href={`https://wa.me/91${detail.phone}?text=Hi, interested in your ${detail.crop} listing on AgriConnect 360`} target="_blank" rel="noreferrer" style={{ padding:'10px 24px', borderRadius:10, background:'rgba(37,211,102,0.15)', color:'#25d366', border:'none', fontWeight:700, cursor:'pointer', textDecoration:'none', display:'inline-flex', alignItems:'center' }}>💬 WhatsApp Seller</a>
+                <a href={`https://wa.me/91${detail.phone}?text=Hi, interested in your ${detail.crop} listing on RythuSphere`} target="_blank" rel="noreferrer" style={{ padding:'10px 24px', borderRadius:10, background:'rgba(37,211,102,0.15)', color:'#25d366', border:'none', fontWeight:700, cursor:'pointer', textDecoration:'none', display:'inline-flex', alignItems:'center' }}>💬 WhatsApp Seller</a>
               </div>
             </div>
           </div>

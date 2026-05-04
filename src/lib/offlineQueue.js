@@ -6,7 +6,7 @@
 
 import { supabase } from './supabase';
 
-const QUEUE_KEY = 'agri360_offline_queue';
+const QUEUE_KEY = 'rythusphere_offline_queue';
 
 // ── Offline Queue ────────────────────────────────────────────────────────────
 
