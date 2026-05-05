@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 
 const CONTACT_METHODS = [
-  { icon: '📞', title: 'Phone Support', desc: 'Toll-free helpline (6 AM – 9 PM)', value: '1800-425-3434', action: 'Call Now', sub: 'Available in Telugu & Hindi' },
-  { icon: '💬', title: 'WhatsApp Support', desc: 'Message us anytime', value: '+91 94400 12345', action: 'Open WhatsApp', sub: 'Response in 2 hours' },
-  { icon: '📧', title: 'Email Support', desc: 'For detailed queries', value: 'support@rythusphere.in', action: 'Send Email', sub: 'Response in 24 hours' },
+  { icon: '📞', title: 'Phone Support', desc: 'Helpline (6 AM – 9 PM)', value: '+91 6303369360', action: 'Call Now', sub: 'Available in Telugu & Hindi' },
+  { icon: '💬', title: 'WhatsApp Support', desc: 'Message us anytime', value: '+91 6303369360', action: 'Open WhatsApp', sub: 'Response in 2 hours' },
+  { icon: '📧', title: 'Email Support', desc: 'For detailed queries', value: 'konankirajesh7@gmail.com', action: 'Send Email', sub: 'Response in 24 hours' },
   { icon: '🏢', title: 'Visit Us', desc: 'Head office in Guntur', value: 'RythuSphere, Main Road, Guntur 522001, AP', action: 'Get Directions', sub: 'Mon–Sat, 9 AM – 6 PM' },
 ];
 

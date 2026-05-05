@@ -259,7 +259,7 @@ function getNavSections(role) {
 const NAV_SECTIONS = getNavSections('admin');
 
 // Public routes that bypass admin layout
-const PUBLIC_PREFIXES = ['/', '/home', '/features', '/about', '/pricing', '/contact-us', '/store', '/login', '/landing', '/onboarding', '/subscription', '/market', '/public-weather', '/blog'];
+const PUBLIC_PREFIXES = ['/', '/home', '/features', '/about', '/pricing', '/contact-us', '/store', '/login', '/landing', '/onboarding', '/subscription', '/blog'];
 
 // Loading skeleton for Suspense fallback
 function PageSkeleton() {
@@ -307,8 +307,9 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/onboarding" replace state={{ from: location.pathname }} />;
   }
 
-  // Layer 3: Subscription guard — admin bypasses
-  if (!isAdmin) {
+  // Layer 3: Subscription guard — admin and customer bypass (customer is free)
+  const userRole = farmerProfile?.role || localStorage.getItem('rythu_user_role') || 'farmer';
+  if (!isAdmin && userRole !== 'customer') {
     const userId = farmerProfile?.id || '';
     const hasPayment = localStorage.getItem(`agri360_payments`);
     const hasTrial = Object.keys(localStorage).some(k => k.startsWith('agri360_trial_') || k.startsWith('rythu_trial_'));
@@ -548,8 +549,8 @@ export default function App() {
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/contact-us" element={<ContactPublicPage />} />
             <Route path="/store" element={<PublicStorePage />} />
-            <Route path="/market" element={<PublicPricesPage />} />
-            <Route path="/public-weather" element={<PublicWeatherPage />} />
+            <Route path="/market" element={<Navigate to="/login" replace />} />
+            <Route path="/public-weather" element={<Navigate to="/login" replace />} />
             <Route path="/blog" element={<BlogPage />} />
           </Route>
         </Routes>

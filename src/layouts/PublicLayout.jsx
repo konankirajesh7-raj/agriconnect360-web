@@ -31,8 +31,6 @@ const responsiveCSS = `
 
 const NAV_LINKS = [
   { to: '/features', label: 'Features' },
-  { to: '/market', label: 'Market Prices' },
-  { to: '/public-weather', label: 'Weather' },
   { to: '/pricing', label: 'Pricing' },
   { to: '/about', label: 'About' },
   { to: '/contact-us', label: 'Contact' },
@@ -203,8 +201,8 @@ export default function PublicLayout() {
             <div>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>Modules</div>
               {[
-                { label: 'Weather AI', to: '/public-weather' },
-                { label: 'Market Prices', to: '/market' },
+                { label: 'Weather AI', to: '/login' },
+                { label: 'Market Prices', to: '/login' },
                 { label: 'Crop Advisory', to: '/features' },
                 { label: 'Soil Health', to: '/features' },
                 { label: 'Gov Schemes', to: '/features' },
@@ -245,9 +243,9 @@ export default function PublicLayout() {
             <div>
               <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>Contact</div>
               <div style={{ fontSize: '0.82rem', color: '#475569', lineHeight: 1.9 }}>
-                <div>📞 1800-425-3434</div>
-                <div>💬 +91 94400 12345</div>
-                <div>📧 support@rythusphere.in</div>
+                <div>📞 +91 6303369360</div>
+                <div>💬 +91 6303369360</div>
+                <div>📧 konankirajesh7@gmail.com</div>
                 <div style={{ marginTop: 8 }}>📍 Guntur, AP 522001</div>
                 <div style={{ marginTop: 8, fontSize: '0.78rem', color: '#374151' }}>Mon–Sun, 6 AM – 9 PM</div>
               </div>

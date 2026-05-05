@@ -5,10 +5,10 @@ import DownloadAppPrompt from '../../components/DownloadAppPrompt';
 const PLANS = [
   {
     name: '👨‍🌾 Farmer',
-    price: '₹0',
-    afterTrial: '₹100/year',
-    period: ' for 6 months',
-    desc: 'First 6 months completely FREE — then just ₹100/year (less than ₹9/month)',
+    price: '₹50',
+    afterTrial: null,
+    period: ' / 6 months',
+    desc: 'Full access to all farming modules — less than ₹9/month',
     highlight: true,
     badge: '🌾 FOR FARMERS',
     features: [
@@ -22,15 +22,15 @@ const PLANS = [
       'Labour & equipment marketplace',
       'Soil & water testing reports',
     ],
-    cta: 'Start Free — 6 Months Free',
+    cta: 'Get Started — ₹50 / 6 Months',
     color: '#22c55e',
   },
   {
     name: '🤝 Broker / Trader',
-    price: '₹499',
+    price: '₹100',
     afterTrial: null,
-    period: '/year',
-    desc: 'Market intelligence for traders — just ₹42/month',
+    period: ' / 6 months',
+    desc: 'Market intelligence for traders — just ₹17/month',
     highlight: false,
     badge: null,
     features: [
@@ -47,10 +47,10 @@ const PLANS = [
   },
   {
     name: '🏪 Supplier / Dealer',
-    price: '₹999',
+    price: '₹100',
     afterTrial: null,
-    period: '/year',
-    desc: 'Grow your agri business — just ₹83/month',
+    period: ' / 6 months',
+    desc: 'Grow your agri business — just ₹17/month',
     highlight: false,
     badge: null,
     features: [
@@ -67,10 +67,10 @@ const PLANS = [
   },
   {
     name: '🏢 FPO / Enterprise',
-    price: '₹1,999',
+    price: '₹100',
     afterTrial: null,
-    period: '/year',
-    desc: 'For farmer organizations — just ₹167/month for unlimited members',
+    period: ' / 6 months',
+    desc: 'For farmer organizations — manage unlimited members',
     highlight: false,
     badge: null,
     features: [
@@ -88,14 +88,14 @@ const PLANS = [
 ];
 
 const FAQ = [
-  { q: 'Is RythuSphere really free for farmers?', a: 'Yes! All 18 core modules are completely free forever for individual farmers. No credit card required, no hidden fees. We believe every AP farmer deserves access to data and AI tools.' },
+  { q: 'Is RythuSphere really affordable?', a: 'Yes! Farmers pay just ₹50 for 6 months (less than ₹9/month). All other roles pay ₹100 for 6 months. No hidden fees, no auto-renewal.' },
   { q: 'Does it work in Telugu?', a: 'Absolutely. Weather advisory, AI crop recommendations, expert responses, and support are all available in Telugu (తెలుగు). We are the only platform built Telugu-first for AP farmers.' },
   { q: 'Which districts does it cover?', a: 'All 13 districts of Andhra Pradesh — Guntur, Krishna, Kurnool, Vijayawada, Nellore, Visakhapatnam, Rajahmundry, Tirupati, Anantapur, Kadapa, Eluru, Ongole, and Machilipatnam — with live mandi prices and weather.' },
   { q: 'How accurate is the AI disease detection?', a: 'Our AI disease detection model is trained on 500,000+ AP-specific crop images and achieves 94% accuracy for common diseases like paddy blast, cotton bollworm, and chilli leaf curl. It improves continuously.' },
   { q: 'Is my farm data safe?', a: 'Your data is encrypted end-to-end and stored on Indian servers. We never sell your data to third parties. You own your data and can delete it anytime from Settings.' },
   { q: 'Can I use it without internet?', a: 'Core features like saved crop calendars, soil health card, and articles are available offline. Live features (weather, prices) require internet. A 2G connection is sufficient for most features.' },
   { q: 'How does the YSR Rythu Bharosa integration work?', a: 'Enter your Aadhaar and land details. We check real-time eligibility against AP government databases, show your installment status, and provide direct application links for any missing documentation.' },
-  { q: 'Can a group of farmers use one account?', a: 'Free accounts are individual. FPO/Enterprise plan supports bulk farmer management — one admin can manage 1000+ farmer profiles, fields, and crop data from a single dashboard.' },
+  { q: 'Can a group of farmers use one account?', a: 'Individual accounts are recommended. FPO/Enterprise plan supports bulk farmer management — one admin can manage 1000+ farmer profiles, fields, and crop data from a single dashboard.' },
 ];
 
 export default function PricingPage() {
@@ -109,11 +109,11 @@ export default function PricingPage() {
       <section style={{ padding: '80px 40px 60px', textAlign: 'center', maxWidth: 700, margin: '0 auto' }}>
         <div style={{ fontSize: '0.78rem', color: '#22c55e', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Simple Pricing for Everyone</div>
         <h1 style={{ fontFamily: 'Outfit, sans-serif', fontSize: 'clamp(2rem, 4vw, 3.2rem)', fontWeight: 900, marginBottom: 16 }}>
-          Farmers Start <span style={{ color: '#22c55e' }}>Free</span>.<br />
-          Everyone Pays <span style={{ color: '#f59e0b' }}>Almost Nothing</span>.
+          Farmers Pay Just <span style={{ color: '#22c55e' }}>₹50</span>.<br />
+          Others Pay <span style={{ color: '#f59e0b' }}>₹100</span>.
         </h1>
         <p style={{ color: '#64748b', fontSize: '1rem', lineHeight: 1.7 }}>
-          6 months free for farmers, then ₹100/year. Role-based plans for brokers, suppliers & FPOs — all under ₹170/month.
+          Affordable plans for every role. Farmers — ₹50 for 6 months. Brokers, Suppliers & FPOs — ₹100 for 6 months. No hidden charges.
         </p>
       </section>
 
@@ -172,7 +172,7 @@ export default function PricingPage() {
       <section style={{ padding: '60px 40px 80px', maxWidth: 760, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 48 }}>
           <h2 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '2rem', fontWeight: 800, marginBottom: 8 }}>Frequently Asked Questions</h2>
-          <p style={{ color: '#64748b' }}>Got more questions? Reach us at support@rythusphere.in or call 1800-XXX-XXXX (toll free)</p>
+          <p style={{ color: '#64748b' }}>Got more questions? Reach us at konankirajesh7@gmail.com or WhatsApp +91 6303369360</p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {FAQ.map((item, i) => (
