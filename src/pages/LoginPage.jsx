@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/hooks/useAuth';
-import { sendOTP as sendSMSOTP, verifyOTP as verifySMSOTP } from '../lib/smsService';
+
 
 const FEATURES = [
   { icon: '🌾', title: 'Smart Crop Advisory', desc: 'AI-powered recommendations in Telugu' },
@@ -19,11 +19,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [activeFeature, setActiveFeature] = useState(0);
-  const [mobile, setMobile] = useState('');
-  const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpTimer, setOtpTimer] = useState(0);
-  const [otpVerified, setOtpVerified] = useState(false);
+
   const [newPassword, setNewPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -34,7 +30,7 @@ export default function LoginPage() {
   const [googleName, setGoogleName] = useState('');
   const [showGooglePwd, setShowGooglePwd] = useState(false);
   const [googlePhoneError, setGooglePhoneError] = useState('');
-  const [demoRoleOpen, setDemoRoleOpen] = useState(false);
+
 
   const [pendingRedirect, setPendingRedirect] = useState('');
   const navigate = useNavigate();
@@ -73,108 +69,12 @@ export default function LoginPage() {
     return () => clearInterval(t);
   }, []);
 
-  // OTP countdown timer
-  useEffect(() => {
-    if (otpTimer > 0) { const t = setTimeout(() => setOtpTimer(otpTimer - 1), 1000); return () => clearTimeout(t); }
-  }, [otpTimer]);
 
-  const handleSendOTP = async () => {
-    if (mobile.length !== 10 || !/^[6-9]/.test(mobile)) {
-      setError('Enter a valid 10-digit Indian mobile number'); return;
-    }
-    // Check if this number is already registered
-    const registered = JSON.parse(localStorage.getItem('rs_registered_users') || '[]');
-    if (registered.includes(mobile)) {
-      setError(`📱 This number is already registered! Please use the 🔐 Password tab to sign in.`);
-      return;
-    }
-    setLoading(true); setError(''); setSuccess('');
-    try {
-      const result = await sendSMSOTP(mobile, 'en');
-      if (result.success) {
-        setOtpSent(true); setOtpTimer(30);
-        setSuccess(result.mock
-          ? `OTP sent (test mode). Check console for OTP.`
-          : `OTP sent to +91-${mobile}. Check your SMS.`);
-      } else {
-        setError(result.error || 'Failed to send OTP. Try again.');
-      }
-    } catch (err) {
-      setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async (e) => {
-    e.preventDefault();
-    if (otp.length !== 6) { setError('Enter the 6-digit OTP'); return; }
-    setLoading(true); setError(''); setSuccess('');
-    const result = verifySMSOTP(mobile, otp);
-    if (result.success) {
-      // OTP verified — new user, show password setup
-      setOtpVerified(true);
-      setSuccess('✅ Mobile verified! Set your name & password to create your account.');
-    } else {
-      setError(result.error);
-    }
-    setLoading(false);
-  };
-
-  const handleCreateAccountAfterOTP = async (e) => {
-    e.preventDefault();
-    if (!fullName.trim()) { setError('Please enter your name'); return; }
-    if (!newPassword || newPassword.length < 6) { setError('Password must be at least 6 characters'); return; }
-    setLoading(true); setError('');
-    const mobileEmail = `${mobile}@rythusphere.in`;
-    try {
-      const result = await signUp(mobileEmail, newPassword, {
-        full_name: fullName, role: 'farmer', phone: mobile,
-      });
-      if (result.success) {
-        // Save to localStorage so we know this number is registered
-        const reg = JSON.parse(localStorage.getItem('rs_registered_users') || '[]');
-        if (!reg.includes(mobile)) { reg.push(mobile); localStorage.setItem('rs_registered_users', JSON.stringify(reg)); }
-        setSuccess('✅ Account created! Redirecting...');
-        // /onboarding is a public route — navigate directly, auth session from signUp will propagate
-        setTimeout(() => navigate('/onboarding', { replace: true }), 600);
-      } else {
-        const errMsg = result.error || '';
-        if (errMsg.toLowerCase().includes('already') || errMsg.toLowerCase().includes('exists') || errMsg.toLowerCase().includes('registered')) {
-          // User already exists — save to localStorage and redirect to Password tab
-          const reg = JSON.parse(localStorage.getItem('rs_registered_users') || '[]');
-          if (!reg.includes(mobile)) { reg.push(mobile); localStorage.setItem('rs_registered_users', JSON.stringify(reg)); }
-          setError('This number is already registered. Switching to Password login...');
-          setTimeout(() => { switchMode('password'); setLoginId(mobile); }, 1500);
-        } else {
-          setError(errMsg || 'Registration failed. Please try again.');
-        }
-      }
-    } catch (err) { setError('Error creating account. Please try again.'); }
-    finally { setLoading(false); }
-  };
-
-  const DEMO_ROLES = [
-    { id: 'farmer', icon: '👨‍🌾', label: 'Farmer', color: '#10b981', dash: '/dashboard' },
-    { id: 'customer', icon: '🛍️', label: 'Customer', color: '#ec4899', dash: '/customer-dashboard' },
-    { id: 'industrial', icon: '🏭', label: 'Industrial Buyer', color: '#3b82f6', dash: '/industrial-dashboard' },
-    { id: 'broker', icon: '🤝', label: 'Broker / Trader', color: '#f59e0b', dash: '/broker-dashboard' },
-    { id: 'supplier', icon: '🏪', label: 'Supplier', color: '#8b5cf6', dash: '/supplier-dashboard' },
-    { id: 'labour', icon: '👷', label: 'Labour', color: '#ef4444', dash: '/labour-dashboard' },
-    { id: 'admin', icon: '🛡️', label: 'Admin (All Access)', color: '#06b6d4', dash: '/dashboard' },
-  ];
-
-  const handleDemoLogin = (role = 'farmer') => {
-    const r = DEMO_ROLES.find(d => d.id === role) || DEMO_ROLES[0];
-    demoLogin(role);
-    setDemoRoleOpen(false);
-    navigate(r.dash);
-  };
 
   const handleGoogleLogin = async () => {
     setLoading(true); setError('');
     const result = await signInWithGoogle();
-    if (!result.success) setError(result.error || 'Google sign-in failed. Try Mobile OTP.');
+    if (!result.success) setError(result.error || 'Google sign-in failed. Please try again.');
     setLoading(false);
   };
 
@@ -242,7 +142,7 @@ export default function LoginPage() {
           if (retry.success) { setPendingRedirect('/dashboard'); return; }
           setError(retry.error || 'Login failed. Please try again.');
         } catch {
-          setError('Login timed out. Close ALL other tabs and try again, or use Mobile OTP.');
+          setError('Login timed out. Close ALL other tabs and try again.');
         }
       } else {
         setError('Connection error. Try again.');
@@ -255,7 +155,6 @@ export default function LoginPage() {
   const switchMode = (mode) => {
     setStep(mode);
     setError(''); setSuccess('');
-    setOtpSent(false); setOtp(''); setOtpVerified(false);
     setLoginId(''); setLoginPassword('');
     setNewPassword(''); setFullName(''); setForgotEmail('');
   };
@@ -490,14 +389,13 @@ export default function LoginPage() {
         </div>
 
         {/* Title */}
-        <div key={step + (otpVerified ? '-verified' : '')} style={{ marginBottom: 20, animation: 'slide-up 0.4s ease' }}>
+        <div key={step} style={{ marginBottom: 20, animation: 'slide-up 0.4s ease' }}>
           <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#e2e8f0', margin: 0 }}>
-            {step === 'forgot' ? '🔑 Reset Password' : step === 'new' && !otpVerified ? '🌱 Create Your Account' : step === 'new' && otpVerified ? '🔐 Set Your Password' : '👋 Welcome Back, Farmer!'}
+            {step === 'forgot' ? '🔑 Reset Password' : step === 'new' ? '🌱 Create Your Account' : '👋 Welcome Back, Farmer!'}
           </h1>
           <p style={{ color: '#64748b', marginTop: 6, fontSize: '0.84rem' }}>
             {step === 'forgot' ? 'Enter your email or mobile to receive a reset link'
-              : step === 'new' && !otpVerified ? 'Verify your mobile via OTP or sign in with Google'
-              : step === 'new' && otpVerified ? 'Create your password for future logins'
+              : step === 'new' ? 'Sign up with Google to get started'
               : 'Sign in with your mobile number & password'}
           </p>
         </div>
@@ -543,171 +441,32 @@ export default function LoginPage() {
             }}>
               {loading ? '⏳ Signing in...' : '→ Sign In'}
             </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0' }}>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-              <span style={{ fontSize: '0.75rem', color: '#475569' }}>or</span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-            </div>
-            <button type="button" onClick={() => setDemoRoleOpen(!demoRoleOpen)} className="auth-btn-secondary" style={{
-              background: 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.08))',
-              color: '#a78bfa', borderColor: 'rgba(139,92,246,0.15)', position: 'relative',
-            }}>
-              🚀 Explore Demo — Choose Role ▾
-            </button>
-            {demoRoleOpen && (
-              <div style={{ marginTop: 8, background: 'rgba(15,20,35,0.95)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 14, padding: 8, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                {DEMO_ROLES.map(r => (
-                  <button key={r.id} type="button" onClick={() => handleDemoLogin(r.id)} style={{
-                    padding: '10px 12px', background: `${r.color}10`, border: `1px solid ${r.color}30`,
-                    borderRadius: 10, cursor: 'pointer', color: r.color, fontSize: '0.78rem', fontWeight: 600,
-                    display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s',
-                  }}>
-                    <span style={{ fontSize: '1.1rem' }}>{r.icon}</span> {r.label}
-                  </button>
-                ))}
-              </div>
-            )}
           </form>
         )}
 
-        {/* ── OTP Form (New User) ── */}
+        {/* ── New User (Google-only signup) ── */}
         {step === 'new' && (
-          <form onSubmit={otpVerified ? handleCreateAccountAfterOTP : handleVerifyOTP} key="otp-form" style={{ animation: 'slide-up 0.4s ease' }}>
-            {!otpSent && !otpVerified ? (
-              <>
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    Mobile Number
-                  </label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <div style={{ padding: '14px 12px', borderRadius: 12, background: 'rgba(15,20,35,0.6)', border: '1.5px solid rgba(255,255,255,0.08)', color: '#64748b', fontSize: '0.92rem', whiteSpace: 'nowrap' }}>+91</div>
-                    <input type="tel" value={mobile} onChange={e => setMobile(e.target.value.replace(/\D/g, ''))}
-                      placeholder="Enter 10-digit number" maxLength={10} className="auth-input" style={{ flex: 1 }}
-                    />
-                  </div>
-                </div>
-                {error && (
-                  <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: '12px 16px', color: '#f87171', fontSize: '0.84rem', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: '1.1rem' }}>⚠️</span> {error}
-                  </div>
-                )}
-                <button type="button" onClick={handleSendOTP} disabled={loading || mobile.length !== 10} className="auth-btn-primary" style={{
-                  background: mobile.length === 10 ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'rgba(255,255,255,0.05)',
-                  color: mobile.length === 10 ? '#fff' : '#475569',
-                  boxShadow: mobile.length === 10 ? '0 4px 20px rgba(245,158,11,0.25)' : 'none',
-                  opacity: loading ? 0.7 : 1, marginBottom: 12,
-                }}>
-                  {loading ? '⏳ Sending OTP...' : '📱 Send OTP'}
-                </button>
-              </>
-            ) : otpSent && !otpVerified ? (
-              <>
-                {success && (
-                  <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12, padding: '12px 16px', color: '#34d399', fontSize: '0.84rem', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: '1.1rem' }}>✅</span> {success}
-                  </div>
-                )}
-                <div style={{ marginBottom: 24 }}>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    Enter 6-Digit OTP
-                  </label>
-                  <input type="text" value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-                    placeholder="● ● ● ● ● ●" maxLength={6} autoFocus className="auth-input"
-                    style={{ textAlign: 'center', letterSpacing: '10px', fontSize: '1.4rem', fontWeight: 700, padding: '16px' }}
-                  />
-                </div>
-                {error && (
-                  <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: '12px 16px', color: '#f87171', fontSize: '0.84rem', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: '1.1rem' }}>⚠️</span> {error}
-                  </div>
-                )}
-                <button type="submit" disabled={loading || otp.length !== 6} className="auth-btn-primary" style={{
-                  background: otp.length === 6 ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)',
-                  color: otp.length === 6 ? '#fff' : '#475569',
-                  boxShadow: otp.length === 6 ? '0 4px 20px rgba(16,185,129,0.25)' : 'none',
-                  opacity: loading ? 0.7 : 1, marginBottom: 12,
-                }}>
-                  {loading ? '⏳ Verifying...' : '✅ Verify OTP'}
-                </button>
-                <button type="button" onClick={() => { setOtpSent(false); setOtp(''); setError(''); setSuccess(''); }}
-                  className="auth-btn-secondary" style={{ marginBottom: 8 }}>
-                  {otpTimer > 0 ? `Resend OTP in ${otpTimer}s` : '🔄 Resend OTP'}
-                </button>
-              </>
-            ) : (
-              /* OTP Verified — Set Password to complete registration */
-              <>
-                {success && (
-                  <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12, padding: '12px 16px', color: '#34d399', fontSize: '0.84rem', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: '1.1rem' }}>✅</span> {success}
-                  </div>
-                )}
-                <div style={{ marginBottom: 18 }}>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Full Name</label>
-                  <input type="text" value={fullName} onChange={e => setFullName(e.target.value)}
-                    placeholder="Rajesh Kumar" className="auth-input" autoComplete="name" autoFocus
-                  />
-                </div>
-                <div style={{ marginBottom: 8 }}>
-                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Set Password</label>
-                  <div style={{ position: 'relative' }}>
-                    <input type={showNewPassword ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                      placeholder="Min 6 characters" className="auth-input" style={{ paddingRight: 48 }} autoComplete="new-password"
-                    />
-                    <button type="button" className="password-toggle" onClick={() => setShowNewPassword(!showNewPassword)}>
-                      {showNewPassword ? '🙈' : '👁️'}
-                    </button>
-                  </div>
-                </div>
-                {newPassword && (() => { const s = passwordStrength(newPassword); return (
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
-                      {[1,2,3,4].map(i => (
-                        <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i <= s.level ? s.color : 'rgba(255,255,255,0.06)', transition: 'all 0.3s' }} />
-                      ))}
-                    </div>
-                    <div style={{ fontSize: '0.72rem', color: s.color, fontWeight: 600 }}>{s.label}</div>
-                  </div>
-                );})()}
-                {!newPassword && <div style={{ marginBottom: 20 }} />}
-                {error && (
-                  <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: '12px 16px', color: '#f87171', fontSize: '0.84rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span>⚠️</span> {error}
-                  </div>
-                )}
-                <button type="submit" disabled={loading} className="auth-btn-primary" style={{
-                  background: 'linear-gradient(135deg, #3b82f6, #2563eb)', color: '#fff',
-                  boxShadow: '0 4px 20px rgba(59,130,246,0.25)', opacity: loading ? 0.7 : 1, marginBottom: 12,
-                }}>
-                  {loading ? '⏳ Creating Account...' : '🚀 Create Account & Continue'}
-                </button>
-              </>
-            )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '16px 0' }}>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-              <span style={{ fontSize: '0.75rem', color: '#475569' }}>or</span>
-              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-            </div>
-            <button type="button" onClick={() => setDemoRoleOpen(!demoRoleOpen)} className="auth-btn-secondary" style={{
-              background: 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.08))',
-              color: '#a78bfa', borderColor: 'rgba(139,92,246,0.15)', position: 'relative',
+          <div key="new-user-info" style={{ animation: 'slide-up 0.4s ease' }}>
+            <div style={{
+              background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)',
+              borderRadius: 16, padding: '24px', marginBottom: 20, textAlign: 'center',
             }}>
-              🚀 Explore Demo — Choose Role ▾
-            </button>
-            {demoRoleOpen && (
-              <div style={{ marginTop: 8, background: 'rgba(15,20,35,0.95)', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 14, padding: 8, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                {DEMO_ROLES.map(r => (
-                  <button key={r.id} type="button" onClick={() => handleDemoLogin(r.id)} style={{
-                    padding: '10px 12px', background: `${r.color}10`, border: `1px solid ${r.color}30`,
-                    borderRadius: 10, cursor: 'pointer', color: r.color, fontSize: '0.78rem', fontWeight: 600,
-                    display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s',
-                  }}>
-                    <span style={{ fontSize: '1.1rem' }}>{r.icon}</span> {r.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </form>
+              <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>🌾</div>
+              <h3 style={{ color: '#10b981', fontSize: '1.1rem', fontWeight: 700, margin: '0 0 8px' }}>
+                Join RythuSphere Today
+              </h3>
+              <p style={{ color: '#64748b', fontSize: '0.84rem', lineHeight: 1.6, margin: 0 }}>
+                Click <strong style={{ color: '#e2e8f0' }}>"Continue with Google"</strong> above to create your account instantly. After signing up, you'll set your phone number and password.
+              </p>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {['✅ Free 6-month trial for farmers', '✅ 24 AI-powered modules', '✅ Telugu, Hindi & English support', '✅ Andhra Pradesh focused'].map((item, i) => (
+                <div key={i} style={{ color: '#94a3b8', fontSize: '0.84rem', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)' }}>
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
         {/* ── Forgot Password Form ── */}

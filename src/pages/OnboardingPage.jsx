@@ -232,6 +232,7 @@ export default function OnboardingPage() {
       }
 
       saveStoredOnboardingData(payload);
+      localStorage.setItem('agri360_onboarding_complete', 'true');
       setCompleted(true);
       setShowCropTips(true);
     } catch (err) {
@@ -268,7 +269,7 @@ export default function OnboardingPage() {
 
   const handleTutorialDone = () => {
     setShowTutorial(false);
-    navigate(redirectPath);
+    navigate('/subscription');
   };
 
   /* ═══════════════ STEP RENDERERS ═══════════════════════════════ */

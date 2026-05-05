@@ -81,6 +81,7 @@ const BugTracker = lazy(() => import('./pages/BugTracker'));
 const AdminBugDashboard = lazy(() => import('./pages/AdminBugDashboard'));
 const VillageExplorer = lazy(() => import('./pages/VillageExplorer'));
 const CustomerDashboardPage = lazy(() => import('./pages/CustomerDashboardPage'));
+const PaymentPage = lazy(() => import('./pages/PaymentPage'));
 
 /** Dynamic sidebar navigation based on user role */
 function getNavSections(role) {
@@ -258,7 +259,7 @@ function getNavSections(role) {
 const NAV_SECTIONS = getNavSections('admin');
 
 // Public routes that bypass admin layout
-const PUBLIC_PREFIXES = ['/', '/home', '/features', '/about', '/pricing', '/contact-us', '/store', '/login', '/landing', '/onboarding', '/market', '/public-weather', '/blog'];
+const PUBLIC_PREFIXES = ['/', '/home', '/features', '/about', '/pricing', '/contact-us', '/store', '/login', '/landing', '/onboarding', '/subscription', '/market', '/public-weather', '/blog'];
 
 // Loading skeleton for Suspense fallback
 function PageSkeleton() {
@@ -284,13 +285,39 @@ function PageSkeleton() {
 }
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading, farmerProfile } = useAuth();
+  const { isAuthenticated, loading, farmerProfile, isAdmin } = useAuth();
   const location = useLocation();
   if (loading) return <PageSkeleton />;
-  if (!isAuthenticated) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  if (!isOnboardingComplete(farmerProfile)) {
+
+  // Layer 1: Auth check with localStorage fallback (handles async session load race)
+  if (!isAuthenticated) {
+    const hasLocalToken = Object.keys(localStorage).some(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    const hasAdminToken = !!localStorage.getItem('agri_admin_token');
+    if (!hasLocalToken && !hasAdminToken) {
+      return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+    }
+  }
+
+  // Layer 2: Onboarding guard
+  const onboardingDone = localStorage.getItem('agri360_onboarding_complete') === 'true'
+    || localStorage.getItem('rythusphere_onboarding_complete') === 'true'
+    || localStorage.getItem('rythusphere_onboarding_complete') === 'skipped'
+    || isOnboardingComplete(farmerProfile);
+  if (!onboardingDone) {
     return <Navigate to="/onboarding" replace state={{ from: location.pathname }} />;
   }
+
+  // Layer 3: Subscription guard — admin bypasses
+  if (!isAdmin) {
+    const userId = farmerProfile?.id || '';
+    const hasPayment = localStorage.getItem(`agri360_payments`);
+    const hasTrial = Object.keys(localStorage).some(k => k.startsWith('agri360_trial_') || k.startsWith('rythu_trial_'));
+    const hasCoupon = Object.keys(localStorage).some(k => k.startsWith('agri360_coupon_') || k.startsWith('rythu_coupon_'));
+    if (!hasPayment && !hasTrial && !hasCoupon) {
+      return <Navigate to="/subscription" replace />;
+    }
+  }
+
   return children;
 }
 
@@ -504,6 +531,7 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/landing" element={<LandingPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/subscription" element={<PaymentPage />} />
           <Route element={<PublicLayout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/home" element={<HomePage />} />

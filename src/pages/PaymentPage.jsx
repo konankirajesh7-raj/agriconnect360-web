@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/hooks/useAuth';
 import { supabase } from '../lib/supabase';
 
-const DEFAULT_CFG = { upiId:'6303369360@mbk', phone:'6303369360', merchantName:'RythuSphere', couponCode:'RYTHUFREE', trialDays:180, farmerPrice:50, othersPrice:100 };
+const DEFAULT_CFG = { upiId:'6303369360@mbk', phone:'6303369360', merchantName:'RythuSphere', couponCode:'AGRI360FREE', trialDays:180, farmerPrice:50, othersPrice:100 };
 function getPlanForRole(role, cfg) {
   if (role === 'farmer') return { id:'farmer-plan', name:'Farmer Plan', price:cfg?.farmerPrice||50, period:'/ 6 months', features:['Full Dashboard & Analytics','AI Crop Advisory','Live Market Prices','Weather Intelligence','Gov Schemes & Subsidies','Equipment & Transport Booking','Community & Network','Marketplace Access'], color:'#10b981' };
   if (role === 'customer') return { id:'customer-plan', name:'Customer Plan', price:50, period:'/ 1 year', features:['Browse & Buy Produce','Supplier Access','Machinery & Equipment','Live Market Prices','Weather Intelligence','Community & Network','Marketplace Access','AI Assistant'], color:'#ec4899' };
@@ -345,6 +345,11 @@ export default function PaymentPage() {
       if (!localStorage.getItem(`rythu_trial_${user.id}`)) {
         localStorage.setItem(`rythu_trial_${user.id}`, new Date().toISOString());
       }
+      localStorage.setItem(`agri360_trial_${user.id}`, new Date().toISOString());
+    }
+    // Also persist payments flag for subscription guard
+    if (payments.length > 0) {
+      localStorage.setItem('agri360_payments', JSON.stringify(payments));
     }
     const dm = { customer:'/customer-dashboard', industrial:'/industrial-dashboard', broker:'/broker-dashboard', supplier:'/supplier-dashboard', labour:'/labour-dashboard', admin:'/admin' };
     navigate(dm[effectiveRole] || '/dashboard');
