@@ -25,7 +25,7 @@ async function loadCfg() {
   return DEFAULT_CFG;
 }
 
-// ������ Trial Tracker Component ������
+//  Trial Tracker Component 
 function TrialTracker({ user }) {
   const [info, setInfo] = useState(null);
   useEffect(() => {
@@ -49,10 +49,10 @@ function TrialTracker({ user }) {
     <div style={{ ...S.card, border:`1px solid ${barColor}33`, marginBottom:20 }}>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <span style={{ fontSize:'1.3rem' }}>{info.expired ? '⏰' : '�x}0'}</span>
+          <span style={{ fontSize:'1.3rem' }}>{info.expired ? '⏰' : '🟢'}</span>
           <div>
             <div style={{ color:'#fff', fontWeight:700, fontSize:'0.9rem' }}>{info.expired ? 'Free Trial Expired' : 'Free Trial Active'}</div>
-            <div style={{ color:'#64748b', fontSize:'0.7rem' }}>{info.startDate} �  {info.endDate}</div>
+            <div style={{ color:'#64748b', fontSize:'0.7rem' }}>{info.startDate} → {info.endDate}</div>
           </div>
         </div>
         <div style={{ background:`${barColor}20`, padding:'4px 12px', borderRadius:10 }}>
@@ -63,13 +63,13 @@ function TrialTracker({ user }) {
       <div style={{ background:'rgba(255,255,255,0.06)', borderRadius:6, height:8, overflow:'hidden' }}>
         <div style={{ width:`${info.pct}%`, height:'100%', background:barColor, borderRadius:6, transition:'width 0.5s' }} />
       </div>
-      {info.remainDays <= 14 && !info.expired && <div style={{ color:'#f59e0b', fontSize:'0.72rem', marginTop:8, fontWeight:600 }}>�a� Your trial expires soon! Upgrade to keep premium features.</div>}
+      {info.remainDays <= 14 && !info.expired && <div style={{ color:'#f59e0b', fontSize:'0.72rem', marginTop:8, fontWeight:600 }}>⚠ Your trial expires soon! Upgrade to keep premium features.</div>}
       {info.expired && <div style={{ color:'#ef4444', fontSize:'0.72rem', marginTop:8, fontWeight:600 }}>Your trial has ended. Subscribe to continue using premium features.</div>}
     </div>
   );
 }
 
-// ������ Coupon Code Section ������
+//  Coupon Code Section 
 function CouponSection({ user, config, onApplied }) {
   const [code, setCode] = useState('');
   const [msg, setMsg] = useState('');
@@ -85,12 +85,12 @@ function CouponSection({ user, config, onApplied }) {
 
   const handleApply = async () => {
     const trimmed = code.trim().toUpperCase();
-    if (!trimmed) { setMsg('�a�️ Please enter a coupon code.'); setTimeout(() => setMsg(''), 4000); return; }
+    if (!trimmed) { setMsg('⚠️ Please enter a coupon code.'); setTimeout(() => setMsg(''), 4000); return; }
     setLoading(true);
 
     const validCode = (config.couponCode || 'RYTHUFREE').toUpperCase();
     if (trimmed !== validCode) {
-      setMsg('�R Invalid coupon code. Please check and try again.');
+      setMsg('❌ Invalid coupon code. Please check and try again.');
       setLoading(false);
       setTimeout(() => setMsg(''), 5000);
       return;
@@ -98,14 +98,14 @@ function CouponSection({ user, config, onApplied }) {
 
     // Check if already used (localStorage quick check)
     if (localStorage.getItem(`rythu_coupon_${user?.id}`)) {
-      setMsg('�a�️ You have already applied a coupon. Each account gets one free trial only.');
+      setMsg('⚠️ You have already applied a coupon. Each account gets one free trial only.');
       setApplied(true);
       setLoading(false);
       setTimeout(() => setMsg(''), 5000);
       return;
     }
 
-    // Save coupon application � goes through same flow as payment (admin verification)
+    // Save coupon application —goes through same flow as payment (admin verification)
     const couponPayment = {
       user_id: user?.id || 'anon',
       user_name: user?.user_metadata?.full_name || user?.email || 'User',
@@ -135,14 +135,14 @@ function CouponSection({ user, config, onApplied }) {
 
     setApplied(true);
     setLoading(false);
-    setMsg('�S& Coupon applied! You now have 6 months FREE access to all premium features.');
+    setMsg('✅ Coupon applied! You now have 6 months FREE access to all premium features.');
     onApplied?.();
     setTimeout(() => setMsg(''), 8000);
   };
   if (applied) return (
     <div style={{ ...S.card, border:'1px solid rgba(16,185,129,0.3)', marginBottom:20 }}>
       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-        <span style={{ fontSize:'1.3rem' }}>�S&</span>
+        <span style={{ fontSize:'1.3rem' }}>✅</span>
         <div>
           <div style={{ color:'#10b981', fontWeight:700, fontSize:'0.85rem' }}>Coupon Applied Successfully</div>
           <div style={{ color:'#64748b', fontSize:'0.7rem' }}>Your subscription is active. Check trial tracker above for details.</div>
@@ -152,18 +152,18 @@ function CouponSection({ user, config, onApplied }) {
   );
   return (
     <div style={{ ...S.card, border:'1px solid rgba(139,92,246,0.2)', marginBottom:20 }}>
-      <div style={{ color:'#fff', fontWeight:700, fontSize:'0.9rem', marginBottom:4, display:'flex', alignItems:'center', gap:8 }}>�x}x️ Have a Coupon Code?</div>
+      <div style={{ color:'#fff', fontWeight:700, fontSize:'0.9rem', marginBottom:4, display:'flex', alignItems:'center', gap:8 }}>🎟️ Have a Coupon Code?</div>
       <div style={{ color:'#94a3b8', fontSize:'0.75rem', marginBottom:12 }}>Apply your coupon to get 6 months FREE access to all premium features</div>
       <div style={{ display:'flex', gap:8 }}>
         <input value={code} onChange={e => setCode(e.target.value.toUpperCase())} placeholder="Enter coupon code" style={{ ...S.inp, flex:1, textTransform:'uppercase', letterSpacing:'2px', fontWeight:700 }} />
         <button onClick={handleApply} disabled={loading} style={{ padding:'12px 20px', borderRadius:10, border:'none', background: loading ? '#475569' : 'linear-gradient(135deg,#8b5cf6,#6366f1)', color:'#fff', fontWeight:700, fontSize:'0.82rem', cursor: loading ? 'wait' : 'pointer', whiteSpace:'nowrap', opacity: loading ? 0.7 : 1 }}>{loading ? '⏳ Applying...' : 'Apply'}</button>
       </div>
-      {msg && <div style={{ marginTop:10, padding:'8px 12px', borderRadius:8, background: msg.startsWith('�S&') ? 'rgba(16,185,129,0.15)' : msg.startsWith('�a�️') ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)', color: msg.startsWith('�S&') ? '#10b981' : msg.startsWith('�a�️') ? '#f59e0b' : '#ef4444', fontSize:'0.78rem', fontWeight:600 }}>{msg}</div>}
+      {msg && <div style={{ marginTop:10, padding:'8px 12px', borderRadius:8, background: msg.startsWith('✅') ? 'rgba(16,185,129,0.15)' : msg.startsWith('⚠️') ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)', color: msg.startsWith('✅') ? '#10b981' : msg.startsWith('⚠️') ? '#f59e0b' : '#ef4444', fontSize:'0.78rem', fontWeight:600 }}>{msg}</div>}
     </div>
   );
 }
 
-// ������ Payment Modal ������
+//  Payment Modal 
 function PaymentModal({ plan, config, onClose, onSubmit }) {
   const [txnId, setTxnId] = useState('');
   const [method, setMethod] = useState('upi');
@@ -178,7 +178,7 @@ function PaymentModal({ plan, config, onClose, onSubmit }) {
       await onSubmit(txnId.trim());
     } catch (err) {
       console.warn('Payment submit error:', err);
-      // Still close modal � payment was saved to localStorage as fallback
+      // Still close modal —payment was saved to localStorage as fallback
       onClose();
     } finally {
       setSubmitting(false);
@@ -188,19 +188,19 @@ function PaymentModal({ plan, config, onClose, onSubmit }) {
     <div style={{ position:'fixed', inset:0, zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)', padding:16 }} onClick={onClose}>
       <div style={{ maxWidth:400, width:'100%', background:'#0f1d32', borderRadius:20, border:'1px solid rgba(255,255,255,0.1)', padding:'24px 20px', maxHeight:'90vh', overflowY:'auto' }} onClick={e=>e.stopPropagation()}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-          <h3 style={{ margin:0, color:'#fff', fontSize:'1.1rem' }}>{step===1?'�x� Make Payment':'�S& Confirm Payment'}</h3>
-          <button onClick={onClose} style={{ background:'none', border:'none', color:'#94a3b8', fontSize:'1.2rem', cursor:'pointer' }}>�S"</button>
+          <h3 style={{ margin:0, color:'#fff', fontSize:'1.1rem' }}>{step===1?'💳 Make Payment':'✅ Confirm Payment'}</h3>
+          <button onClick={onClose} style={{ background:'none', border:'none', color:'#94a3b8', fontSize:'1.2rem', cursor:'pointer' }}>✕</button>
         </div>
         <div style={{ background:'rgba(16,185,129,0.1)', borderRadius:12, padding:14, border:'1px solid rgba(16,185,129,0.2)', marginBottom:20 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div><div style={{ color:'#10b981', fontWeight:700 }}>{plan.name}</div><div style={{ color:'#94a3b8', fontSize:'0.75rem' }}>{plan.period}</div></div>
-            <div style={{ color:'#fff', fontWeight:800, fontSize:'1.3rem' }}>��{plan.price}</div>
+            <div style={{ color:'#fff', fontWeight:800, fontSize:'1.3rem' }}>₹{plan.price}</div>
           </div>
         </div>
         {step===1 ? <>
           <div style={{ marginBottom:16 }}>
             <div style={{ color:'#94a3b8', fontSize:'0.75rem', fontWeight:600, marginBottom:8 }}>PAY VIA</div>
-            {[{id:'upi',l:'�x� UPI (GPay / PhonePe / Paytm)',d:'Instant'},{id:'qr',l:'�x� Scan QR Code',d:'Any UPI app'},{id:'phone',l:'�x~ Pay to Phone',d:config.phone}].map(m=>(
+            {[{id:'upi',l:'📱 UPI (GPay / PhonePe / Paytm)',d:'Instant'},{id:'qr',l:'📱 Scan QR Code',d:'Any UPI app'},{id:'phone',l:'📞 Pay to Phone',d:config.phone}].map(m=>(
               <button key={m.id} onClick={()=>setMethod(m.id)} style={{ width:'100%', padding:'12px 14px', borderRadius:10, marginBottom:8, background:method===m.id?'rgba(16,185,129,0.15)':'rgba(255,255,255,0.03)', border:`1px solid ${method===m.id?'rgba(16,185,129,0.4)':'rgba(255,255,255,0.08)'}`, color:'#fff', textAlign:'left', cursor:'pointer', boxSizing:'border-box' }}>
                 <div style={{ fontWeight:600, fontSize:'0.82rem' }}>{m.l}</div><div style={{ color:'#64748b', fontSize:'0.7rem' }}>{m.d}</div>
               </button>
@@ -210,15 +210,15 @@ function PaymentModal({ plan, config, onClose, onSubmit }) {
           {method==='upi' && <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:10, padding:14, border:'1px solid rgba(255,255,255,0.08)', marginBottom:16, textAlign:'center' }}>
             <div style={{ color:'#94a3b8', fontSize:'0.7rem', marginBottom:6 }}>UPI ID</div>
             <div style={{ color:'#10b981', fontWeight:700, fontSize:'1rem', fontFamily:'monospace', background:'rgba(16,185,129,0.1)', padding:'8px 12px', borderRadius:8, display:'inline-block' }}>{config.upiId}</div>
-            <button onClick={()=>navigator.clipboard?.writeText(config.upiId)} style={{ display:'block', margin:'10px auto 0', padding:'6px 16px', borderRadius:8, background:'rgba(16,185,129,0.15)', border:'1px solid rgba(16,185,129,0.3)', color:'#10b981', fontSize:'0.72rem', cursor:'pointer', fontWeight:600 }}>�x9 Copy UPI ID</button>
-            <a href={upiLink} style={{ display:'block', margin:'10px auto 0', padding:'10px 20px', borderRadius:10, background:'linear-gradient(135deg,#10b981,#059669)', color:'#fff', fontWeight:700, fontSize:'0.82rem', textDecoration:'none' }}>�x� Open UPI App & Pay ��{plan.price}</a>
+            <button onClick={()=>navigator.clipboard?.writeText(config.upiId)} style={{ display:'block', margin:'10px auto 0', padding:'6px 16px', borderRadius:8, background:'rgba(16,185,129,0.15)', border:'1px solid rgba(16,185,129,0.3)', color:'#10b981', fontSize:'0.72rem', cursor:'pointer', fontWeight:600 }}>📋 Copy UPI ID</button>
+            <a href={upiLink} style={{ display:'block', margin:'10px auto 0', padding:'10px 20px', borderRadius:10, background:'linear-gradient(135deg,#10b981,#059669)', color:'#fff', fontWeight:700, fontSize:'0.82rem', textDecoration:'none' }}>📱 Open UPI App & Pay ₹{plan.price}</a>
           </div>}
           {method==='phone' && <div style={{ background:'rgba(255,255,255,0.03)', borderRadius:10, padding:14, textAlign:'center', marginBottom:16 }}>
             <div style={{ color:'#94a3b8', fontSize:'0.7rem', marginBottom:6 }}>Send money to</div>
             <div style={{ color:'#f59e0b', fontWeight:700, fontSize:'1.3rem', fontFamily:'monospace' }}>{config.phone}</div>
-            <div style={{ color:'#64748b', fontSize:'0.7rem', marginTop:4 }}>Amount: ��{plan.price}</div>
+            <div style={{ color:'#64748b', fontSize:'0.7rem', marginTop:4 }}>Amount: ₹{plan.price}</div>
           </div>}
-          <button onClick={()=>setStep(2)} style={S.btn('linear-gradient(135deg,#10b981,#059669)')}>�S& I've Made the Payment � </button>
+          <button onClick={()=>setStep(2)} style={S.btn('linear-gradient(135deg,#10b981,#059669)')}>✅ I've Made the Payment →</button>
         </> : <>
           <div style={{ marginBottom:16 }}>
             <label style={{ display:'block', color:'#94a3b8', fontSize:'0.75rem', fontWeight:600, marginBottom:8 }}>ENTER TRANSACTION ID / UTR NUMBER</label>
@@ -226,7 +226,7 @@ function PaymentModal({ plan, config, onClose, onSubmit }) {
             <div style={{ color:'#64748b', fontSize:'0.68rem', marginTop:6 }}>Find this in your UPI app payment history</div>
           </div>
           <div style={{ display:'flex', gap:8 }}>
-            <button onClick={()=>setStep(1)} style={{ ...S.btn('rgba(255,255,255,0.06)'), flex:'0 0 auto', width:'auto', padding:'13px 20px' }}>� � Back</button>
+            <button onClick={()=>setStep(1)} style={{ ...S.btn('rgba(255,255,255,0.06)'), flex:'0 0 auto', width:'auto', padding:'13px 20px' }}>⬅ Back</button>
             <button onClick={doSubmit} disabled={submitting||!txnId.trim()||txnId.trim().length<4} style={{ ...S.btn(txnId.trim().length>=4?'linear-gradient(135deg,#10b981,#059669)':'rgba(255,255,255,0.06)'), flex:1, opacity:txnId.trim().length>=4?1:0.5 }}>{submitting?'Submitting...':'Submit for Verification'}</button>
           </div>
         </>}
@@ -235,20 +235,20 @@ function PaymentModal({ plan, config, onClose, onSubmit }) {
   );
 }
 
-// ������ My Payments History ������
+//  My Payments History 
 function MyPayments({ payments }) {
   if (!payments.length) return null;
   return (
     <div style={{ marginTop:24 }}>
-      <div style={{ color:'#94a3b8', fontSize:'0.78rem', fontWeight:600, marginBottom:10 }}>�x9 Payment History</div>
+      <div style={{ color:'#94a3b8', fontSize:'0.78rem', fontWeight:600, marginBottom:10 }}>📋 Payment History</div>
       {payments.map(p => (
         <div key={p.id} style={{ ...S.card, marginBottom:10, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <div>
-            <div style={{ color:'#e2e8f0', fontWeight:600, fontSize:'0.82rem' }}>{p.plan_name} � ��{p.amount}</div>
+            <div style={{ color:'#e2e8f0', fontWeight:600, fontSize:'0.82rem' }}>{p.plan_name} —₹{p.amount}</div>
             <div style={{ color:'#64748b', fontSize:'0.68rem' }}>TXN: {p.txn_id} · {new Date(p.created_at).toLocaleDateString()}</div>
           </div>
           <span style={{ padding:'3px 10px', borderRadius:12, fontSize:'0.65rem', fontWeight:700, background:`${STATUS_COLORS[p.status]}20`, color:STATUS_COLORS[p.status], textTransform:'uppercase' }}>
-            {p.status==='pending'?'⏳ Pending':p.status==='verified'?'�S& Verified':'�R Rejected'}
+            {p.status==='pending'?'⏳ Pending':p.status==='verified'?'✅ Verified':'❌ Rejected'}
           </span>
         </div>
       ))}
@@ -256,7 +256,7 @@ function MyPayments({ payments }) {
   );
 }
 
-// ������ Main Payment Page ������
+//  Main Payment Page 
 export default function PaymentPage() {
   const { user, farmerProfile, userRole } = useAuth();
   const navigate = useNavigate();
@@ -270,7 +270,7 @@ export default function PaymentPage() {
 
   useEffect(() => { loadCfg().then(setConfig); }, []);
 
-  // Robust role detection � fetch from Supabase profiles (source of truth)
+  // Robust role detection —fetch from Supabase profiles (source of truth)
   const [detectedRole, setDetectedRole] = useState(() => {
     try { const r = localStorage.getItem('rythu_user_role'); if (r) return r; } catch {}
     try { const d = JSON.parse(localStorage.getItem('rythu_onboarding_data') || '{}'); if (d.role) return d.role; } catch {}
@@ -326,7 +326,7 @@ export default function PaymentPage() {
       setPayments(prev=>[{...payment,id:'l-'+Date.now()},...prev]);
     }
     setShowModal(false);
-    setSuccessMsg(`�S& Payment submitted! TXN: ${txnId}. Admin will verify within 24 hours.`);
+    setSuccessMsg(`✅ Payment submitted! TXN: ${txnId}. Admin will verify within 24 hours.`);
     setTimeout(()=>setSuccessMsg(''), 8000);
     // Reload payments to show updated list
     loadPayments();
@@ -347,6 +347,10 @@ export default function PaymentPage() {
       }
       localStorage.setItem(`agri360_trial_${user.id}`, new Date().toISOString());
     }
+    // Persist role so RoleDashboard/RoleRoute can read it even before Supabase loads
+    if (effectiveRole) {
+      localStorage.setItem('rythu_user_role', effectiveRole);
+    }
     // Also persist payments flag for subscription guard
     if (payments.length > 0) {
       localStorage.setItem('agri360_payments', JSON.stringify(payments));
@@ -364,47 +368,47 @@ export default function PaymentPage() {
 
   return (
     <div style={shell}><div style={inner}>
-      <div style={hdr}><div style={lgo}>�xR�</div><div style={{color:'#fff',fontWeight:800,fontSize:'1.2rem'}}>RythuSphere</div></div>
+      <div style={hdr}><div style={lgo}>🌾</div><div style={{color:'#fff',fontWeight:800,fontSize:'1.2rem'}}>RythuSphere</div></div>
       <div style={{textAlign:'center',marginBottom:24}}>
-        <div style={{fontSize:'2.5rem',marginBottom:8}}>�x</div>
+        <div style={{fontSize:'2.5rem',marginBottom:8}}>🎁</div>
         <h2 style={{color:'#fff',fontSize:'1.4rem',fontWeight:800,margin:'0 0 6px',background:'linear-gradient(135deg,#10b981,#34d399)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>Choose Your Plan</h2>
         <p style={{color:'#94a3b8',fontSize:'0.82rem',margin:0}}>Unlock all premium features for your farming journey</p>
       </div>
 
       {successMsg && <div style={{background:'rgba(16,185,129,0.15)',borderRadius:12,padding:14,border:'1px solid rgba(16,185,129,0.3)',marginBottom:16,color:'#10b981',fontSize:'0.8rem',fontWeight:600}}>{successMsg}</div>}
 
-      {/* ������ Plan Card First ������ */}
+      {/*  Plan Card First  */}
       <div style={{...S.card,border:`2px solid ${plan.color}50`,background:'linear-gradient(145deg,rgba(15,29,50,0.9),rgba(10,22,40,0.95))',position:'relative',overflow:'hidden'}}>
         <div style={{position:'absolute',top:0,right:0,background:`linear-gradient(135deg,${plan.color},${plan.color}aa)`,padding:'4px 16px',borderRadius:'0 0 0 12px',fontSize:'0.68rem',fontWeight:700,color:'#fff',textTransform:'uppercase'}}>Recommended</div>
         <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16,marginTop:8}}>
           <div>
             <div style={{color:'#e2e8f0',fontWeight:800,fontSize:'1.15rem'}}>{plan.name}</div>
-            <div style={{color:'#64748b',fontSize:'0.75rem',marginTop:3}}>{effectiveRole==='farmer'?'�x�⬍�xR� Farmer':`�x�� ${(effectiveRole||'').charAt(0).toUpperCase()+(effectiveRole||'').slice(1)}`}</div>
+            <div style={{color:'#64748b',fontSize:'0.75rem',marginTop:3}}>{effectiveRole==='farmer'?'👨‍🌾 Farmer':`👤 ${(effectiveRole||'').charAt(0).toUpperCase()+(effectiveRole||'').slice(1)}`}</div>
           </div>
-          <div style={{textAlign:'right'}}><span style={{color:'#fff',fontWeight:900,fontSize:'2.2rem'}}>��{plan.price}</span><div style={{color:'#64748b',fontSize:'0.75rem'}}>{plan.period}</div></div>
+          <div style={{textAlign:'right'}}><span style={{color:'#fff',fontWeight:900,fontSize:'2.2rem'}}>₹{plan.price}</span><div style={{color:'#64748b',fontSize:'0.75rem'}}>{plan.period}</div></div>
         </div>
-        <div style={{marginBottom:18,display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2px 0'}}>{plan.features.map((f,i)=><div key={i} style={{padding:'5px 0',display:'flex',alignItems:'center',gap:8,color:'#c8d6e5',fontSize:'0.78rem'}}><span style={{color:plan.color,fontSize:'0.75rem',fontWeight:700}}>�S</span>{f}</div>)}</div>
-        {isTrial ? <div style={{...S.btn('rgba(16,185,129,0.15)'),color:'#10b981',textAlign:'center',fontSize:'0.9rem'}}>�x}0 Free Trial Active</div>
-         : activePlan===plan.id ? <div style={{...S.btn('rgba(16,185,129,0.15)'),color:'#10b981',textAlign:'center'}}>�S& Plan Active</div>
-         : <button onClick={()=>handleSubscribe(plan)} style={{...S.btn(`linear-gradient(135deg,${plan.color},${plan.color}dd)`),fontSize:'0.9rem',letterSpacing:'0.3px'}}>�x� Subscribe � ��{plan.price} {plan.period}</button>}
+        <div style={{marginBottom:18,display:'grid',gridTemplateColumns:'1fr 1fr',gap:'2px 0'}}>{plan.features.map((f,i)=><div key={i} style={{padding:'5px 0',display:'flex',alignItems:'center',gap:8,color:'#c8d6e5',fontSize:'0.78rem'}}><span style={{color:plan.color,fontSize:'0.75rem',fontWeight:700}}>✅</span>{f}</div>)}</div>
+        {isTrial ? <div style={{...S.btn('rgba(16,185,129,0.15)'),color:'#10b981',textAlign:'center',fontSize:'0.9rem'}}>🟢 Free Trial Active</div>
+         : activePlan===plan.id ? <div style={{...S.btn('rgba(16,185,129,0.15)'),color:'#10b981',textAlign:'center'}}>✅ Plan Active</div>
+         : <button onClick={()=>handleSubscribe(plan)} style={{...S.btn(`linear-gradient(135deg,${plan.color},${plan.color}dd)`),fontSize:'0.9rem',letterSpacing:'0.3px'}}>💳 Subscribe —₹{plan.price} {plan.period}</button>}
       </div>
 
-      {/* ������ Coupon Section Below Plan ������ */}
+      {/*  Coupon Section Below Plan  */}
       <div style={{marginTop:20}}>
         <CouponSection user={user} config={config} onApplied={()=>{ forceUpdate(n=>n+1); loadPayments(); }} />
       </div>
 
-      {/* ������ Trial Tracker � only shown after coupon applied ������ */}
+      {/*  Trial Tracker —only shown after coupon applied  */}
       {isTrial && <div style={{marginTop:16}}><TrialTracker user={user} /></div>}
 
 
-      {/* ������ Status � only when active ������ */}
+      {/*  Status —only when active  */}
       {(isTrial || activePlan!=='basic') && <div style={{background:'rgba(16,185,129,0.1)',borderRadius:12,padding:'10px 16px',border:'1px solid rgba(16,185,129,0.2)',marginTop:16,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
         <span style={{color:'#94a3b8',fontSize:'0.78rem'}}>Status:</span>
-        <span style={{color:'#10b981',fontWeight:700,fontSize:'0.85rem'}}>{isTrial ? '�x}0 Free Trial Active' : `⭐ ${plan.name} � Active`}</span>
+        <span style={{color:'#10b981',fontWeight:700,fontSize:'0.85rem'}}>{isTrial ? '🟢 Free Trial Active' : `⭐ ${plan.name} —Active`}</span>
       </div>}
 
-      {/* ������ Under Verification Banner ������ */}
+      {/*  Under Verification Banner  */}
       {isUnderVerification && <div style={{marginTop:20,background:'linear-gradient(135deg,rgba(245,158,11,0.12),rgba(245,158,11,0.05))',borderRadius:16,padding:'24px 20px',border:'1px solid rgba(245,158,11,0.3)',textAlign:'center'}}>
         <div style={{fontSize:'2.5rem',marginBottom:12}}>⏳</div>
         <div style={{color:'#f59e0b',fontWeight:800,fontSize:'1.1rem',marginBottom:6}}>Payment Under Verification</div>
@@ -414,16 +418,16 @@ export default function PaymentPage() {
             <div key={i} style={{background:'rgba(245,158,11,0.1)',padding:'6px 14px',borderRadius:10,fontSize:'0.75rem',color:'#f59e0b',fontWeight:600}}>TXN: {p.txn_id}</div>
           ))}
         </div>
-        <div style={{color:'#64748b',fontSize:'0.72rem',marginTop:12}}>�x~ Contact support: 6303369360 | konankirajesh7@gmail.com</div>
+        <div style={{color:'#64748b',fontSize:'0.72rem',marginTop:12}}>📞 Contact support: 6303369360 | konankirajesh7@gmail.com</div>
       </div>}
 
       <MyPayments payments={payments} />
 
-      {canContinue && <button onClick={handleContinue} style={{...S.btn('linear-gradient(135deg,#10b981,#059669)'),marginTop:24,fontSize:'1rem',padding:'16px',letterSpacing:'0.5px',boxShadow:'0 4px 20px rgba(16,185,129,0.3)'}}>�S& Continue to Dashboard � </button>}
+      {canContinue && <button onClick={handleContinue} style={{...S.btn('linear-gradient(135deg,#10b981,#059669)'),marginTop:24,fontSize:'1rem',padding:'16px',letterSpacing:'0.5px',boxShadow:'0 4px 20px rgba(16,185,129,0.3)'}}>✅ Continue to Dashboard →</button>}
 
       <div style={{marginTop:24,...S.card}}>
-        <div style={{color:'#94a3b8',fontSize:'0.75rem',fontWeight:600,marginBottom:10}}>�x� How Payment Works</div>
-        {['Apply coupon for 6 months free','When trial ends, pay via UPI','Enter Transaction ID after payment','Admin verifies � plan activates!'].map((s,i)=>(
+        <div style={{color:'#94a3b8',fontSize:'0.75rem',fontWeight:600,marginBottom:10}}>💳 How Payment Works</div>
+        {['Apply coupon for 6 months free','When trial ends, pay via UPI','Enter Transaction ID after payment','Admin verifies —plan activates!'].map((s,i)=>(
           <div key={i} style={{display:'flex',gap:8,padding:'4px 0',fontSize:'0.72rem',color:'#64748b',alignItems:'flex-start'}}>
             <span style={{width:18,height:18,borderRadius:'50%',background:'rgba(16,185,129,0.15)',color:'#10b981',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'0.6rem',fontWeight:700,flexShrink:0}}>{i+1}</span>
             <span>{s}</span>

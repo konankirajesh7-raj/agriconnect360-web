@@ -233,6 +233,10 @@ export default function OnboardingPage() {
 
       saveStoredOnboardingData(payload);
       localStorage.setItem('agri360_onboarding_complete', 'true');
+      // Persist role for RoleDashboard/RoleRoute
+      if (payload.role) {
+        localStorage.setItem('rythu_user_role', payload.role);
+      }
       setCompleted(true);
       setShowCropTips(true);
     } catch (err) {

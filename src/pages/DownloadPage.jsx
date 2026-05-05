@@ -27,7 +27,7 @@ export default function DownloadPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 8px 32px rgba(16,185,129,0.3)',
         }}>
-          <span style={{ fontSize: '2.5rem' }}>�xR�</span>
+          <span style={{ fontSize: '2.5rem' }}>🌾</span>
         </div>
 
         <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#fff', margin: '0 0 4px', letterSpacing: '-0.02em' }}>
@@ -73,7 +73,7 @@ export default function DownloadPage() {
                 <polyline points="7 10 12 15 17 10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              Download APK � Free
+              Download APK —Free
             </>
           )}
         </a>
@@ -100,7 +100,7 @@ export default function DownloadPage() {
             transition: 'all 0.2s',
           }}
         >
-          �xR� Open in Browser (No Download)
+          🌾 Open in Browser (No Download)
         </a>
 
         {/* Installation Instructions */}
@@ -110,7 +110,7 @@ export default function DownloadPage() {
           padding: '16px 20px', border: '1px solid rgba(255,255,255,0.06)',
         }}>
           <div style={{ fontSize: '0.78rem', fontWeight: 700, color: '#e2e8f0', marginBottom: 12 }}>
-            �x9 Installation Steps:
+            📋 Installation Steps:
           </div>
           {[
             'Tap "Download APK" above',
@@ -139,9 +139,9 @@ export default function DownloadPage() {
           marginTop: 20,
         }}>
           {[
-            { icon: '�x�', label: 'Works Offline' },
-            { icon: '�x', label: 'Secure' },
-            { icon: '�a�', label: 'Super Fast' },
+            { icon: '📱', label: 'Works Offline' },
+            { icon: 'x', label: 'Secure' },
+            { icon: '⚠', label: 'Super Fast' },
           ].map(f => (
             <div key={f.label} style={{
               padding: '10px 6px', borderRadius: 10,

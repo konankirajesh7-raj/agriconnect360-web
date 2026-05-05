@@ -325,9 +325,13 @@ function ProtectedRoute({ children }) {
 function RoleRoute({ roles, children }) {
   const { farmerProfile, isAdmin, loading } = useAuth();
   if (loading) return <PageSkeleton />;
-  const userRole = farmerProfile?.role || 'farmer';
+  const userRole = farmerProfile?.role || localStorage.getItem('rythu_user_role') || 'farmer';
   // Only admins can access all role dashboards; everyone else is restricted to their role
-  if (!roles.includes(userRole) && !isAdmin) return <Navigate to="/" replace />;
+  if (!roles.includes(userRole) && !isAdmin) {
+    // If role mismatch, redirect to the correct role dashboard instead of home
+    const ROLE_DASHBOARDS_MAP = { customer:'/customer-dashboard', industrial:'/industrial-dashboard', broker:'/broker-dashboard', supplier:'/supplier-dashboard', labour:'/labour-dashboard', admin:'/admin', farmer:'/dashboard' };
+    return <Navigate to={ROLE_DASHBOARDS_MAP[userRole] || '/dashboard'} replace />;
+  }
   return children;
 }
 
@@ -347,7 +351,7 @@ function BugReportFAB() {
 /** Smart dashboard router — sends user to their role-specific dashboard */
 function RoleDashboard() {
   const { farmerProfile } = useAuth();
-  const role = farmerProfile?.role || 'farmer';
+  const role = farmerProfile?.role || localStorage.getItem('rythu_user_role') || 'farmer';
   const ROLE_DASHBOARDS = {
     customer: CustomerDashboardPage,
     industrial: IndustrialDashboardPage,
@@ -355,8 +359,12 @@ function RoleDashboard() {
     supplier: SupplierDashboardPage,
     labour: LabourDashboardPage,
   };
-  const DashComponent = ROLE_DASHBOARDS[role] || Dashboard;
-  return <DashComponent />;
+  // If non-farmer role has a dedicated dashboard, redirect to it
+  if (role !== 'farmer' && ROLE_DASHBOARDS[role]) {
+    const DashComponent = ROLE_DASHBOARDS[role];
+    return <DashComponent />;
+  }
+  return <Dashboard />;
 }
 
 // Global search data

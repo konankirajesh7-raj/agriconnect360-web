@@ -1,9 +1,9 @@
 /**
- * Free SMS / Alert Service � RythuSphere
+ * Free SMS / Alert Service —RythuSphere
  * 
  * FREE services integrated:
- * 1. CallMeBot WhatsApp API � completely free, no signup needed for users
- * 2. Browser Notification API (via SW) � free, built-in
+ * 1. CallMeBot WhatsApp API —completely free, no signup needed for users
+ * 2. Browser Notification API (via SW) —free, built-in
  * 3. Supabase Edge Function trigger (uses existing subscription)
  * 
  * For SMS (WhatsApp-based):
@@ -16,7 +16,7 @@ const CALLMEBOT_BASE = 'https://api.callmebot.com/whatsapp.php';
 /**
  * Send a WhatsApp message via CallMeBot (FREE)
  * User must register once at: https://www.callmebot.com/blog/free-api-whatsapp-messages/
- * Steps: Save +34 644 59 77 21 �  Send "I allow callmebot to send me messages"
+ * Steps: Save +34 644 59 77 21 → Send "I allow callmebot to send me messages"
  * They get their personal apikey back via WhatsApp
  */
 export async function sendWhatsAppAlert(phone, message, apiKey) {
@@ -42,10 +42,10 @@ export async function sendWhatsAppAlert(phone, message, apiKey) {
  * Price alert SMS/WhatsApp message
  */
 export function buildPriceAlertMsg(crop, price, change, district) {
-  const dir = change >= 0 ? '�x� UP' : '�x0 DOWN';
-  return `�xR� RythuSphere Alert\n\n` +
+  const dir = change >= 0 ? '📱 UP' : 'x0 DOWN';
+  return `🌾 RythuSphere Alert\n\n` +
     `${dir} ${Math.abs(change)}% | ${crop}\n` +
-    `Current Price: ��${price.toLocaleString()}/Q\n` +
+    `Current Price: ₹${price.toLocaleString()}/Q\n` +
     `Market: ${district} APMC\n\n` +
     `Reply STOP to unsubscribe | rythusphere-web.vercel.app`;
 }
@@ -54,7 +54,7 @@ export function buildPriceAlertMsg(crop, price, change, district) {
  * Weather alert message
  */
 export function buildWeatherAlertMsg(district, condition, advisory) {
-  return `�xR�️ RythuSphere Weather Alert\n\n` +
+  return `🌾️ RythuSphere Weather Alert\n\n` +
     `${condition} expected in ${district}\n` +
     `Advisory: ${advisory}\n\n` +
     `rythusphere-web.vercel.app`;
@@ -64,12 +64,12 @@ export function buildWeatherAlertMsg(district, condition, advisory) {
  * Labour booking confirmation
  */
 export function buildLabourBookingMsg(ref, task, date, workers, total) {
-  return `�S& RythuSphere � Labour Booked\n\n` +
+  return `✅ RythuSphere —Labour Booked\n\n` +
     `Ref: ${ref}\n` +
     `Task: ${task}\n` +
     `Date: ${date}\n` +
     `Workers: ${workers}\n` +
-    `Total: ��${total.toLocaleString()}\n\n` +
+    `Total: ₹${total.toLocaleString()}\n\n` +
     `rythusphere-web.vercel.app`;
 }
 
@@ -91,7 +91,7 @@ export async function sendSMSViaSupabase(supabaseClient, phone, message, type = 
         phone, message, type, status: 'pending', created_at: new Date().toISOString(),
       });
     } catch {}
-    return { success: false, error: 'SMS service not configured � logged for review' };
+    return { success: false, error: 'SMS service not configured —logged for review' };
   }
 }
 
