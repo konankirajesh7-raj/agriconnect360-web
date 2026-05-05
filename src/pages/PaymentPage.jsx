@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 const DEFAULT_CFG = { upiId:'6303369360@mbk', phone:'6303369360', merchantName:'RythuSphere', couponCode:'AGRI360FREE', trialDays:180, farmerPrice:50, othersPrice:100 };
 function getPlanForRole(role, cfg) {
   if (role === 'farmer') return { id:'farmer-plan', name:'Farmer Plan', price:cfg?.farmerPrice||50, period:'/ 6 months', features:['Full Dashboard & Analytics','AI Crop Advisory','Live Market Prices','Weather Intelligence','Gov Schemes & Subsidies','Equipment & Transport Booking','Community & Network','Marketplace Access'], color:'#10b981' };
-  if (role === 'customer') return { id:'customer-plan', name:'Customer Plan', price:0, period:'/ free', features:['Browse & Buy Produce','Supplier Access','Machinery & Equipment','Live Market Prices','Weather Intelligence','Community & Network','Marketplace Access','AI Assistant'], color:'#ec4899' };
+  if (role === 'customer') return { id:'customer-plan', name:'Customer Plan', price:50, period:'/ 1 year', features:['Browse & Buy Produce','Supplier Access','Machinery & Equipment','Live Market Prices','Weather Intelligence','Community & Network','Marketplace Access','AI Assistant'], color:'#ec4899' };
   return { id:'others-plan', name:'Professional Plan', price:cfg?.othersPrice||100, period:'/ 6 months', features:['Full Dashboard & Analytics','AI Business Assistant','Live Market Prices','Weather Intelligence','Transport & Cold Storage','Equipment Booking','Community & Network','Marketplace Access','Broker/Supplier Tools'], color:'#8b5cf6' };
 }
 const STATUS_COLORS = { pending:'#f59e0b', verified:'#10b981', rejected:'#ef4444' };

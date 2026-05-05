@@ -29,6 +29,7 @@ const MyMoneyPage = lazy(() => import('./pages/MyMoneyPage'));
 const SoilPage = lazy(() => import('./pages/SoilPage'));
 const LabourPage = lazy(() => import('./pages/LabourPage'));
 const TransportPage = lazy(() => import('./pages/TransportPage'));
+const MyTransportMachineryPage = lazy(() => import('./pages/MyTransportMachineryPage'));
 const SuppliersPage = lazy(() => import('./pages/SuppliersPage'));
 const EquipmentPage = lazy(() => import('./pages/EquipmentPage'));
 const DisputesPage = lazy(() => import('./pages/DisputesPage'));
@@ -105,6 +106,7 @@ function getNavSections(role) {
       { path: '/transport', icon: '🚛', label: 'Transport' },
       { path: '/suppliers', icon: '🏪', label: 'Suppliers' },
       { path: '/equipment', icon: '🚜', label: 'Equipment' },
+      { path: '/my-transport', icon: '🔧', label: 'My T&M' },
       { path: '/cold-storage', icon: '❄️', label: 'Cold Storage' },
     ]},
     { label: 'Knowledge', items: [
@@ -307,9 +309,8 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/onboarding" replace state={{ from: location.pathname }} />;
   }
 
-  // Layer 3: Subscription guard — admin and customer bypass (customer is free)
-  const userRole = farmerProfile?.role || localStorage.getItem('rythu_user_role') || 'farmer';
-  if (!isAdmin && userRole !== 'customer') {
+  // Layer 3: Subscription guard — admin bypasses
+  if (!isAdmin) {
     const userId = farmerProfile?.id || '';
     const hasPayment = localStorage.getItem(`agri360_payments`);
     const hasTrial = Object.keys(localStorage).some(k => k.startsWith('agri360_trial_') || k.startsWith('rythu_trial_'));
@@ -713,6 +714,7 @@ export default function App() {
             <Route path="/soil" element={<ProtectedRoute><SoilPage /></ProtectedRoute>} />
             <Route path="/labour" element={<ProtectedRoute><LabourPage /></ProtectedRoute>} />
             <Route path="/transport" element={<ProtectedRoute><TransportPage /></ProtectedRoute>} />
+            <Route path="/my-transport" element={<ProtectedRoute><MyTransportMachineryPage /></ProtectedRoute>} />
             <Route path="/suppliers" element={<ProtectedRoute><SuppliersPage /></ProtectedRoute>} />
             <Route path="/equipment" element={<ProtectedRoute><EquipmentPage /></ProtectedRoute>} />
             <Route path="/disputes" element={<ProtectedRoute><DisputesPage /></ProtectedRoute>} />

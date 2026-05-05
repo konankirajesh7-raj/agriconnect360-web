@@ -23,7 +23,7 @@ export default function MyTransportMachineryPage() {
   if (userRole === 'customer') {
     return (
       <div className="animated" style={{ textAlign: 'center', padding: 60 }}>
-        <div style={{ fontSize: '3rem', marginBottom: 16 }}>xa</div>
+        <div style={{ fontSize: '3rem', marginBottom: 16 }}>🚫</div>
         <div style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: 8 }}>Not Available</div>
         <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Transport & Machinery management is available for Farmers, Brokers, Suppliers, Industrial Buyers and Labour roles.</div>
       </div>
@@ -148,14 +148,14 @@ export default function MyTransportMachineryPage() {
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.08), rgba(139,92,246,0.05))', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 16, padding: '20px 24px', marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <div style={{ fontWeight: 800, fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: 10 }}>xa: My Transport & Machinery</div>
+          <div style={{ fontWeight: 800, fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: 10 }}>🔧 My Transport & Machinery</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 4 }}>Register, manage & track your vehicles and farm machinery</div>
         </div>
         <button onClick={() => { resetForm(); setShowAdd(true); setEditItem(null); }} style={{
           padding: '10px 22px', borderRadius: 10, border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem',
           background: 'linear-gradient(135deg, #3b82f6, #6366f1)', color: '#fff', boxShadow: '0 4px 16px rgba(59,130,246,0.3)',
         }}>
-          ~" Add New Item
+          ➕ Add New Item
         </button>
       </div>
 
@@ -163,8 +163,8 @@ export default function MyTransportMachineryPage() {
       <div className="grid-4" style={{ marginBottom: 20 }}>
         {[
           { l: 'Total Items', v: myItems.length, i: '📋', c: '#3b82f6' },
-          { l: 'Transport', v: transportItems.length, i: 'xa:', c: '#22c55e' },
-          { l: 'Machinery', v: machineryItems.length, i: 'xaS', c: '#f59e0b' },
+          { l: 'Transport', v: transportItems.length, i: '🚛', c: '#22c55e' },
+          { l: 'Machinery', v: machineryItems.length, i: '🚜', c: '#f59e0b' },
           { l: 'Active Now', v: myItems.filter(i => i.status === 'active').length, i: '✅', c: '#10b981' },
         ].map(s => (
           <div key={s.l} className="stat-card">
@@ -177,7 +177,7 @@ export default function MyTransportMachineryPage() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
-        {[['my-items', '📋', 'My Items'], ['transport', 'xa:', 'Transport'], ['machinery', 'xaS', 'Machinery']].map(([id, icon, label]) => (
+        {[['my-items', '📋', 'My Items'], ['transport', '🚛', 'Transport'], ['machinery', '🚜', 'Machinery']].map(([id, icon, label]) => (
           <button key={id} onClick={() => setTab(id)} style={{
             padding: '9px 18px', borderRadius: 22, border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 700,
             background: tab === id ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'var(--bg-card)',
@@ -193,7 +193,7 @@ export default function MyTransportMachineryPage() {
         const filtered = tab === 'transport' ? transportItems : tab === 'machinery' ? machineryItems : myItems;
         if (filtered.length === 0) return (
           <div className="card" style={{ padding: 48, textAlign: 'center', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: '3rem', marginBottom: 12 }}>{tab === 'transport' ? 'xa:' : tab === 'machinery' ? 'xaS' : '📋'}</div>
+            <div style={{ fontSize: '3rem', marginBottom: 12 }}>{tab === 'transport' ? '🚛' : tab === 'machinery' ? '🚜' : '📋'}</div>
             <div style={{ fontWeight: 700 }}>No {tab === 'my-items' ? '' : tab} items yet</div>
             <div style={{ fontSize: '0.82rem', marginTop: 4 }}>Click "Add New Item" to register your transport or machinery</div>
           </div>
@@ -207,7 +207,7 @@ export default function MyTransportMachineryPage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                       <div style={{ width: 44, height: 44, borderRadius: 12, background: item.category === 'transport' ? 'rgba(59,130,246,0.1)' : 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.5rem' }}>
-                        {item.category === 'transport' ? 'xa:' : 'xaS'}
+                        {item.category === 'transport' ? '🚛' : '🚜'}
                       </div>
                       <div>
                         <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{item.name}</div>
@@ -218,11 +218,11 @@ export default function MyTransportMachineryPage() {
                   </div>
 
                   <div style={{ background: 'var(--bg-primary)', borderRadius: 8, padding: '10px 12px', marginBottom: 12 }}>
-                    {(item.registration_number || item.registration) && <div style={{ fontSize: '0.78rem', fontWeight: 600 }}>x {item.registration_number || item.registration}</div>}
+                    {(item.registration_number || item.registration) && <div style={{ fontSize: '0.78rem', fontWeight: 600 }}>🔖 {item.registration_number || item.registration}</div>}
                     <div style={{ display: 'flex', gap: 12, marginTop: 4, flexWrap: 'wrap' }}>
-                      {item.capacity && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>📱 {item.capacity}</span>}
+                      {item.capacity && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>📦 {item.capacity}</span>}
                       {(item.rate_per_day || item.rate) && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>💳 ₹{item.rate_per_day || item.rate}/hr</span>}
-                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>x {item.condition}</span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>⚙️ {item.condition}</span>
                     </div>
                     {item.description && <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>{item.description}</div>}
                   </div>
@@ -232,9 +232,9 @@ export default function MyTransportMachineryPage() {
                   </div>
 
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => setTrackingItem(item)} style={{ flex: 1, padding: '8px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>📱 Track</button>
-                    <button onClick={() => startEdit(item)} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', color: '#fff', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700 }}>S️ Edit</button>
-                    <button onClick={() => handleDelete(item.id)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)', color: '#ef4444', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>x️</button>
+                    <button onClick={() => setTrackingItem(item)} style={{ flex: 1, padding: '8px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>📡 Track</button>
+                    <button onClick={() => startEdit(item)} style={{ flex: 1, padding: '8px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', color: '#fff', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 700 }}>✏️ Edit</button>
+                    <button onClick={() => handleDelete(item.id)} style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.06)', color: '#ef4444', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600 }}>🗑️</button>
                   </div>
                 </div>
               );
@@ -248,12 +248,12 @@ export default function MyTransportMachineryPage() {
         <div style={{ position: 'fixed', inset: 0, zIndex: 1001, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)' }} onClick={() => { setShowAdd(false); setEditItem(null); resetForm(); }}>
           <div style={{ width: 520, maxHeight: '85vh', overflowY: 'auto', background: 'var(--bg-card)', borderRadius: 20, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }} onClick={e => e.stopPropagation()}>
             <div style={{ fontWeight: 800, fontSize: '1.15rem', marginBottom: 20 }}>
-              {editItem ? 'S️ Edit Item' : '~" Register New Transport / Machinery'}
+              {editItem ? '✏️ Edit Item' : '➕ Register New Transport / Machinery'}
             </div>
 
             {/* Category Toggle */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-              {[['transport', 'xa:', 'Transport'], ['machinery', 'xaS', 'Machinery']].map(([cat, icon, label]) => (
+              {[['transport', '🚛', 'Transport'], ['machinery', '🚜', 'Machinery']].map(([cat, icon, label]) => (
                 <button key={cat} onClick={() => setForm(f => ({ ...f, category: cat, type: '' }))} style={{
                   flex: 1, padding: '12px', borderRadius: 10, border: `2px solid ${form.category === cat ? '#3b82f6' : 'var(--border)'}`,
                   background: form.category === cat ? 'rgba(59,130,246,0.1)' : 'var(--bg-primary)',
@@ -332,7 +332,7 @@ export default function MyTransportMachineryPage() {
                 background: (form.name.trim() && form.type) ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'var(--border)',
                 color: (form.name.trim() && form.type) ? '#fff' : 'var(--text-muted)', cursor: 'pointer', fontWeight: 800, fontSize: '0.95rem',
               }}>
-                {editItem ? '✅ Update Item' : '~" Register Item'}
+                {editItem ? '✅ Update Item' : '➕ Register Item'}
               </button>
               <button onClick={() => { setShowAdd(false); setEditItem(null); resetForm(); }} style={{ padding: '13px 24px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
             </div>
@@ -346,8 +346,8 @@ export default function MyTransportMachineryPage() {
           <div style={{ width: 480, maxHeight: '80vh', overflowY: 'auto', background: 'var(--bg-card)', borderRadius: 20, padding: 28, boxShadow: '0 24px 64px rgba(0,0,0,0.4)' }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <div>
-                <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>📱 Tracking: {trackingItem.name}</div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{trackingItem.item_type || trackingItem.type} · {trackingItem.category === 'transport' ? 'xa:' : 'xaS'}</div>
+                <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>📡 Tracking: {trackingItem.name}</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{trackingItem.item_type || trackingItem.type} · {trackingItem.category === 'transport' ? '🚛' : '🚜'}</div>
               </div>
               <button onClick={() => setTrackingItem(null)} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 12px', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
             </div>
@@ -364,11 +364,11 @@ export default function MyTransportMachineryPage() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
               {[
                 ['Type', trackingItem.item_type || trackingItem.type],
-                ['Registration', trackingItem.registration_number || trackingItem.registration || ''],
+                ['Registration', trackingItem.registration_number || trackingItem.registration || '—'],
                 ['Location', `${trackingItem.location || ''} ${trackingItem.district || ''}`],
                 ['Condition', trackingItem.condition],
-                ['Rate', (trackingItem.rate_per_day || trackingItem.rate) ? `₹${trackingItem.rate_per_day || trackingItem.rate}/hr` : ''],
-                ['Capacity', trackingItem.capacity || ''],
+                ['Rate', (trackingItem.rate_per_day || trackingItem.rate) ? `₹${trackingItem.rate_per_day || trackingItem.rate}/hr` : '—'],
+                ['Capacity', trackingItem.capacity || '—'],
               ].map(([k, v]) => (
                 <div key={k} style={{ background: 'var(--bg-primary)', borderRadius: 8, padding: '10px 12px' }}>
                   <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>{k}</div>
@@ -378,7 +378,7 @@ export default function MyTransportMachineryPage() {
             </div>
 
             {/* Activity Log */}
-            <div style={{ fontWeight: 700, marginBottom: 12, fontSize: '0.9rem' }}>xS Activity Log</div>
+            <div style={{ fontWeight: 700, marginBottom: 12, fontSize: '0.9rem' }}>📋 Activity Log</div>
             <div style={{ maxHeight: 200, overflowY: 'auto' }}>
               {(trackingItem.activity_log || trackingItem.trackingLog || []).slice().reverse().map((log, i) => (
                 <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
