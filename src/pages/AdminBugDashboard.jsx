@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useBugReports } from '../lib/hooks/useBugReports';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const SEV = { critical:'#FF1744', high:'#FF6D00', medium:'#FFD600', low:'#4CAF50' };
 const STA = { new:'#FF1744', acknowledged:'#40C4FF', in_progress:'#FF9800', resolved:'#00e676', wont_fix:'#607D8B' };

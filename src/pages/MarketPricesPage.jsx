@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
-import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLanguage } from '../lib/i18n/LanguageContext';
+import { getMarketAnalysis, getMapSearchUrl, GOOGLE_KEYS } from '../lib/googleApis';
+import { supabase, AP_DISTRICTS } from '../lib/supabase';
+import { fetchLiveMandiPrices, syncPricesToSupabase } from '../lib/services/mandiService';
+
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+
+const ALL_CROPS = ['Paddy','Cotton','Chilli','Turmeric','Groundnut','Maize','Jowar','Sugarcane','Banana','Mango','Tomato','Onion','Coconut','Cashew','Black Pepper','Coriander','Ginger','Sesame','Sunflower','Chana','Brinjal','Lady Finger','Drumstick','Curry Leaves','Green Gram','Bengal Gram','Red Gram','Urad Dal','Horse Gram','Mustard','Soybean','Tobacco','Jute','Arecanut','Tamarind','Lemon','Papaya','Guava','Pomegranate','Watermelon','Ridge Gourd','Bitter Gourd','Bottle Gourd','Pumpkin','Cabbage','Cauliflower','Carrot','Beetroot','Potato','Sweet Potato'];
 
 const MANDIS_BY_CROP = {
   Cotton:  [{ name:'Guntur APMC', price:7150, district:'Guntur', arr:890 },{ name:'Kurnool APMC', price:6900, district:'Kurnool', arr:540 },{ name:'Vijayawada Mandi', price:7050, district:'Krishna', arr:620 },{ name:'Ongole APMC', price:6800, district:'Prakasam', arr:410 }],
@@ -8,16 +14,6 @@ const MANDIS_BY_CROP = {
   Chilli:  [{ name:'Guntur APMC', price:8400, district:'Guntur', arr:1200 },{ name:'Khammam APMC', price:8100, district:'Khammam', arr:800 },{ name:'Warangal Mandi', price:7950, district:'Warangal', arr:650 },{ name:'Sangareddy', price:8250, district:'Medak', arr:480 }],
   Groundnut:[{ name:'Kurnool APMC', price:5200, district:'Kurnool', arr:780 },{ name:'Anantapur APMC', price:5100, district:'Anantapur', arr:640 },{ name:'Nandyal APMC', price:5250, district:'Kurnool', arr:520 },{ name:'Tirupati APMC', price:5000, district:'Chittoor', arr:410 }],
 };
-
-const MOCK_PRICES = [
-  { id: '1', crop_type: 'Paddy', market_name: 'Mysuru APMC', price_per_quintal: 2180, min_price: 2050, max_price: 2300, district: 'Mysuru', date: new Date().toISOString(), arrivals_quintals: 4520, source: 'enam', market_type: 'apmc' },
-  { id: '2', crop_type: 'Sugarcane', market_name: 'Belagavi Sugar Factory', price_per_quintal: 3450, min_price: 3200, max_price: 3600, district: 'Belagavi', date: new Date().toISOString(), arrivals_quintals: 12000, source: 'direct', market_type: 'factory' },
-  { id: '3', crop_type: 'Cotton', market_name: 'Dharwad APMC', price_per_quintal: 6800, min_price: 6500, max_price: 7100, district: 'Dharwad', date: new Date().toISOString(), arrivals_quintals: 890, source: 'enam', market_type: 'apmc' },
-  { id: '4', crop_type: 'Wheat', market_name: 'Vijayapura Mandi', price_per_quintal: 2150, min_price: 2100, max_price: 2250, district: 'Vijayapura', date: new Date().toISOString(), arrivals_quintals: 6300, source: 'enam', market_type: 'apmc' },
-  { id: '5', crop_type: 'Maize', market_name: 'Haveri APMC', price_per_quintal: 1980, min_price: 1850, max_price: 2100, district: 'Haveri', date: new Date().toISOString(), arrivals_quintals: 2100, source: 'enam', market_type: 'apmc' },
-  { id: '6', crop_type: 'Tomato', market_name: 'Kolar Wholesale', price_per_quintal: 1200, min_price: 900, max_price: 1500, district: 'Kolar', date: new Date().toISOString(), arrivals_quintals: 3400, source: 'direct', market_type: 'broker' },
-  { id: '7', crop_type: 'Groundnut', market_name: 'Tumkur APMC', price_per_quintal: 5200, min_price: 5000, max_price: 5500, district: 'Tumkur', date: new Date().toISOString(), arrivals_quintals: 780, source: 'enam', market_type: 'apmc' },
-];
 
 const HISTORY_DATA = [
   { day: '15M', price: 2050 }, { day: '12M', price: 2120 }, { day: '9M', price: 2200 },
@@ -44,15 +40,123 @@ const BEST_MANDIS = [
 ];
 
 export default function MarketPricesPage() {
-  const { data: prices, loading, isLive } = useSupabaseQuery('market_prices', { orderBy: { column: 'date', ascending: false }, limit: 200, realtime: true }, MOCK_PRICES);
+  const [prices, setPrices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isLive, setIsLive] = useState(false);
   const [selected, setSelected] = useState(null);
   const [activeTab, setActiveTab] = useState('prices');
   const [alerts, setAlerts] = useState([]);
   const [showAlertForm, setShowAlertForm] = useState(false);
   const [alertForm, setAlertForm] = useState({ crop:'Cotton', type:'above', threshold:'' });
   const [compareCrop, setCompareCrop] = useState('Cotton');
+  const [aiMarketInsight, setAiMarketInsight] = useState('');
+  const [aiMktLoading, setAiMktLoading] = useState(false);
+  const [districtFilter, setDistrictFilter] = useState('All');
+  const [cropFilter, setCropFilter] = useState('All');
+  const [search, setSearch] = useState('');
 
-  const avgPrice = prices.length ? Math.round(prices.reduce((s, p) => s + p.price_per_quintal, 0) / prices.length) : 0;
+  // Comprehensive seed data for offline/fallback
+  const SEED_PRICES = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+    const crops = [
+      { crop: 'Paddy', base: 2180, unit: 'Quintal' },{ crop: 'Cotton', base: 7150, unit: 'Quintal' },
+      { crop: 'Chilli', base: 8400, unit: 'Quintal' },{ crop: 'Turmeric', base: 12500, unit: 'Quintal' },
+      { crop: 'Groundnut', base: 5200, unit: 'Quintal' },{ crop: 'Maize', base: 2150, unit: 'Quintal' },
+      { crop: 'Jowar', base: 3200, unit: 'Quintal' },{ crop: 'Sugarcane', base: 3500, unit: 'Tonne' },
+      { crop: 'Banana', base: 1800, unit: 'Quintal' },{ crop: 'Mango', base: 4500, unit: 'Quintal' },
+      { crop: 'Tomato', base: 2800, unit: 'Quintal' },{ crop: 'Onion', base: 1950, unit: 'Quintal' },
+      { crop: 'Coconut', base: 2600, unit: '100 Nuts' },{ crop: 'Cashew', base: 15200, unit: 'Quintal' },
+      { crop: 'Black Pepper', base: 42000, unit: 'Quintal' },{ crop: 'Coriander', base: 7800, unit: 'Quintal' },
+      { crop: 'Ginger', base: 4200, unit: 'Quintal' },{ crop: 'Sesame', base: 11500, unit: 'Quintal' },
+      { crop: 'Sunflower', base: 5600, unit: 'Quintal' },{ crop: 'Chana', base: 5100, unit: 'Quintal' },
+      { crop: 'Green Gram', base: 7200, unit: 'Quintal' },{ crop: 'Red Gram', base: 8500, unit: 'Quintal' },
+      { crop: 'Urad Dal', base: 6800, unit: 'Quintal' },{ crop: 'Soybean', base: 4300, unit: 'Quintal' },
+      { crop: 'Potato', base: 1400, unit: 'Quintal' },{ crop: 'Cabbage', base: 1200, unit: 'Quintal' },
+      { crop: 'Cauliflower', base: 1800, unit: 'Quintal' },{ crop: 'Brinjal', base: 2200, unit: 'Quintal' },
+      { crop: 'Lady Finger', base: 2600, unit: 'Quintal' },{ crop: 'Watermelon', base: 800, unit: 'Quintal' },
+    ];
+    const districts = ['Guntur','Kurnool','Krishna','Anantapur','Chittoor','Nellore','Prakasam','Vizianagaram','East Godavari','West Godavari','Visakhapatnam','Srikakulam','YSR Kadapa'];
+    const result = [];
+    let id = 1;
+    // Use dayOfYear as deterministic seed for daily variance
+    const seededRand = (i) => ((dayOfYear * 7 + i * 13) % 100) / 100;
+    crops.forEach((c, ci) => {
+      const numDist = 3 + (dayOfYear + ci) % 4;
+      const shuffled = [...districts].sort((a,b) => seededRand(ci+a.charCodeAt(0)) - seededRand(ci+b.charCodeAt(0))).slice(0, numDist);
+      shuffled.forEach((d, di) => {
+        // Deterministic daily variance: ±8% based on day+crop+district
+        const factor = 0.92 + seededRand(ci * 13 + di * 7) * 0.16;
+        const variance = Math.round(c.base * factor);
+        const minP = Math.round(variance * 0.88);
+        const maxP = Math.round(variance * 1.12);
+        result.push({
+          id: id++, crop_type: c.crop, market_name: d + ' APMC',
+          price_per_quintal: variance, min_price: minP, max_price: maxP,
+          district: d, date: today, source: 'ap_reference',
+        });
+      });
+    });
+    return result;
+  }, []);
+
+  // Fetch from Supabase market_prices + trigger live API refresh
+  useEffect(() => {
+    // IMMEDIATELY show seed data so page is never empty
+    setPrices(SEED_PRICES);
+    setLoading(false);
+
+    // Then try to upgrade with live/DB data
+    (async () => {
+      try {
+        // 1. First try direct live API fetch (data.gov.in)
+        let liveData = [];
+        try {
+          liveData = await fetchLiveMandiPrices('Andhra Pradesh');
+        } catch {}
+
+        if (liveData.length > 3) {
+          const mapped = liveData.map((d, i) => ({
+            id: `live-${i}`, crop_type: d.crop, market_name: d.mandi || d.district + ' APMC',
+            price_per_quintal: d.price, min_price: d.min_price, max_price: d.max_price,
+            district: d.district, date: d.price_date, source: 'agmarknet_live',
+          }));
+          setPrices(mapped);
+          setIsLive(true);
+
+          // Also upsert to DB in background for future cache
+          syncPricesToSupabase(liveData).catch(() => {});
+          return;
+        }
+
+        // 2. Fallback: Fetch from Supabase DB (seeded + cached data)
+        const { data } = await supabase.from('market_prices').select('*').order('price_date', { ascending: false }).limit(500);
+        if (data?.length > 5) {
+          const mapped = data.map(d => ({
+            id: d.id, crop_type: d.crop, market_name: d.mandi || d.district + ' APMC',
+            price_per_quintal: d.price, min_price: d.min_price, max_price: d.max_price,
+            district: d.district, date: d.price_date, source: d.source || 'agmarknet',
+          }));
+          setPrices(mapped);
+          setIsLive(true);
+        }
+      } catch {}
+    })();
+  }, [SEED_PRICES]);
+
+  // Filter logic
+  const filtered = useMemo(() => {
+    let items = prices;
+    if (districtFilter !== 'All') items = items.filter(p => p.district === districtFilter);
+    if (cropFilter !== 'All') items = items.filter(p => p.crop_type === cropFilter);
+    if (search) items = items.filter(p => (p.crop_type||'').toLowerCase().includes(search.toLowerCase()) || (p.market_name||'').toLowerCase().includes(search.toLowerCase()));
+    return items;
+  }, [prices, districtFilter, cropFilter, search]);
+
+  const uniqueCrops = [...new Set(prices.map(p => p.crop_type))].sort();
+  const uniqueDistricts = [...new Set(prices.map(p => p.district))].sort();
+  const avgPrice = filtered.length ? Math.round(filtered.reduce((s, p) => s + p.price_per_quintal, 0) / filtered.length) : 0;
 
   const saveAlert = () => {
     if (!alertForm.threshold) return;
@@ -61,30 +165,31 @@ export default function MarketPricesPage() {
     setShowAlertForm(false);
   };
 
+  const { t } = useLanguage();
   const tabs = [
-    { id: 'prices',   icon: '📊', label: 'Market Rates' },
-    { id: 'alerts',   icon: '🔔', label: 'Price Alerts' },
-    { id: 'compare',  icon: '⚖️', label: 'Compare Markets' },
-    { id: 'heatmap',  icon: '🗺️', label: 'Pan-India Prices' },
-    { id: 'best-mandi',icon: '🏆', label: 'Best Mandi' },
+    { id: 'prices',   icon: '📊', label: t('todayMarketRates').split(' ')[0]+' '+t('todayMarketRates').split(' ').slice(1).join(' ').substring(0,10) || t('marketPrices') },
+    { id: 'alerts',   icon: '🔔', label: t('priceAlerts') },
+    { id: 'compare',  icon: '⚖️', label: t('compareMarkets') },
+    { id: 'heatmap',  icon: '🗺️', label: t('panIndiaPrices') },
+    { id: 'best-mandi',icon: '🏆', label: t('bestMandi') },
   ];
 
   return (
     <div className="animated">
       <div className="section-header">
         <div>
-          <div className="section-title">💰 Market Prices & Intelligence</div>
+          <div className="section-title">💰 {t('marketPricesIntel')}</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>e-NAM integrated APMC rates • LSTM forecasts • Pan-India comparison</div>
         </div>
-        <button className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '8px 16px' }} onClick={()=>{setShowAlertForm(true); setActiveTab('alerts');}}>🔔 Set Price Alert</button>
+        <button className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '8px 16px' }} onClick={()=>{setShowAlertForm(true); setActiveTab('alerts');}}>🔔 {t('setPriceAlert')}</button>
       </div>
 
       <div className="grid-4" style={{ marginBottom: 20 }}>
         {[
-          { label: 'Crops Tracked', value: prices.length, icon: '🌾', color: '#22c55e' },
-          { label: 'Avg Price/Quintal', value: `₹${avgPrice.toLocaleString()}`, icon: '💰', color: '#f59e0b' },
-          { label: 'Markets Active', value: new Set(prices.map(p => p.market_name)).size, icon: '🏪', color: '#3b82f6' },
-          { label: 'Districts Covered', value: new Set(prices.map(p => p.district)).size, icon: '📍', color: '#8b5cf6' },
+          { label: t('cropsFound'), value: filtered.length, icon: '🌾', color: '#22c55e' },
+          { label: t('avgPriceQ'), value: `₹${avgPrice.toLocaleString()}`, icon: '💰', color: '#f59e0b' },
+          { label: t('markets'), value: new Set(filtered.map(p => p.market_name)).size, icon: '🏪', color: '#3b82f6' },
+          { label: t('districts'), value: new Set(filtered.map(p => p.district)).size, icon: '📍', color: '#8b5cf6' },
         ].map(s => (
           <div key={s.label} className="stat-card">
             <div style={{ fontSize: '1.8rem', marginBottom: 8 }}>{s.icon}</div>
@@ -92,6 +197,20 @@ export default function MarketPricesPage() {
             <div className="stat-label">{s.label}</div>
           </div>
         ))}
+      </div>
+
+      {/* Filter Bar */}
+      <div style={{ display:'flex', gap:10, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
+        <select value={districtFilter} onChange={e=>setDistrictFilter(e.target.value)} style={{ padding:'8px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-card)', color:'var(--text-primary)', fontSize:'0.82rem' }}>
+          <option value="All">{t('allDistricts')}</option>
+          {uniqueDistricts.map(d=><option key={d} value={d}>{d}</option>)}
+        </select>
+        <select value={cropFilter} onChange={e=>setCropFilter(e.target.value)} style={{ padding:'8px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-card)', color:'var(--text-primary)', fontSize:'0.82rem' }}>
+          <option value="All">{t('allCrops')}</option>
+          {uniqueCrops.map(c=><option key={c} value={c}>{c}</option>)}
+        </select>
+        <input placeholder={`🔍 ${t('searchCropMarket')}`} value={search} onChange={e=>setSearch(e.target.value)} style={{ padding:'8px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-card)', color:'var(--text-primary)', fontSize:'0.82rem', minWidth:180 }}/>
+        <span style={{ fontSize:'0.72rem', color: isLive?'#22c55e':'#f59e0b', fontWeight:600, marginLeft:'auto' }}>{isLive?`🟢 ${t('liveFromAgmarknet')}`:'🟡 Offline data'}</span>
       </div>
 
       {/* Tabs */}
@@ -107,59 +226,132 @@ export default function MarketPricesPage() {
       </div>
 
       {activeTab === 'prices' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 20 }}>
           <div className="card">
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 16, padding: '0 4px' }}>📊 Today's Market Rates</div>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: 16, padding: '0 4px' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>📊 {t('todayMarketRates')} ({filtered.length} {t('records')})</div>
+              <div style={{ fontSize:'0.68rem', color:'var(--text-muted)' }}>{t('lastUpdated')}: {new Date().toLocaleString('en-IN', { hour:'2-digit', minute:'2-digit', day:'numeric', month:'short' })}</div>
+            </div>
             {loading ? <div className="loading-state">⟳ Loading prices...</div> : (
               <div className="table-wrap">
                 <table className="data-table">
-                  <thead><tr><th>Crop</th><th>Market</th><th>District</th><th>Min</th><th>Price</th><th>Max</th><th>Arrivals (Q)</th><th>Source</th></tr></thead>
+                  <thead><tr><th>{t('crop')}</th><th>{t('market')}</th><th>{t('district')}</th><th style={{textAlign:'center'}}>{t('priceRangeQ')}</th><th>{t('modal')}</th><th>{t('source')}</th></tr></thead>
                   <tbody>
-                    {prices.map(p => (
-                      <tr key={p.id} onClick={() => setSelected(p)} style={{ cursor: 'pointer' }}>
-                        <td style={{ fontWeight: 600 }}>{p.crop_type}</td>
-                        <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{p.market_name}</td>
-                        <td>{p.district}</td>
-                        <td style={{ color: '#ef4444' }}>₹{p.min_price}</td>
-                        <td style={{ fontWeight: 700, color: '#22c55e' }}>₹{p.price_per_quintal}</td>
-                        <td style={{ color: '#3b82f6' }}>₹{p.max_price}</td>
-                        <td>{p.arrivals_quintals?.toLocaleString()}</td>
-                        <td><span className="badge badge-info" style={{ fontSize: '0.7rem' }}>{p.source}</span></td>
-                      </tr>
-                    ))}
+                    {filtered.map(p => {
+                      const range = p.max_price - p.min_price || 1;
+                      const pos = ((p.price_per_quintal - p.min_price) / range) * 100;
+                      const srcMap = {
+                        'agmarknet_live': { label: '🟢 Agmarknet Live', color: '#22c55e', bg: 'rgba(34,197,94,0.1)' },
+                        'agmarknet': { label: '📡 Agmarknet', color: '#3b82f6', bg: 'rgba(59,130,246,0.1)' },
+                        'ap_reference': { label: '📋 AP APMC Ref', color: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+                        'enam': { label: '🏛️ e-NAM', color: '#8b5cf6', bg: 'rgba(139,92,246,0.1)' },
+                      };
+                      const src = srcMap[p.source] || { label: p.source || 'APMC', color: '#94a3b8', bg: 'rgba(148,163,184,0.1)' };
+                      return (
+                        <tr key={p.id} onClick={() => setSelected(p)} style={{ cursor: 'pointer' }}>
+                          <td style={{ fontWeight: 600 }}>{p.crop_type}</td>
+                          <td style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{p.market_name}</td>
+                          <td>{p.district}</td>
+                          <td style={{ minWidth: 180 }}>
+                            <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:'0.72rem' }}>
+                              <span style={{ color:'#ef4444', fontWeight:600, minWidth:50, textAlign:'right' }}>₹{p.min_price?.toLocaleString()}</span>
+                              <div style={{ flex:1, height:6, background:'rgba(255,255,255,0.06)', borderRadius:3, position:'relative', overflow:'hidden' }}>
+                                <div style={{ position:'absolute', left:0, top:0, height:'100%', width:`${Math.min(pos,100)}%`, background:'linear-gradient(90deg,#ef4444,#f59e0b,#22c55e)', borderRadius:3 }}/>
+                                <div style={{ position:'absolute', left:`${Math.min(pos,97)}%`, top:-2, width:10, height:10, borderRadius:'50%', background:'#fff', border:'2px solid #22c55e', boxShadow:'0 0 4px rgba(34,197,94,0.5)' }}/>
+                              </div>
+                              <span style={{ color:'#3b82f6', fontWeight:600, minWidth:50 }}>₹{p.max_price?.toLocaleString()}</span>
+                            </div>
+                          </td>
+                          <td style={{ fontWeight: 700, color: '#22c55e', fontSize:'0.9rem' }}>₹{p.price_per_quintal?.toLocaleString()}</td>
+                          <td>
+                            <span style={{ background: src.bg, color: src.color, padding:'3px 8px', borderRadius:10, fontSize:'0.65rem', fontWeight:700, whiteSpace:'nowrap' }}>{src.label}</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {filtered.length===0&&<tr><td colSpan={6} style={{textAlign:'center',padding:30,color:'var(--text-muted)'}}>No prices found</td></tr>}
                   </tbody>
                 </table>
               </div>
             )}
           </div>
 
-          <div className="card" style={{ padding: '20px' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 12 }}>
-              📈 {selected ? `${selected.crop_type} Price Trend` : 'Select a crop for trend'}
+          <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+            {/* Price Detail Card */}
+            <div className="card" style={{ padding: '20px' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 12 }}>
+                📈 {selected ? `${selected.crop_type} ${t('priceTrend')}` : t('selectCropTrend')}
+              </div>
+              {selected ? (
+                <>
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#22c55e' }}>₹{selected.price_per_quintal?.toLocaleString()}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('perQuintal')} · {selected.market_name}</div>
+                    <div style={{ display:'flex', gap:12, marginTop:8 }}>
+                      <span style={{ fontSize:'0.72rem', padding:'3px 8px', borderRadius:6, background:'rgba(239,68,68,0.1)', color:'#ef4444' }}>{t('min')} ₹{selected.min_price?.toLocaleString()}</span>
+                      <span style={{ fontSize:'0.72rem', padding:'3px 8px', borderRadius:6, background:'rgba(59,130,246,0.1)', color:'#3b82f6' }}>{t('max')} ₹{selected.max_price?.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <LineChart data={HISTORY_DATA}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                      <XAxis dataKey="day" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                      <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                      <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8 }} />
+                      <Line type="monotone" dataKey="price" stroke="#22c55e" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                  <div style={{ marginTop: 12, padding: '10px', background: 'rgba(59,130,246,0.08)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(59,130,246,0.15)' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#3b82f6' }}>🤖 {t('aiForecast')}</div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>LSTM predicts ₹{(selected.price_per_quintal + 120).toLocaleString()} by next week. Hold stock if possible.</div>
+                  </div>
+                </>
+              ) : (
+                <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px 0', fontSize: '0.85rem' }}>👆 {t('clickCropRow')}</div>
+              )}
             </div>
-            {selected ? (
-              <>
-                <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#22c55e' }}>₹{selected.price_per_quintal}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>per quintal · {selected.market_name}</div>
-                </div>
-                <ResponsiveContainer width="100%" height={160}>
-                  <LineChart data={HISTORY_DATA}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis dataKey="day" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
-                    <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
-                    <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8 }} />
-                    <Line type="monotone" dataKey="price" stroke="#22c55e" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-                <div style={{ marginTop: 12, padding: '10px', background: 'rgba(59,130,246,0.08)', borderRadius: 'var(--radius-sm)', border: '1px solid rgba(59,130,246,0.15)' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#3b82f6' }}>🤖 AI Forecast</div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>LSTM predicts ₹{selected.price_per_quintal + 120} by next week. Hold stock if possible.</div>
-                </div>
-              </>
-            ) : (
-              <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '40px 0', fontSize: '0.85rem' }}>👆 Click any crop row to view price trend</div>
-            )}
+
+            {/* Top Crops Mini Chart */}
+            <div className="card" style={{ padding:'20px' }}>
+              <div style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--text-secondary)', marginBottom:12 }}>🏆 {t('topCropsByPrice')}</div>
+              {(() => {
+                const cropAvg = {};
+                prices.forEach(p => {
+                  if (!cropAvg[p.crop_type]) cropAvg[p.crop_type] = { sum:0, count:0 };
+                  cropAvg[p.crop_type].sum += p.price_per_quintal;
+                  cropAvg[p.crop_type].count++;
+                });
+                const sorted = Object.entries(cropAvg).map(([crop,v]) => ({ crop, avg: Math.round(v.sum/v.count) })).sort((a,b) => b.avg - a.avg).slice(0,6);
+                const maxAvg = sorted[0]?.avg || 1;
+                return sorted.map(c => (
+                  <div key={c.crop} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
+                    <span style={{ fontSize:'0.72rem', minWidth:80, color:'var(--text-muted)', fontWeight:600 }}>{c.crop}</span>
+                    <div style={{ flex:1, height:8, background:'rgba(255,255,255,0.04)', borderRadius:4, overflow:'hidden' }}>
+                      <div style={{ width:`${(c.avg/maxAvg)*100}%`, height:'100%', borderRadius:4, background:'linear-gradient(90deg,#22c55e,#3b82f6)' }}/>
+                    </div>
+                    <span style={{ fontSize:'0.72rem', fontWeight:700, color:'#22c55e', minWidth:60, textAlign:'right' }}>₹{c.avg.toLocaleString()}</span>
+                  </div>
+                ));
+              })()}
+            </div>
+
+            {/* Data Source Legend */}
+            <div className="card" style={{ padding:'16px' }}>
+              <div style={{ fontSize:'0.78rem', fontWeight:600, marginBottom:8, color:'var(--text-secondary)' }}>📡 {t('dataSources')}</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                {[
+                  { icon:'🟢', label:'Agmarknet Live', desc:'Real-time from data.gov.in API' },
+                  { icon:'📡', label:'Agmarknet DB', desc:'Cached government mandi data' },
+                  { icon:'📋', label:'AP APMC Reference', desc:'AP state reference prices' },
+                ].map(s => (
+                  <div key={s.label} style={{ display:'flex', gap:8, alignItems:'center', fontSize:'0.72rem' }}>
+                    <span>{s.icon}</span>
+                    <span style={{ fontWeight:600, color:'var(--text-primary)' }}>{s.label}</span>
+                    <span style={{ color:'var(--text-muted)' }}>— {s.desc}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -345,6 +537,47 @@ export default function MarketPricesPage() {
                 <button className="btn btn-primary" style={{ width: '100%', padding: '8px', fontSize: '0.82rem' }}>View Details & Route</button>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Gemini AI Market Analysis */}
+      {GOOGLE_KEYS.gemini && (
+        <div className="card" style={{ padding: 20, marginTop: 20, border: '1px solid rgba(34,197,94,0.2)', background: 'linear-gradient(135deg, rgba(34,197,94,0.04), rgba(59,130,246,0.03))' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#22c55e' }}>🧠 Gemini AI Market Intelligence</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>AI-powered price forecasts and selling strategy</div>
+            </div>
+            <button onClick={async () => {
+              setAiMktLoading(true);
+              try {
+                const priceData = prices.slice(0, 5).map(p => ({ crop: p.crop_type, market: p.market_name, price: p.price_per_quintal }));
+                const result = await getMarketAnalysis(priceData, compareCrop);
+                setAiMarketInsight(result.text);
+              } catch (e) { setAiMarketInsight('⚠️ AI analysis unavailable: ' + e.message); }
+              setAiMktLoading(false);
+            }} disabled={aiMktLoading} style={{
+              padding: '8px 18px', borderRadius: 10, border: '1px solid rgba(34,197,94,0.3)',
+              background: 'rgba(34,197,94,0.1)', color: '#22c55e', cursor: 'pointer',
+              fontSize: '0.78rem', fontWeight: 700,
+            }}>{aiMktLoading ? '⏳ Analyzing...' : aiMarketInsight ? '🔄 Refresh' : '✨ Get Market Intelligence'}</button>
+          </div>
+          {aiMarketInsight && <div style={{ fontSize: '0.82rem', lineHeight: 1.8, color: 'var(--text-secondary)', whiteSpace: 'pre-line', maxHeight: 350, overflowY: 'auto' }}>{aiMarketInsight}</div>}
+        </div>
+      )}
+
+      {/* Google Maps - Nearby Mandis */}
+      {GOOGLE_KEYS.maps && (
+        <div className="card" style={{ padding: 16, marginTop: 16 }}>
+          <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 10 }}>🗺️ APMC Markets Near You</div>
+          <div style={{ borderRadius: 12, overflow: 'hidden', height: 260 }}>
+            <iframe
+              src={getMapSearchUrl('APMC market mandi Andhra Pradesh')}
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+              title="Nearby APMC Markets"
+            />
           </div>
         </div>
       )}

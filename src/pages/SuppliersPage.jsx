@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../lib/i18n/LanguageContext';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 
 const AP_DISTRICTS = ['All Locations','Guntur','Krishna','Anantapur','Chittoor','Kurnool','East Godavari','West Godavari','Nellore','Prakasam','Srikakulam','Vizianagaram','Visakhapatnam','Kadapa'];
 
@@ -97,6 +99,13 @@ const DISTRICT_COORDS = [
 ];
 
 export default function SuppliersPage() {
+  const { t, tx } = useLanguage();
+  const { data: dbShops, loading: shopsLoading } = useSupabaseQuery('supplier_shops', { select:'*', orderBy:{ column:'rating', ascending:false }, limit:100 }, SHOPS);
+  const allShops = (dbShops || SHOPS).map(s => ({
+    ...s, products: s.products || [], reviewList: s.reviewList || [],
+    icon: s.icon || '🏪', rating: s.rating || 4.0, reviews: s.reviews || s.total_reviews || 0,
+    open: s.open !== undefined ? s.open : true, dist: s.dist || '',
+  }));
   const [view, setView] = useState('shops');
   const [selectedShop, setSelectedShop] = useState(null);
   const [cart, setCart] = useState([]);
@@ -119,9 +128,9 @@ export default function SuppliersPage() {
     }, () => {}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
   }, []);
 
-  const filteredShops = SHOPS.filter(s => {
+  const filteredShops = allShops.filter(s => {
     if (locFilter !== 'All Locations' && s.district !== locFilter) return false;
-    if (search && !s.name.toLowerCase().includes(search.toLowerCase()) && !s.type.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !s.name.toLowerCase().includes(search.toLowerCase()) && !(s.type||'').toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 

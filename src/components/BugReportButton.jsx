@@ -12,7 +12,7 @@ export default function BugReportButton({ onClick, openBugCount = 0 }) {
       aria-label="Report a bug"
       style={{
         position: 'fixed',
-        bottom: 90,
+        bottom: 160,
         right: 24,
         zIndex: 999,
         width: 56,

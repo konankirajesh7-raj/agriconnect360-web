@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { getDistrictList, getMandalList, getDistrictStats, searchVillages } from '../lib/data/apVillages';
 import { useLanguage } from '../lib/i18n/LanguageContext';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 
 const DISTRICT_COORDS = {
   'Anantapur':[15.6894,77.5996],'Chittoor':[13.2172,79.1003],'East Godavari':[17.3216,82.0895],
@@ -65,6 +66,10 @@ const ROLE_CONFIG = {
 
 export default function VillageExplorer() {
   const { t, t3 } = useLanguage();
+  const { t: tFunc } = useLanguage();
+  // Fetch village people from Supabase, fallback to hardcoded LOCAL_PEOPLE flattened
+  const allLocalPeopleFlat = useMemo(() => Object.entries(LOCAL_PEOPLE).flatMap(([district, people]) => people.map(p => ({ ...p, district }))), []);
+  const { data: dbPeople } = useSupabaseQuery('village_people', { select:'*', orderBy:{ column:'rating', ascending:false }, limit:200 }, allLocalPeopleFlat);
   const [searchQ, setSearchQ] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedMandal, setSelectedMandal] = useState('');
@@ -72,8 +77,8 @@ export default function VillageExplorer() {
   const [roleFilter, setRoleFilter] = useState('all');
   const [contactModal, setContactModal] = useState(null);
   const [gpsStatus, setGpsStatus] = useState('');
+  const [viewMode, setViewMode] = useState('list');
 
-  // GPS auto-detect district
   useEffect(() => {
     if (navigator.geolocation) {
       setGpsStatus('📡 Detecting location...');
@@ -101,22 +106,31 @@ export default function VillageExplorer() {
     return { districts: districtStats.length, mandals: m, villages: v, population: p };
   }, [districtStats]);
 
-  const people = selectedDistrict ? (LOCAL_PEOPLE[selectedDistrict] || LOCAL_PEOPLE['Guntur']) : [];
+  const people = useMemo(() => {
+    if (!selectedDistrict) return [];
+    return (dbPeople || []).filter(p => p.district === selectedDistrict);
+  }, [selectedDistrict, dbPeople]);
   const filteredPeople = roleFilter === 'all' ? people : people.filter(p => p.role === roleFilter);
+
+  // Google Maps key
+  const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_KEY || '';
+  const mapCenter = DISTRICT_COORDS[selectedDistrict] || [16.3067, 80.4365];
+  const mapZoom = selectedDistrict ? 10 : 7;
+  const mapQuery = selectedDistrict ? `${selectedDistrict}+district+Andhra+Pradesh+India` : 'Andhra+Pradesh+India';
 
   return (
     <div className="animated" style={{ maxWidth:1400, margin:'0 auto' }}>
       {/* Hero Header */}
       <div style={{ background:'linear-gradient(135deg, #065f46, #0369a1, #7c3aed)', borderRadius:16, padding:'28px 30px', marginBottom:20, position:'relative', overflow:'hidden' }}>
         <div style={{ position:'absolute', top:0, right:0, width:200, height:200, background:'radial-gradient(circle, rgba(255,255,255,0.1), transparent)', borderRadius:'50%' }} />
-        <h1 style={{ fontSize:'1.5rem', fontWeight:800, color:'#fff', margin:0 }}>🏘️ Village Explorer</h1>
-        <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.82rem', marginTop:4 }}>Discover villages • Connect with local farmers, labours, brokers & industries</p>
+        <h1 style={{ fontSize:'1.5rem', fontWeight:800, color:'#fff', margin:0 }}>🏠️ {t('villageExplorer')}</h1>
+        <p style={{ color:'rgba(255,255,255,0.7)', fontSize:'0.82rem', marginTop:4 }}>{t('discoverVillages')}</p>
         <div style={{ display:'flex', gap:12, marginTop:16, flexWrap:'wrap' }}>
           {[
-            { v:stats.districts, l:'Districts', c:'#34d399', i:'🗺️' },
-            { v:stats.mandals, l:'Mandals', c:'#60a5fa', i:'🏛️' },
-            { v:stats.villages.toLocaleString(), l:'Villages', c:'#fbbf24', i:'🏘️' },
-            { v:`${(stats.population/1e7).toFixed(1)}Cr`, l:'Population', c:'#c084fc', i:'👥' },
+            { v:stats.districts, l:t('districts'), c:'#34d399', i:'🗺️' },
+            { v:stats.mandals, l:t('mandals'), c:'#60a5fa', i:'🏛️' },
+            { v:stats.villages.toLocaleString(), l:t('villages'), c:'#fbbf24', i:'🏠️' },
+            { v:`${(stats.population/1e7).toFixed(1)}Cr`, l:t('population'), c:'#c084fc', i:'👥' },
           ].map(s => (
             <div key={s.l} style={{ background:'rgba(255,255,255,0.12)', borderRadius:10, padding:'10px 18px', textAlign:'center', flex:'1', minWidth:100 }}>
               <div style={{ fontSize:'1.4rem', fontWeight:800, color:s.c }}>{s.v}</div>
@@ -128,29 +142,54 @@ export default function VillageExplorer() {
 
       {/* Filters */}
       <div style={{ display:'flex', gap:10, marginBottom:16, flexWrap:'wrap' }}>
-        <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="🔍 Search village..."
+        <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder={`🔍 ${t('searchVillage')}`}
           style={{ flex:2, minWidth:200, padding:'10px 14px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.85rem' }} />
         <select value={selectedDistrict} onChange={e => { setSelectedDistrict(e.target.value); setSelectedMandal(''); }}
           style={{ flex:1, minWidth:160, padding:'10px 14px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.85rem' }}>
-          <option value="">📍 Select District</option>
+          <option value="">📍 {t('selectDistrict')}</option>
           {districts.map(d => <option key={d.en} value={d.en}>{d.en}</option>)}
         </select>
         {mandals.length > 0 && (
           <select value={selectedMandal} onChange={e => setSelectedMandal(e.target.value)}
             style={{ flex:1, minWidth:140, padding:'10px 14px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.85rem' }}>
-            <option value="">🏛️ All Mandals</option>
+            <option value="">🏛️ {t('selectMandal')}</option>
             {mandals.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         )}
         {(searchQ || selectedDistrict) && (
-          <button onClick={() => { setSearchQ(''); setSelectedDistrict(''); setSelectedMandal(''); }} style={{ padding:'10px 16px', borderRadius:10, border:'none', background:'rgba(239,68,68,0.15)', color:'#ef4444', cursor:'pointer', fontWeight:600, fontSize:'0.82rem' }}>✕ Clear</button>
+          <button onClick={() => { setSearchQ(''); setSelectedDistrict(''); setSelectedMandal(''); }} style={{ padding:'10px 16px', borderRadius:10, border:'none', background:'rgba(239,68,68,0.15)', color:'#ef4444', cursor:'pointer', fontWeight:600, fontSize:'0.82rem' }}>✕ {t('clear')}</button>
         )}
+        <div style={{ display:'flex', gap:6, marginLeft:'auto' }}>
+          {[['list','📋',t('list')],['map','🗺️',t('map')]].map(([m,icon,label])=>(            <button key={m} onClick={()=>setViewMode(m)} style={{ padding:'8px 16px', borderRadius:10, border:'none', cursor:'pointer', fontSize:'0.82rem', fontWeight:700, background:viewMode===m?'linear-gradient(135deg,#059669,#10b981)':'var(--bg-card)', color:viewMode===m?'#fff':'var(--text-muted)' }}>{icon} {label}</button>
+          ))}
+        </div>
       </div>
 
-      {/* LOCAL PEOPLE — shown when district selected */}
-      {selectedDistrict && people.length > 0 && (
+      {/* MAP VIEW */}
+      {viewMode === 'map' && (
         <div style={{ marginBottom:20 }}>
-          <div style={{ fontWeight:700, fontSize:'0.95rem', marginBottom:10 }}>👥 People in {selectedDistrict}</div>
+          <iframe
+            title="Village Map"
+            width="100%"
+            height="500"
+            style={{ border:0, borderRadius:16 }}
+            loading="lazy"
+            src={`https://www.openstreetmap.org/export/embed.html?bbox=${mapCenter[1]-0.8}%2C${mapCenter[0]-0.6}%2C${mapCenter[1]+0.8}%2C${mapCenter[0]+0.6}&layer=mapnik&marker=${mapCenter[0]}%2C${mapCenter[1]}`}
+          />
+          <div style={{ display:'flex', gap:12, marginTop:10, flexWrap:'wrap', justifyContent:'center' }}>
+            {Object.entries(ROLE_CONFIG).map(([k,v])=>(
+              <span key={k} style={{ display:'flex', alignItems:'center', gap:4, fontSize:'0.72rem', color:'var(--text-muted)' }}>
+                <span style={{ width:10, height:10, borderRadius:'50%', background:v.color, display:'inline-block' }} /> {v.icon} {v.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* LOCAL PEOPLE — shown when district selected */}
+      {viewMode === 'list' && selectedDistrict && people.length > 0 && (
+        <div style={{ marginBottom:20 }}>
+          <div style={{ fontWeight:700, fontSize:'0.95rem', marginBottom:10 }}>👥 {t('peopleIn')} {selectedDistrict}</div>
           <div style={{ display:'flex', gap:6, marginBottom:12, flexWrap:'wrap' }}>
             {['all','farmer','labour','broker','supplier','industry'].map(r => {
               const rc = ROLE_CONFIG[r];
@@ -197,7 +236,7 @@ export default function VillageExplorer() {
       )}
 
       {/* District Grid (default) */}
-      {!searchQ && !selectedDistrict && (
+      {viewMode === 'list' && !searchQ && !selectedDistrict && (
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:14 }}>
           {districtStats.map(d => (
             <div key={d.name} className="card" style={{ padding:18, cursor:'pointer', transition:'transform 0.2s', borderLeft:'3px solid #34d399' }}
@@ -220,7 +259,7 @@ export default function VillageExplorer() {
       )}
 
       {/* Village Results */}
-      {(searchQ || selectedDistrict) && results.length > 0 && (
+      {viewMode === 'list' && (searchQ || selectedDistrict) && results.length > 0 && (
         <div>
           <div style={{ fontSize:'0.82rem', color:'var(--text-muted)', marginBottom:10 }}>📊 {results.length} villages found</div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:12 }}>

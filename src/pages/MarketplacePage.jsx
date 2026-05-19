@@ -1,6 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useAuth } from '../lib/hooks/useAuth';
+import { supabase } from '../lib/supabase';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
-const INIT = [
+const DEMO_LISTINGS = [
   { id: 1, crop: 'Paddy (Sona Masuri)', qty: 50, unit: 'Quintals', price: 2200, farmer: 'Ravi Kumar', village: 'Mangalagiri', district: 'Guntur', grade: 'A', organic: false, posted: '2026-04-20', image: '🌾', status: 'active', views: 142, interested: 3, phone: '9000000002' },
   { id: 2, crop: 'Cotton (MCU-5)', qty: 30, unit: 'Quintals', price: 7200, farmer: 'Lakshmi Devi', village: 'Adoni', district: 'Kurnool', grade: 'A', organic: false, posted: '2026-04-19', image: '🏵️', status: 'active', views: 98, interested: 1, phone: '9000000003' },
   { id: 3, crop: 'Red Chilli (Teja)', qty: 20, unit: 'Quintals', price: 14800, farmer: 'Suresh Reddy', village: 'Khammam', district: 'Guntur', grade: 'Premium', organic: false, posted: '2026-04-18', image: '🌶️', status: 'active', views: 210, interested: 5, phone: '9000000004' },
@@ -14,28 +17,55 @@ const INIT = [
   { id: 11, crop: 'Lady Finger (Bhindi)', qty: 4, unit: 'Kg', price: 30, farmer: 'Venkata P.', village: 'Vijayawada', district: 'Krishna', grade: 'A', organic: false, posted: '2026-04-24', image: '🥬', status: 'active', views: 22, interested: 3, phone: '9000000012' },
 ];
 
-const DISTRICTS = ['All', ...new Set(INIT.map(l => l.district))];
+const CROP_ICONS = {'paddy':'🌾','cotton':'🏵️','chilli':'🌶️','groundnut':'🥜','turmeric':'🟡','maize':'🌽','tomato':'🍅','brinjal':'🍆','drumstick':'🥒','curry':'🌿','lady':'🥬'};
+function getCropIcon(name){ const k=Object.keys(CROP_ICONS).find(k=>(name||'').toLowerCase().includes(k)); return k?CROP_ICONS[k]:'🌾'; }
+
+const DISTRICTS = ['All','Guntur','Krishna','Kurnool','Anantapur','Chittoor','Prakasam','East Godavari','West Godavari','Nellore','Vizianagaram','Srikakulam','Visakhapatnam','YSR Kadapa'];
 const inp = { width:'100%', borderRadius:10, border:'1px solid rgba(255,255,255,0.1)', background:'rgba(8,12,20,0.65)', color:'var(--text-primary)', padding:'9px 12px', outline:'none', fontSize:'0.85rem' };
 const sel = { ...inp, cursor:'pointer' };
 const pill = (a) => ({ padding:'7px 16px', borderRadius:999, border:'none', fontSize:'0.78rem', fontWeight:600, cursor:'pointer', background: a?'var(--green-primary)':'rgba(255,255,255,0.06)', color: a?'#fff':'var(--text-muted)', transition:'all 0.15s' });
 
 export default function MarketplacePage() {
-  const [listings, setListings] = useState(INIT);
+  const { userRole, user, farmerProfile } = useAuth();
+  const isCustomer = userRole === 'customer';
+  const [listings, setListings] = useState(DEMO_LISTINGS);
   const [query, setQuery] = useState('');
   const [districtFilter, setDistrictFilter] = useState('All');
   const [organicOnly, setOrganicOnly] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
   const [myInterests, setMyInterests] = useState([]);
-  const [tab, setTab] = useState('browse'); // browse | my | create | detail
+  const [tab, setTab] = useState('browse');
   const [detailId, setDetailId] = useState(null);
   const [toast, setToast] = useState('');
-  // Create form
-  const [fc, setFc] = useState({ crop:'Paddy BPT-5204', qty:'15', price:'2100', grade:'A', organic:false, village:'Narasaraopet', district:'Guntur', phone:'9000000001' });
+  const [section, setSection] = useState('all');
+  const [fc, setFc] = useState({ crop:'Paddy BPT-5204', qty:'15', unit:'Quintals', price:'2100', grade:'A', organic:false, village:'Narasaraopet', district:'Guntur', phone:'9000000001' });
 
   const flash = m => { setToast(m); setTimeout(()=>setToast(''),2500); };
 
+  // Fetch real listings from Supabase
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase.from('f2c_store_listings').select('*').order('created_at',{ascending:false}).limit(50);
+        if (data?.length) {
+          const mapped = data.map(d => ({
+            id: d.id, crop: d.title || d.crop || 'Crop', qty: d.quantity || d.qty || 0, unit: d.unit || 'Quintals',
+            price: d.price || 0, farmer: d.seller_name || d.farmer || '—', village: d.village || '—',
+            district: d.district || '—', grade: d.grade || 'A', organic: d.organic || false,
+            posted: (d.created_at||'').split('T')[0], image: getCropIcon(d.title||d.crop||''),
+            status: d.status || 'active', views: d.views || 0, interested: d.interested || 0,
+            phone: d.phone || '—', user_id: d.user_id,
+          }));
+          setListings([...mapped, ...DEMO_LISTINGS]);
+        }
+      } catch {}
+    })();
+  }, []);
+
   const filtered = useMemo(() => {
     let items = listings.filter(l => l.status === 'active');
+    if (section === 'retail') items = items.filter(l => l.unit === 'Kg');
+    if (section === 'wholesale') items = items.filter(l => l.unit === 'Quintals');
     if (query) items = items.filter(l => l.crop.toLowerCase().includes(query.toLowerCase()) || l.farmer.toLowerCase().includes(query.toLowerCase()));
     if (districtFilter !== 'All') items = items.filter(l => l.district === districtFilter);
     if (organicOnly) items = items.filter(l => l.organic);
@@ -43,21 +73,42 @@ export default function MarketplacePage() {
     if (sortBy === 'price-high') items.sort((a,b) => b.price - a.price);
     if (sortBy === 'qty') items.sort((a,b) => b.qty - a.qty);
     return items;
-  }, [listings, query, districtFilter, organicOnly, sortBy]);
+  }, [listings, query, districtFilter, organicOnly, sortBy, section]);
 
-  const myListings = listings.filter(l => l.farmer === 'You');
+  const myListings = listings.filter(l => l.farmer === 'You' || l.user_id === user?.id);
 
-  function createListing() {
+  async function createListing() {
     if (!fc.crop || !fc.qty || !fc.price) return;
-    const nl = { id: Date.now(), crop: fc.crop, qty: +fc.qty, unit: 'Quintals', price: +fc.price, farmer: 'You', village: fc.village, district: fc.district, grade: fc.grade, organic: fc.organic, posted: new Date().toISOString().slice(0,10), image: '🌾', status: 'active', views: 0, interested: 0, phone: fc.phone };
+    const row = { title: fc.crop, quantity: +fc.qty, unit: fc.unit, price: +fc.price, seller_name: farmerProfile?.name || 'You', village: fc.village, district: fc.district, grade: fc.grade, organic: fc.organic, phone: fc.phone, status: 'active', user_id: user?.id };
+    const { data, error } = await supabase.from('f2c_store_listings').insert(row).select().single();
+    const nl = { id: data?.id || Date.now(), crop: fc.crop, qty: +fc.qty, unit: fc.unit, price: +fc.price, farmer: farmerProfile?.name || 'You', village: fc.village, district: fc.district, grade: fc.grade, organic: fc.organic, posted: new Date().toISOString().slice(0,10), image: getCropIcon(fc.crop), status: 'active', views: 0, interested: 0, phone: fc.phone, user_id: user?.id };
     setListings(p => [nl, ...p]);
     setTab('my');
-    flash('✅ Listing published! Visible to all buyers.');
+    flash(error ? '⚠️ Saved locally (DB error)' : '✅ Listing published!');
   }
 
-  function markSold(id) { setListings(p => p.map(l => l.id===id ? {...l, status:'sold'} : l)); flash('✅ Marked as sold. Moved to history.'); }
-  function renewListing(id) { setListings(p => p.map(l => l.id===id ? {...l, posted: new Date().toISOString().slice(0,10)} : l)); flash('🔄 Listing renewed for 30 days.'); }
-  function expressInterest(id) { setMyInterests(p => [...p, id]); setListings(p => p.map(l => l.id===id ? {...l, interested: l.interested+1} : l)); flash('🤝 Interest sent! Seller notified via SMS.'); }
+  function markSold(id) { supabase.from('f2c_store_listings').update({status:'sold'}).eq('id',id).then(()=>{}); setListings(p => p.map(l => l.id===id ? {...l, status:'sold'} : l)); flash('✅ Marked as sold.'); }
+  function renewListing(id) { supabase.from('f2c_store_listings').update({created_at:new Date().toISOString()}).eq('id',id).then(()=>{}); setListings(p => p.map(l => l.id===id ? {...l, posted: new Date().toISOString().slice(0,10)} : l)); flash('🔄 Listing renewed.'); }
+  function expressInterest(id) {
+    setMyInterests(p => [...p, id]);
+    setListings(p => p.map(l => l.id===id ? {...l, interested: l.interested+1} : l));
+    // Save order to Supabase
+    const listing = listings.find(l => l.id === id);
+    if (user?.id && listing) {
+      supabase.from('marketplace_orders').insert({
+        buyer_id: user.id, seller_id: listing.user_id || null,
+        listing_id: typeof id === 'string' ? id : null,
+        crop: listing.crop, quantity: listing.qty, unit: listing.unit,
+        price_per_unit: listing.price, total_amount: listing.price * listing.qty,
+        buyer_name: farmerProfile?.name || 'Buyer', buyer_phone: farmerProfile?.phone || '',
+        seller_name: listing.farmer, district: listing.district, status: 'interested'
+      }).then(() => {});
+      supabase.from('notifications').insert({
+        user_id: user.id, title: '🤝 Interest Sent', body: `You expressed interest in ${listing.crop} by ${listing.farmer}`, type: 'marketplace', read: false
+      }).then(() => {});
+    }
+    flash('🤝 Interest sent! Seller notified via SMS.');
+  }
 
   const detail = listings.find(l => l.id === detailId);
 
@@ -65,32 +116,47 @@ export default function MarketplacePage() {
     <div className="animated">
       <div className="section-header">
         <div>
-          <div className="section-title">🏪 Farmer Marketplace</div>
+          <div className="section-title">🏪 RythuSphere Marketplace</div>
           <div style={{ fontSize:'0.8rem', color:'var(--text-muted)', marginTop:2 }}>Buy & sell produce directly — farmer to farmer, farmer to consumer</div>
         </div>
-        <button onClick={()=>setTab('create')} style={{ padding:'10px 20px', borderRadius:10, background:'linear-gradient(135deg,#059669,#10b981)', color:'#fff', border:'none', fontWeight:700, fontSize:'0.82rem', cursor:'pointer' }}>+ List Produce</button>
+        {!isCustomer && <button onClick={()=>setTab('create')} style={{ padding:'10px 20px', borderRadius:10, background:'linear-gradient(135deg,#059669,#10b981)', color:'#fff', border:'none', fontWeight:700, fontSize:'0.82rem', cursor:'pointer' }}>+ List Produce</button>}
+      </div>
+
+      {/* Section Toggle - Retail vs Wholesale */}
+      <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+        {[['all','📦','All'],['retail','🛒','Retail (Kgs)'],['wholesale','🏭','Wholesale (Quintals)']].map(([id,icon,label])=>(
+          <button key={id} onClick={()=>setSection(id)} style={{ padding:'10px 18px', borderRadius:24, border:section===id?'2px solid #10b981':'2px solid transparent', cursor:'pointer', fontSize:'0.82rem', fontWeight:700, background:section===id?'rgba(16,185,129,0.12)':'var(--bg-card)', color:section===id?'#10b981':'var(--text-muted)', transition:'all 0.2s' }}>
+            {icon} {label}
+          </button>
+        ))}
       </div>
 
       {/* Tabs */}
       <div style={{ display:'flex', gap:6, marginBottom:16 }}>
-        {[['browse','🏪 Browse'],['my','📋 My Listings'],['create','➕ Create']].map(([k,l])=>
+        {[['browse','🏪 Browse'], ...(!isCustomer ? [['my','📋 My Listings'],['create','➕ Create']] : [])].map(([k,l])=>
           <button key={k} onClick={()=>{setTab(k);setDetailId(null);}} style={pill(tab===k)}>{l}</button>
         )}
       </div>
 
       {/* === CREATE TAB === */}
-      {tab === 'create' && (
+      {tab === 'create' && !isCustomer && (
         <div className="card" style={{ padding:24, maxWidth:600 }}>
           <div style={{ fontWeight:700, fontSize:'1.1rem', marginBottom:18 }}>📝 List Your Produce</div>
+          {/* Unit Toggle */}
+          <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+            {[['Kg','🛒','Retail (Kgs)'],['Quintals','🏭','Wholesale (Quintals)']].map(([u,icon,label])=>(
+              <button key={u} onClick={()=>setFc({...fc, unit:u})} style={{ flex:1, padding:'10px', borderRadius:10, border:`2px solid ${fc.unit===u?'#10b981':'var(--border)'}`, background:fc.unit===u?'rgba(16,185,129,0.1)':'var(--bg-primary)', color:fc.unit===u?'#10b981':'var(--text-muted)', cursor:'pointer', fontWeight:700, fontSize:'0.82rem' }}>{icon} {label}</button>
+            ))}
+          </div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
             <div><label style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>Crop *</label><input style={inp} value={fc.crop} onChange={e=>setFc({...fc, crop:e.target.value})} /></div>
-            <div><label style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>Quantity (Quintals) *</label><input style={inp} type="number" value={fc.qty} onChange={e=>setFc({...fc, qty:e.target.value})} /></div>
-            <div><label style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>Price ₹/Quintal *</label><input style={inp} type="number" value={fc.price} onChange={e=>setFc({...fc, price:e.target.value})} /></div>
+            <div><label style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>Quantity ({fc.unit}) *</label><input style={inp} type="number" value={fc.qty} onChange={e=>setFc({...fc, qty:e.target.value})} /></div>
+            <div><label style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>Price ₹/{fc.unit === 'Kg' ? 'Kg' : 'Quintal'} *</label><input style={inp} type="number" value={fc.price} onChange={e=>setFc({...fc, price:e.target.value})} /></div>
             <div><label style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>Grade</label><select style={sel} value={fc.grade} onChange={e=>setFc({...fc, grade:e.target.value})}><option>A</option><option>B</option><option>Premium</option></select></div>
             <div><label style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>Village</label><input style={inp} value={fc.village} onChange={e=>setFc({...fc, village:e.target.value})} /></div>
             <div><label style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>District</label><input style={inp} value={fc.district} onChange={e=>setFc({...fc, district:e.target.value})} /></div>
             <div><label style={{ fontSize:'0.75rem', color:'var(--text-muted)' }}>WhatsApp</label><input style={inp} value={fc.phone} onChange={e=>setFc({...fc, phone:e.target.value})} /></div>
-            <div style={{ display:'flex', alignItems:'flex-end', paddingBottom:6 }}><label style={{ display:'flex', gap:8, fontSize:'0.82rem', color:'var(--text-secondary)', cursor:'pointer' }}><input type="checkbox" checked={fc.organic} onChange={e=>setFc({...fc, organic:e.target.checked})} style={{ accentColor:'#10b981' }} />🌿 Organic</label></div>
+            <div style={{ display:'flex', alignItems:'flex-end', paddingBottom:6 }}><label style={{ display:'flex', gap:8, fontSize:'0.82rem', color:'var(--text-secondary)', cursor:'pointer' }}><input type="checkbox" checked={fc.organic} onChange={e=>setFc({...fc, organic:e.target.checked})} style={{ accentColor:'#10b981' }} /> 🌿 Organic</label></div>
           </div>
           <button onClick={createListing} style={{ marginTop:18, padding:'12px 32px', borderRadius:10, background:'linear-gradient(135deg,#059669,#10b981)', color:'#fff', border:'none', fontWeight:700, fontSize:'0.88rem', cursor:'pointer' }}>🚀 List Now</button>
         </div>

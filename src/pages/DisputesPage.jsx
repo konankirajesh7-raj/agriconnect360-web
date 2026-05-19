@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const MOCK_DISPUTES = [
   { id: 1, complainant_id: 1, respondent_type: 'supplier', category: 'Payment', description: 'Supplier delivered inferior quality seeds but charged premium price', status: 'under_review', created_at: '2024-12-10', evidence_urls: ['doc1.pdf'] },
@@ -12,6 +13,7 @@ const STATUS_PIPELINE = ['filed', 'under_review', 'mediation', 'resolved', 'clos
 const STATUS_COLOR = { filed: '#ef4444', under_review: '#f59e0b', mediation: '#3b82f6', resolved: '#22c55e', closed: '#6b7280' };
 
 export default function DisputesPage() {
+  const { t, tx } = useLanguage();
   const { data: disputes, loading, isLive } = useSupabaseQuery('disputes', { orderBy: { column: 'created_at', ascending: false }, limit: 200 }, MOCK_DISPUTES);
   const [statusFilter, setStatusFilter] = useState('all');
 

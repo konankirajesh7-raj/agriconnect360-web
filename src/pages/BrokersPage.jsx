@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const DISTRICTS = ['All Districts','Guntur','Krishna','Anantapur','Chittoor','Kurnool','East Godavari','West Godavari','Nellore','Vizianagaram','Visakhapatnam','Prakasam','Kadapa'];
 
@@ -15,6 +16,7 @@ const TYPE_COLORS = { Broker:'#3b82f6', Industry:'#8b5cf6', Exporter:'#f59e0b' }
 const INP = { width:'100%',padding:'9px 12px',borderRadius:8,border:'1px solid var(--border)',background:'var(--bg-primary)',color:'var(--text-primary)',fontSize:'0.85rem',boxSizing:'border-box',outline:'none' };
 
 export default function BrokersPage() {
+  const { t, tx } = useLanguage();
   const [district, setDistrict] = useState('All Districts');
   const [typeFilter, setTypeFilter] = useState('All');
   const [search, setSearch]   = useState('');

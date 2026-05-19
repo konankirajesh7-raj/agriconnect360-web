@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { getMapSearchUrl, GOOGLE_KEYS } from '../lib/googleApis';
+import { useSupabaseQuery, useSupabaseMutation } from '../lib/hooks/useSupabaseQuery';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const AP_DISTRICTS = ['All Locations','Guntur','Krishna','Anantapur','Chittoor','Kurnool','Prakasam','Nellore','East Godavari','West Godavari','Visakhapatnam','Vizianagaram','Srikakulam','Kadapa'];
 const DISTRICT_COORDS = [
@@ -41,6 +44,7 @@ const REVIEWS = [
 const BK_STATUS = { confirmed:{bg:'rgba(34,197,94,0.1)',color:'#22c55e'}, pending:{bg:'rgba(245,158,11,0.1)',color:'#f59e0b'}, cancelled:{bg:'rgba(239,68,68,0.1)',color:'#ef4444'} };
 
 export default function EquipmentPage() {
+  const { t, tx } = useLanguage();
   const [tab, setTab] = useState('marketplace');
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
@@ -56,6 +60,10 @@ export default function EquipmentPage() {
     { ref:'EQ-DEMO01', equipment:'Harvester (Custom)', type:'Harvesting', date:'2026-04-18', days:'3 acres', total:8400, payment:'upi', status:'confirmed', owner:'Vijay D.' },
     { ref:'EQ-DEMO02', equipment:'Power Sprayer', type:'Spraying', date:'2026-04-10', days:'2d × 4h', total:3600, payment:'cash', status:'confirmed', owner:'Suresh M.' },
   ]);
+  const { data: myListings, loading: listingsLoading, refetch: refetchListings } = useSupabaseQuery('equipment_listings', { select:'*', orderBy:{ column:'created_at', ascending:false }, limit:50 }, []);
+  const { insert: insertListing, loading: listingSaving } = useSupabaseMutation('equipment_listings');
+  const [showListForm, setShowListForm] = useState(false);
+  const [listForm, setListForm] = useState({ name:'', type:'Tractor', brand:'', rate:'', unit:'hr', condition:'Good', location:'', district:'Guntur', desc:'', phone:'' });
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -68,6 +76,16 @@ export default function EquipmentPage() {
   }, []);
 
   let list = filter==='All' ? EQ : EQ.filter(e=>e.type===filter);
+  // Merge Supabase listings into browse view
+  if (myListings?.length) {
+    const dbItems = myListings.map(l => ({
+      id: l.id, name: l.name||'Equipment', type: l.type||'Tractor', brand: l.brand||'', rate: l.rate||0, unit: l.unit||'hr',
+      available: l.available !== false, condition: l.condition||'Good', location: l.location||'', district: l.district||'Guntur',
+      owner: l.owner_name||'You', phone: l.phone||'', rating: l.rating||4.0, reviews: l.reviews||0, totalHours: l.total_hours||0, desc: l.desc||l.description||'',
+    }));
+    const merged = [...dbItems.filter(d => filter==='All' || d.type===filter), ...list];
+    list = merged;
+  }
   if (locFilter !== 'All Locations') list = list.filter(e => e.district === locFilter);
   if (search) list = list.filter(e=>e.name.toLowerCase().includes(search.toLowerCase())||e.location.toLowerCase().includes(search.toLowerCase())||e.brand.toLowerCase().includes(search.toLowerCase()));
   if (sort==='rating') list = [...list].sort((a,b)=>b.rating-a.rating);
@@ -115,7 +133,7 @@ export default function EquipmentPage() {
 
       {/* Tabs */}
       <div style={{ display:'flex', gap:6, marginBottom:22 }}>
-        {[['marketplace','🚜','Marketplace'],['bookings','🧾','My Bookings']].map(([id,icon,label])=>(
+        {[['marketplace','🚜','Marketplace'],['bookings','🧾','My Bookings'],['my-listings','📋','My Listings']].map(([id,icon,label])=>(
           <button key={id} onClick={()=>setTab(id)} style={{ padding:'10px 22px', borderRadius:24, border:'none', cursor:'pointer', fontSize:'0.85rem', fontWeight:700, background:tab===id?'linear-gradient(135deg,#22c55e,#16a34a)':'var(--bg-card)', color:tab===id?'#fff':'var(--text-muted)', boxShadow:tab===id?'0 4px 12px rgba(34,197,94,0.3)':'none', transition:'all 0.2s', position:'relative' }}>
             {icon} {label}
             {id==='bookings' && bookingHistory.length>0 && <span style={{ position:'absolute', top:-4, right:-4, background:'#ef4444', color:'#fff', borderRadius:'50%', width:18, height:18, fontSize:'0.6rem', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800 }}>{bookingHistory.length}</span>}
@@ -238,7 +256,87 @@ export default function EquipmentPage() {
           </div>
         ))}
       </div>
+
+      {/* Google Maps - Equipment Locations */}
+      {GOOGLE_KEYS.maps && (
+        <div className="card" style={{ padding: 16, marginTop: 18 }}>
+          <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 10 }}>🗺️ Equipment Near {locFilter === 'All Locations' ? 'Andhra Pradesh' : locFilter}</div>
+          <div style={{ borderRadius: 12, overflow: 'hidden', height: 260 }}>
+            <iframe
+              src={getMapSearchUrl(`farm equipment rental ${locFilter === 'All Locations' ? 'Andhra Pradesh' : locFilter}`)}
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+              title="Equipment Locations Map"
+            />
+          </div>
+        </div>
+      )}
       </> }
+
+      {/* MY LISTINGS TAB */}
+      {tab==='my-listings' && (
+        <div>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+            <div>
+              <div style={{ fontWeight:700, fontSize:'1rem' }}>📋 My Equipment Listings</div>
+              <div style={{ fontSize:'0.78rem', color:'var(--text-muted)' }}>List your farm equipment for other farmers to rent or buy</div>
+            </div>
+            <button onClick={()=>setShowListForm(true)} style={{ padding:'10px 20px', borderRadius:10, border:'none', background:'linear-gradient(135deg,#22c55e,#16a34a)', color:'#fff', fontWeight:700, fontSize:'0.85rem', cursor:'pointer' }}>+ List Equipment</button>
+          </div>
+          {listingsLoading ? <div style={{ textAlign:'center', padding:40, color:'var(--text-muted)' }}>⟳ Loading...</div> : myListings.length === 0 ? (
+            <div className="card" style={{ padding:48, textAlign:'center' }}>
+              <div style={{ fontSize:'3rem', marginBottom:12 }}>🚜</div>
+              <div style={{ fontWeight:700, fontSize:'1rem', marginBottom:4 }}>No equipment listed yet</div>
+              <div style={{ fontSize:'0.82rem', color:'var(--text-muted)' }}>Click "List Equipment" to add your first item</div>
+            </div>
+          ) : (
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(290px,1fr))', gap:16 }}>
+              {myListings.map(item => (
+                <div key={item.id} className="card" style={{ padding:18 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                    <span style={{ fontSize:'1.8rem' }}>{ICONS[item.type]||'🔧'}</span>
+                    <span style={{ background:COND[item.condition]?.bg, color:COND[item.condition]?.color, padding:'2px 10px', borderRadius:8, fontSize:'0.7rem', fontWeight:700 }}>{item.condition}</span>
+                  </div>
+                  <div style={{ fontWeight:800, fontSize:'0.95rem' }}>{item.name}</div>
+                  <div style={{ fontSize:'0.75rem', color:'var(--text-muted)', marginBottom:8 }}>{item.brand} · 📍 {item.location}, {item.district}</div>
+                  <div style={{ fontSize:'1.3rem', fontWeight:900, color:'#22c55e' }}>₹{Number(item.rate).toLocaleString()}<span style={{ fontSize:'0.7rem', color:'var(--text-muted)', fontWeight:400 }}>/{item.unit}</span></div>
+                  <div style={{ fontSize:'0.75rem', color:'var(--text-muted)', marginTop:6 }}>{item.desc?.slice(0,80)}{item.desc?.length>80?'...':''}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* List Equipment Modal */}
+          {showListForm && (
+            <div style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)' }} onClick={()=>setShowListForm(false)}>
+              <div className="card" style={{ width:500, padding:28, maxHeight:'85vh', overflowY:'auto' }} onClick={e=>e.stopPropagation()}>
+                <div style={{ fontWeight:800, fontSize:'1.1rem', marginBottom:20 }}>🚜 List Your Equipment</div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
+                  <div><label style={LBL}>Equipment Name *</label><input style={INP} placeholder="e.g. Tractor 45HP" value={listForm.name} onChange={e=>setListForm(p=>({...p,name:e.target.value}))}/></div>
+                  <div><label style={LBL}>Brand</label><input style={INP} placeholder="e.g. Mahindra" value={listForm.brand} onChange={e=>setListForm(p=>({...p,brand:e.target.value}))}/></div>
+                  <div><label style={LBL}>Type</label><select style={INP} value={listForm.type} onChange={e=>setListForm(p=>({...p,type:e.target.value}))}>{CATS.filter(c=>c!=='All').map(c=><option key={c}>{c}</option>)}</select></div>
+                  <div><label style={LBL}>Condition</label><select style={INP} value={listForm.condition} onChange={e=>setListForm(p=>({...p,condition:e.target.value}))}>{['Excellent','Good','Fair'].map(c=><option key={c}>{c}</option>)}</select></div>
+                  <div><label style={LBL}>Rate (₹) *</label><input style={INP} type="number" placeholder="e.g. 1200" value={listForm.rate} onChange={e=>setListForm(p=>({...p,rate:e.target.value}))}/></div>
+                  <div><label style={LBL}>Unit</label><select style={INP} value={listForm.unit} onChange={e=>setListForm(p=>({...p,unit:e.target.value}))}>{['hr','acre','day'].map(u=><option key={u}>{u}</option>)}</select></div>
+                  <div><label style={LBL}>Location *</label><input style={INP} placeholder="e.g. Tenali" value={listForm.location} onChange={e=>setListForm(p=>({...p,location:e.target.value}))}/></div>
+                  <div><label style={LBL}>District</label><select style={INP} value={listForm.district} onChange={e=>setListForm(p=>({...p,district:e.target.value}))}>{AP_DISTRICTS.filter(d=>d!=='All Locations').map(d=><option key={d}>{d}</option>)}</select></div>
+                  <div style={{gridColumn:'1/-1'}}><label style={LBL}>Phone</label><input style={INP} placeholder="e.g. 98765 00001" value={listForm.phone} onChange={e=>setListForm(p=>({...p,phone:e.target.value}))}/></div>
+                  <div style={{gridColumn:'1/-1'}}><label style={LBL}>Description</label><textarea style={{...INP, resize:'none'}} rows={2} placeholder="Brief description of equipment..." value={listForm.desc} onChange={e=>setListForm(p=>({...p,desc:e.target.value}))}/></div>
+                </div>
+                <div style={{ display:'flex', gap:10 }}>
+                  <button onClick={async ()=>{
+                    if (!listForm.name || !listForm.rate || !listForm.location) return;
+                    const result = await insertListing({ ...listForm, rate: parseFloat(listForm.rate), available: true });
+                    if (result.success) { setShowListForm(false); setListForm({ name:'', type:'Tractor', brand:'', rate:'', unit:'hr', condition:'Good', location:'', district:'Guntur', desc:'', phone:'' }); refetchListings(); }
+                  }} disabled={listingSaving||!listForm.name||!listForm.rate} style={{ flex:1, padding:12, borderRadius:10, border:'none', background:'linear-gradient(135deg,#22c55e,#16a34a)', color:'#fff', fontWeight:700, cursor:'pointer', opacity:listForm.name&&listForm.rate?1:0.5 }}>
+                    {listingSaving ? '⟳ Saving...' : '✅ List Equipment'}
+                  </button>
+                  <button onClick={()=>setShowListForm(false)} style={{ flex:1, padding:12, borderRadius:10, border:'1px solid var(--border)', background:'transparent', color:'var(--text-primary)', cursor:'pointer' }}>Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Detail Drawer */}
       {detail && (

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { useSupabaseQuery, useSupabaseMutation } from '../lib/hooks/useSupabaseQuery';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const PIE_COLORS = ['#22c55e','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#f97316','#06b6d4','#ec4899'];
 const CAT_ICONS = { seeds:'🌱', fertilizers:'🧪', pesticides:'💊', labour:'👷', irrigation:'💧', transport:'🚛', equipment:'🚜', misc:'📋' };
@@ -33,7 +34,9 @@ const INP = { width:'100%', padding:'10px 14px', borderRadius:6, border:'1px sol
 const LBL = { display:'block', fontSize:'0.78rem', color:'var(--text-muted)', marginBottom:4, fontWeight:600 };
 
 export default function ExpensesPage() {
+  const { t, tx } = useLanguage();
   const { data: dbExpenses, isLive } = useSupabaseQuery('expenses', { select:'*', orderBy:{ column:'expense_date', ascending:false }, limit:200 }, INIT_EXPENSES);
+  const { data: budgetData } = useSupabaseQuery('budget_tracking', { select:'*', orderBy:{ column:'category', ascending:true }, limit:20 }, BUDGET_DATA);
   const { insert } = useSupabaseMutation('expenses');
 
   const [localList, setLocalList] = useState(INIT_EXPENSES);
@@ -60,7 +63,7 @@ export default function ExpensesPage() {
     return catOk && monOk;
   });
   const totalSpent = expenses.reduce((s,e) => s+(e.amount||0), 0);
-  const totalBudget = BUDGET_DATA.reduce((s,b) => s+b.budget, 0);
+  const totalBudget = budgetData.reduce((s,b) => s+(b.budget||0), 0);
   const cats = [...new Set(expenses.map(e=>e.category))];
   const pieData = cats.map(cat => ({ name:cat, value:expenses.filter(e=>e.category===cat).reduce((s,e)=>s+e.amount,0) }));
 
@@ -199,7 +202,7 @@ export default function ExpensesPage() {
         <div className="card" style={{ padding:24 }}>
           <div style={{ fontSize:'0.95rem', fontWeight:700, marginBottom:4 }}>🎯 Budget vs Actual — Kharif 2024-25</div>
           <div style={{ fontSize:'0.78rem', color:'var(--text-muted)', marginBottom:20 }}>Track spending against your season budget</div>
-          {BUDGET_DATA.map(b => {
+          {budgetData.map(b => {
             const pct = Math.round((b.spent/b.budget)*100);
             const isOver = pct > 90;
             return (

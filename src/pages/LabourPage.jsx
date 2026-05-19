@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const AP_DISTRICTS = ['All Locations','Guntur','Krishna','Anantapur','Chittoor','Kurnool','Prakasam','Nellore','East Godavari','West Godavari','Visakhapatnam','Vizianagaram','Srikakulam','Kadapa'];
 const DISTRICT_COORDS = [
@@ -13,12 +14,12 @@ const DISTRICT_COORDS = [
 
 const ASSOC = [
   { id:1, name:'Guntur Kisan Mazdoor Sangha', leader:'Ramu Naik', mobile:'98765 00001', district:'Guntur', workers:45, rating:4.5, specialties:['Paddy Harvesting','Weeding','Transplanting'], verified:true, rate:500, exp:8, completed:234, photo:'👨‍🌾' },
-  { id:2, name:'Narasaraopet Labour Cooperative', leader:'Venkat Rao', mobile:'98765 00002', district:'Guntur', workers:60, rating:4.7, specialties:['Cotton Picking','Harvesting','Spraying'], verified:true, rate:480, exp:12, completed:312, photo:'👩‍🌾' },
-  { id:3, name:'Tenali Agri Workers Union', leader:'Sridhar B.', mobile:'98765 00003', district:'Guntur', workers:30, rating:4.2, specialties:['Paddy Transplanting','Irrigation','Planting'], verified:true, rate:450, exp:6, completed:178, photo:'🧑‍🌾' },
+  { id:2, name:'Narasaraopet Farm Workers Cooperative', leader:'Venkat Rao', mobile:'98765 00002', district:'Guntur', workers:60, rating:4.7, specialties:['Cotton Picking','Harvesting','Spraying'], verified:true, rate:480, exp:12, completed:312, photo:'👩‍🌾' },
+  { id:3, name:'Tenali Farm Workers Union', leader:'Sridhar B.', mobile:'98765 00003', district:'Guntur', workers:30, rating:4.2, specialties:['Paddy Transplanting','Irrigation','Planting'], verified:true, rate:450, exp:6, completed:178, photo:'🧑‍🌾' },
   { id:4, name:'Ongole Farm Workers Assoc.', leader:'Prasad K.', mobile:'98765 00004', district:'Prakasam', workers:50, rating:4.4, specialties:['Groundnut Digging','Weeding','Harvesting'], verified:false, rate:420, exp:9, completed:189, photo:'👨‍🌾' },
-  { id:5, name:'Kurnool Agricultural Labourers', leader:'Ravi T.', mobile:'98765 00005', district:'Kurnool', workers:40, rating:4.6, specialties:['Sugarcane Cutting','Cotton Picking','Weed Control'], verified:true, rate:520, exp:11, completed:256, photo:'👩‍🌾' },
+  { id:5, name:'Kurnool Farm Workers Group', leader:'Ravi T.', mobile:'98765 00005', district:'Kurnool', workers:40, rating:4.6, specialties:['Sugarcane Cutting','Cotton Picking','Weed Control'], verified:true, rate:520, exp:11, completed:256, photo:'👩‍🌾' },
   { id:6, name:'Anantapur Dryland Workers', leader:'Nagappa M.', mobile:'98765 00006', district:'Anantapur', workers:35, rating:4.3, specialties:['Groundnut Harvesting','Land Preparation','Seed Sowing'], verified:true, rate:400, exp:7, completed:145, photo:'👨‍🌾' },
-  { id:7, name:'Vizianagaram Farm Labour Union', leader:'Srinivasa Rao', mobile:'98765 00007', district:'Vizianagaram', workers:42, rating:4.4, specialties:['Paddy Harvesting','Transplanting','Spraying'], verified:true, rate:460, exp:10, completed:198, photo:'👨‍🌾' },
+  { id:7, name:'Vizianagaram Farm Workers Union', leader:'Srinivasa Rao', mobile:'98765 00007', district:'Vizianagaram', workers:42, rating:4.4, specialties:['Paddy Harvesting','Transplanting','Spraying'], verified:true, rate:460, exp:10, completed:198, photo:'👨‍🌾' },
   { id:8, name:'Visakha Agri Workers Co-op', leader:'Durga Prasad', mobile:'98765 00008', district:'Visakhapatnam', workers:55, rating:4.5, specialties:['Cashew Picking','Coffee Harvesting','Land Clearing'], verified:true, rate:500, exp:14, completed:287, photo:'👩‍🌾' },
   { id:9, name:'Chittoor Horticulture Labourers', leader:'Subramaniam K.', mobile:'98765 00009', district:'Chittoor', workers:38, rating:4.3, specialties:['Mango Picking','Spraying','Pruning'], verified:true, rate:480, exp:8, completed:165, photo:'🧑‍🌾' },
   { id:10, name:'East Godavari Coconut Workers', leader:'Nageswara Rao', mobile:'98765 00010', district:'East Godavari', workers:48, rating:4.6, specialties:['Coconut Harvesting','Palm Climbing','Copra Making'], verified:true, rate:550, exp:15, completed:340, photo:'👨‍🌾' },
@@ -32,6 +33,7 @@ const STATUS_STYLE = { pending:{ bg:'rgba(245,158,11,0.1)', color:'#f59e0b' }, a
 const BLANK = { task:'Harvesting', assoc:1, date:'', workers:'5', duration:'Full day', location:'Narasaraopet Village, Guntur', wage:'500', notes:'' };
 
 export default function LabourPage() {
+  const { t, tx } = useLanguage();
   const [tab, setTab] = useState('associations');
   const [form, setForm] = useState(BLANK);
   const [locFilter, setLocFilter] = useState('All Locations');
@@ -74,17 +76,17 @@ export default function LabourPage() {
       {/* Header */}
       <div style={{ background:'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(251,191,36,0.04))', border:'1px solid rgba(245,158,11,0.2)', borderRadius:16, padding:'20px 24px', marginBottom:24, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
         <div>
-          <div style={{ fontWeight:800, fontSize:'1.35rem' }}>👷 Labour Booking</div>
-          <div style={{ fontSize:'0.8rem', color:'var(--text-muted)', marginTop:4 }}>Verified farm labour · Escrow-secured · 5 AP districts</div>
+          <div style={{ fontWeight:800, fontSize:'1.35rem' }}>👷 Farm Workers Booking</div>
+          <div style={{ fontSize:'0.8rem', color:'var(--text-muted)', marginTop:4 }}>Verified farm workers · Escrow-secured · AP-wide coverage</div>
         </div>
-        <button className="btn btn-primary" onClick={()=>setTab('book')} style={{ background:'linear-gradient(135deg,#f59e0b,#d97706)', border:'none', boxShadow:'0 4px 16px rgba(245,158,11,0.35)', fontWeight:700 }}>+ Book Labour</button>
+        <button className="btn btn-primary" onClick={()=>setTab('book')} style={{ background:'linear-gradient(135deg,#f59e0b,#d97706)', border:'none', boxShadow:'0 4px 16px rgba(245,158,11,0.35)', fontWeight:700 }}>+ Book Workers</button>
       </div>
 
       {/* Confirmed */}
       {confirmed && (
         <div style={{ background:'rgba(34,197,94,0.08)', border:'1px solid rgba(34,197,94,0.25)', borderRadius:12, padding:'14px 20px', marginBottom:20, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <div>
-            <div style={{ fontWeight:800, color:'#22c55e', marginBottom:4 }}>✅ Labour Requested! Ref: <span style={{ fontFamily:'monospace' }}>{confirmed.id}</span></div>
+            <div style={{ fontWeight:800, color:'#22c55e', marginBottom:4 }}>✅ Workers Requested! Ref: <span style={{ fontFamily:'monospace' }}>{confirmed.id}</span></div>
             <div style={{ fontSize:'0.82rem', color:'var(--text-secondary)' }}>{confirmed.task} · {confirmed.workers} workers · {confirmed.date} · <span style={{ color:'#f59e0b', fontWeight:700 }}>Status: Pending</span> · Total: ₹{confirmed.total.toLocaleString()}</div>
           </div>
           <button onClick={()=>setConfirmed(null)} style={{ background:'none', border:'1px solid var(--border)', borderRadius:8, padding:'6px 12px', cursor:'pointer', color:'var(--text-muted)', fontSize:'0.78rem' }}>✕</button>
@@ -109,7 +111,7 @@ export default function LabourPage() {
 
       {/* Tabs */}
       <div style={{ display:'flex', gap:6, marginBottom:22 }}>
-        {[['associations','👥','Associations'],['book','📝','Book Labour'],['bookings','🧾','My Bookings']].map(([id,icon,label])=>(
+        {[['associations','👥','Associations'],['book','📝','Book Workers'],['bookings','🧾','My Bookings']].map(([id,icon,label])=>(
           <button key={id} onClick={()=>setTab(id)} style={{ padding:'10px 20px', borderRadius:24, border:'none', cursor:'pointer', fontSize:'0.82rem', fontWeight:700, background:tab===id?'linear-gradient(135deg,#f59e0b,#d97706)':'var(--bg-card)', color:tab===id?'#fff':'var(--text-muted)', boxShadow:tab===id?'0 4px 12px rgba(245,158,11,0.3)':'none', transition:'all 0.2s' }}>
             {icon} {label}
           </button>
@@ -120,7 +122,7 @@ export default function LabourPage() {
       {tab==='associations' && (
         <>
           <div style={{ display:'flex', gap:8, marginBottom:14, flexWrap:'wrap', alignItems:'center' }}>
-            <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="🔍 Search labour associations..."
+            <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="🔍 Search farm worker associations..."
               style={{ flex:'1 1 180px', minWidth:160, padding:'10px 14px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.85rem', boxSizing:'border-box' }} />
             <select value={locFilter} onChange={e => setLocFilter(e.target.value)}
               style={{ padding:'8px 14px', borderRadius:10, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.82rem' }}>
@@ -178,7 +180,7 @@ export default function LabourPage() {
       {tab==='book' && (
         <div style={{ display:'grid', gridTemplateColumns:'1fr 360px', gap:20 }}>
           <div className="card" style={{ padding:28 }}>
-            <div style={{ fontWeight:800, fontSize:'1rem', marginBottom:20 }}>📝 Labour Request Form</div>
+            <div style={{ fontWeight:800, fontSize:'1rem', marginBottom:20 }}>📝 Farm Workers Request Form</div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
               <div><label style={LBL}>Task *</label>
                 <select value={form.task} onChange={e=>upd('task',e.target.value)} style={INP}>{TASKS.map(t=><option key={t}>{t}</option>)}</select></div>
@@ -193,7 +195,7 @@ export default function LabourPage() {
               <div style={{ gridColumn:'1/-1' }}><label style={LBL}>Special Instructions</label><textarea rows={2} placeholder="Any specific requirements..." value={form.notes} onChange={e=>upd('notes',e.target.value)} style={{ ...INP, resize:'none' }}/></div>
             </div>
             <button className="btn btn-primary" disabled={!form.date||!form.workers||!form.location} onClick={handleRequest} style={{ width:'100%', padding:13, marginTop:16, fontSize:'0.95rem', background:'linear-gradient(135deg,#f59e0b,#d97706)', border:'none', boxShadow:'0 6px 20px rgba(245,158,11,0.35)', fontWeight:800 }}>
-              🚀 Submit Labour Request
+              🚀 Submit Workers Request
             </button>
           </div>
           {/* Summary card */}
@@ -224,7 +226,7 @@ export default function LabourPage() {
       {tab==='bookings' && (
         <div className="card">
           <div style={{ padding:'18px 20px', borderBottom:'1px solid var(--border)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-            <div style={{ fontWeight:700 }}>🧾 My Labour Bookings ({bookings.length})</div>
+            <div style={{ fontWeight:700 }}>🧾 My Workers Bookings ({bookings.length})</div>
           </div>
           <div className="table-wrap">
             <table className="data-table">

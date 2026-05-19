@@ -13,7 +13,7 @@ const FEATURES = [
   { icon: '📞', title: 'Expert Agronomists', desc: 'Connect via voice, video or WhatsApp with 50+ certified agronomists across AP. Available 6 AM – 9 PM.', color: '#06b6d4' },
   { icon: '🛡️', title: 'Crop Insurance', desc: 'PMFBY, weather-based & livestock insurance. File and track claims from your phone. Claims in 15 days.', color: '#ec4899' },
   { icon: '🚜', title: 'Equipment Rental', desc: 'Rent tractors, harvesters, sprayers from verified operators. Book by hour or by acre. Nearest to your field.', color: '#f59e0b' },
-  { icon: '👷', title: 'Labour Marketplace', desc: 'Book certified farm labour groups. PaySure escrow protects payments. Rated associations with 10,000+ workers.', color: '#22c55e' },
+  { icon: '👷', title: 'Farm Workers Marketplace', desc: 'Book certified farm worker groups. PaySure escrow protects payments. Rated associations with 10,000+ workers.', color: '#22c55e' },
   { icon: '🚛', title: 'Transport Hub', desc: 'Book verified trucks for produce transport. Live GPS tracking. Cost estimator shows best route to market.', color: '#3b82f6' },
 ];
 

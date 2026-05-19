@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const MOCK_SCHEMES = [
   { _id: '1', name: 'PM-KISAN', category: 'subsidy', description: 'Direct income support of ₹6000/year to farmer families in 3 installments', amount: 6000, ministry: 'Agriculture Ministry', state: 'Central', is_active: true, documents_required: ['Aadhaar', 'Land records', 'Bank account'], deadline: null, application_url: 'pmkisan.gov.in', beneficiaries: '11.8 Cr', eligibility: ['Small & marginal farmers', 'Valid Aadhaar', 'Own cultivable land'] },
@@ -27,12 +28,19 @@ const DBT_TRACKING = [
 const CAT_LABELS = { subsidy: { label: 'Subsidy', color: '#22c55e', icon: '💵' }, insurance: { label: 'Insurance', color: '#3b82f6', icon: '🛡️' }, loan: { label: 'Loan', color: '#f59e0b', icon: '🏦' }, market: { label: 'Market', color: '#8b5cf6', icon: '🏪' }, other: { label: 'Other', color: '#6b7280', icon: '📋' } };
 
 export default function SchemesPage() {
+  const { t, tx } = useLanguage();
   const { data: schemes, loading, isLive } = useSupabaseQuery('schemes', { orderBy: { column: 'name', ascending: true }, limit: 200 }, MOCK_SCHEMES);
+  const { data: dbtData, loading: dbtLoading } = useSupabaseQuery('dbt_transactions', { orderBy: { column: 'created_at', ascending: false }, limit: 50 }, DBT_TRACKING);
   const [catFilter, setCatFilter] = useState('all');
   const [activeTab, setActiveTab] = useState('browse');
   const [selectedScheme, setSelectedScheme] = useState(null);
   const [eligibilityResults, setEligibilityResults] = useState(null);
   const [eligForm, setEligForm] = useState({ state: 'Andhra Pradesh', land: '2.5', category: 'Small (< 2 ha)', income: '200000', crop: 'Cotton', irrigation: 'Borewell' });
+
+  // Compute DBT stats dynamically
+  const dbtCredited = dbtData.filter(d => d.status === 'credited').reduce((s, d) => s + (d.amount || 0), 0);
+  const dbtPending = dbtData.filter(d => d.status === 'pending').reduce((s, d) => s + (d.amount || 0), 0);
+  const dbtProcessing = dbtData.filter(d => d.status === 'processing').reduce((s, d) => s + (d.amount || 0), 0);
 
   const categories = [...new Set(schemes.map(s => s.category))];
   const filtered = catFilter === 'all' ? schemes : schemes.filter(s => s.category === catFilter);
@@ -193,10 +201,10 @@ export default function SchemesPage() {
         <div>
           <div className="grid-4" style={{ marginBottom: 20 }}>
             {[
-              { label: 'Total Received', value: '₹11,500', icon: '💰', color: '#22c55e' },
-              { label: 'Pending', value: '₹2,000', icon: '⏳', color: '#f59e0b' },
-              { label: 'Processing', value: '₹4,000', icon: '🔄', color: '#3b82f6' },
-              { label: 'Transactions', value: DBT_TRACKING.length, icon: '📋', color: '#8b5cf6' },
+              { label: 'Total Received', value: `₹${dbtCredited.toLocaleString()}`, icon: '💰', color: '#22c55e' },
+              { label: 'Pending', value: `₹${dbtPending.toLocaleString()}`, icon: '⏳', color: '#f59e0b' },
+              { label: 'Processing', value: `₹${dbtProcessing.toLocaleString()}`, icon: '🔄', color: '#3b82f6' },
+              { label: 'Transactions', value: dbtData.length, icon: '📋', color: '#8b5cf6' },
             ].map(s => (
               <div key={s.label} className="stat-card">
                 <div style={{ fontSize: '1.8rem', marginBottom: 8 }}>{s.icon}</div>
@@ -210,7 +218,7 @@ export default function SchemesPage() {
               <table className="data-table">
                 <thead><tr><th>Scheme</th><th>Installment</th><th>Amount</th><th>Account</th><th>Date</th><th>Txn ID</th><th>Status</th></tr></thead>
                 <tbody>
-                  {DBT_TRACKING.map(d => (
+                  {dbtData.map(d => (
                     <tr key={d.id}>
                       <td style={{ fontWeight: 600 }}>{d.scheme}</td>
                       <td>{d.installment}</td>

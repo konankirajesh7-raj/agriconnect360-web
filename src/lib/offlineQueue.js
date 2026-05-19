@@ -39,7 +39,7 @@ export function enqueueWrite(table, action, data, id = null) {
     retries: 0,
   });
   saveQueue(queue);
-  console.log(`📦 Queued offline ${action} on ${table}`);
+
 }
 
 /**
@@ -76,12 +76,12 @@ export async function syncQueue() {
         remaining.push(item);
       }
       failed++;
-      console.warn(`⚠️ Sync failed for ${item.table}:${item.action}`, err.message);
+      /* warn removed */
     }
   }
 
   saveQueue(remaining);
-  if (success > 0) console.log(`✅ Synced ${success} queued operations`);
+
   return { success, failed };
 }
 
@@ -124,7 +124,7 @@ export async function smartWrite(table, action, data, id = null) {
 
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
-    console.log('🌐 Back online — syncing queued writes...');
+
     syncQueue();
   });
 

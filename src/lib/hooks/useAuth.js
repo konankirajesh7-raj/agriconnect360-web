@@ -35,7 +35,7 @@ export function useAuth() {
     signUp: async () => ({ success: false, error: 'AuthProvider not mounted' }),
     demoLogin: (role = 'admin') => {
       const DEMO_NAMES = { farmer: 'Farmer (Demo)', customer: 'Customer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' };
-      localStorage.setItem('rythu_admin_token', 'demo_admin_token_2024');
+      localStorage.setItem('rythu_admin_token', import.meta.env.VITE_DEMO_TOKEN || 'demo_token_local');
       localStorage.setItem('rythu_demo_role', role);
       window.location.reload();
     },
@@ -181,7 +181,7 @@ function useAuthProvider() {
         return hydrated;
       }
     } catch (e) {
-      console.warn('Profile load failed:', e.message);
+      /* warn removed */
       const fallback = getStoredOnboardingData();
       if (fallback) {
         const hydrated = hydrateFarmerProfile(fallback, 'farmer');
@@ -192,24 +192,20 @@ function useAuthProvider() {
     return null;
   };
 
-  // ── OTP Rate Limiting (max 5/hour per phone) ───────────────────────────────
+  // ── Phone OTP (Supabase built-in phone auth + Twilio free trial) ───────────
   const checkOTPRateLimit = useCallback((phone) => {
     const key = `otp_attempts_${phone}`;
     const raw = localStorage.getItem(key);
     const record = raw ? JSON.parse(raw) : { count: 0, firstAttempt: Date.now() };
     const hourMs = 60 * 60 * 1000;
-
-    // Reset if older than 1 hour
     if (Date.now() - record.firstAttempt > hourMs) {
       localStorage.setItem(key, JSON.stringify({ count: 1, firstAttempt: Date.now() }));
       return { allowed: true };
     }
-
     if (record.count >= 5) {
       const waitMin = Math.ceil((hourMs - (Date.now() - record.firstAttempt)) / 60000);
       return { allowed: false, error: `Too many OTP requests. Try again in ${waitMin} min.` };
     }
-
     record.count++;
     localStorage.setItem(key, JSON.stringify(record));
     return { allowed: true };
@@ -251,14 +247,10 @@ function useAuthProvider() {
 
   const signInWithOTP = useCallback(async (phone) => {
     try {
-      // Rate limit check
       const rateCheck = checkOTPRateLimit(phone);
       if (!rateCheck.allowed) return { success: false, error: rateCheck.error };
-
-      // Lockout check
       const lockCheck = checkAccountLockout(phone);
       if (lockCheck.locked) return { success: false, error: lockCheck.error };
-
       const p = phone.startsWith('+') ? phone : `+91${phone}`;
       const { data, error } = await supabase.auth.signInWithOtp({ phone: p });
       if (error) throw error;
@@ -268,16 +260,14 @@ function useAuthProvider() {
 
   const verifyOTP = useCallback(async (phone, otp) => {
     try {
-      // Lockout check
       const lockCheck = checkAccountLockout(phone);
       if (lockCheck.locked) return { success: false, error: lockCheck.error };
-
       const p = phone.startsWith('+') ? phone : `+91${phone}`;
-      const { data, error } = await supabase.auth.verifyOtp({ phone: p, token: otp, type: 'sms' });
-      if (error) {
-        recordFailedAttempt(phone);
-        throw error;
-      }
+      // Race against timeout to prevent infinite hang on auth lock
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('Verification timed out. Please try again.')), 15000));
+      const verify = supabase.auth.verifyOtp({ phone: p, token: otp, type: 'sms' });
+      const { data, error } = await Promise.race([verify, timeout]);
+      if (error) { recordFailedAttempt(phone); throw error; }
       clearFailedAttempts(phone);
       return { success: true, data };
     } catch (e) { return { success: false, error: e.message }; }
@@ -338,7 +328,7 @@ function useAuthProvider() {
 
   const demoLogin = useCallback((role = 'admin') => {
     const DEMO_NAMES = { farmer: 'Farmer (Demo)', customer: 'Customer (Demo)', industrial: 'Industrial (Demo)', broker: 'Broker (Demo)', supplier: 'Supplier (Demo)', labour: 'Labour (Demo)', fpo: 'FPO Admin (Demo)', admin: 'Admin (Demo)' };
-    localStorage.setItem('rythu_admin_token', 'demo_admin_token_2024');
+    localStorage.setItem('rythu_admin_token', import.meta.env.VITE_DEMO_TOKEN || 'demo_token_local');
     localStorage.setItem('rythu_demo_role', role);
     localStorage.setItem('rythu_admin_user', JSON.stringify({ name: DEMO_NAMES[role] || role, role }));
     setIsDemoMode(true);
@@ -358,28 +348,34 @@ function useAuthProvider() {
     } catch (e) { return { success: false, error: e.message }; }
   }, []);
 
-  const signInWithEmailOTP = useCallback(async (email) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: true },
-      });
-      if (error) return { success: false, error: error.message };
-      return { success: true, data };
-    } catch (e) { return { success: false, error: e.message }; }
-  }, []);
+
+
+  // Comprehensive cleanup of all auth-related localStorage keys
+  const clearAuthStorage = () => {
+    const AUTH_PREFIXES = [
+      'sb-', 'rythu_admin', 'rythu_demo_', 'rythu_user_role',
+      'lock:', 'auth-token', 'rs_auth', 'login_fails_', 'otp_attempts_',
+      'agri360_payments', 'agri360_onboarding', 'agri360_is_admin',
+      'agri_admin_token', 'agri360_coupon_', 'agri360_trial_',
+      'rythu_coupon_', 'rythu_trial_', 'rythu_payment',
+      'rythusphere_onboarding', 'rythu_session',
+    ];
+    Object.keys(localStorage).forEach(k => {
+      if (AUTH_PREFIXES.some(p => k.startsWith(p)) || k.includes('auth-token') || k.includes('sb-')) {
+        localStorage.removeItem(k);
+      }
+    });
+    // Clear session storage OTP data
+    Object.keys(sessionStorage).forEach(k => {
+      if (k.startsWith('otp_')) sessionStorage.removeItem(k);
+    });
+  };
 
   const signOut = useCallback(async () => {
     try {
       if (!isDemoMode) await supabase.auth.signOut();
       setSession(null); setUser(null); setFarmerProfile(null); setIsDemoMode(false);
-      // Clear ONLY auth-related keys — preserve user preferences (language, location cache)
-      const AUTH_PREFIXES = ['sb-', 'rythu_admin', 'rythu_demo_', 'lock:', 'auth-token', 'rs_auth', 'login_fails_', 'otp_attempts_'];
-      Object.keys(localStorage).forEach(k => {
-        if (AUTH_PREFIXES.some(p => k.startsWith(p)) || k.includes('auth-token')) {
-          localStorage.removeItem(k);
-        }
-      });
+      clearAuthStorage();
       return { success: true };
     } catch (e) { return { success: false, error: e.message }; }
   }, [isDemoMode]);
@@ -388,8 +384,7 @@ function useAuthProvider() {
     try {
       await supabase.auth.signOut({ scope: 'global' });
       setSession(null); setUser(null); setFarmerProfile(null); setIsDemoMode(false);
-      localStorage.removeItem('rythu_admin_token');
-      localStorage.removeItem('rythu_admin_user');
+      clearAuthStorage();
       return { success: true };
     } catch (e) { return { success: false, error: e.message }; }
   }, []);

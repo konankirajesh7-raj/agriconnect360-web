@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/hooks/useAuth';
 import { premiumDB } from '../lib/supabase';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const defaultSettings = {
   language: 'en',
@@ -30,6 +31,7 @@ const defaultSettings = {
 };
 
 export default function SettingsPage() {
+  const { t, tx } = useLanguage();
   const navigate = useNavigate();
   const { farmerProfile, updateProfile } = useAuth();
   const farmerId = Number(farmerProfile?.id || 0);

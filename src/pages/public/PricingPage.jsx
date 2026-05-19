@@ -19,7 +19,7 @@ const PLANS = [
       'Crop calendar & growth tracking',
       'Government scheme eligibility checker',
       'Community feed & farmer network',
-      'Labour & equipment marketplace',
+      'Farm Workers & equipment marketplace',
       'Soil & water testing reports',
     ],
     cta: 'Get Started — ₹50 / 6 Months',

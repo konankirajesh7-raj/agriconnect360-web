@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../lib/hooks/useAuth';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 
 const FEATURES = [
@@ -11,7 +12,16 @@ const FEATURES = [
 ];
 
 export default function LoginPage() {
-  const [step, setStep] = useState('new'); // 'new' | 'returning' | 'forgot'
+  const { t, tx } = useLanguage();
+  const [step, setStep] = useState('new'); // 'new' | 'returning' | 'forgot' | 'otp'
+  const [otpPhone, setOtpPhone] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCountdown, setOtpCountdown] = useState(0);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpPassword, setOtpPassword] = useState('');
+  const [showOtpPassword, setShowOtpPassword] = useState(false);
+  const [otpFullName, setOtpFullName] = useState('');
   const [loginId, setLoginId] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -33,9 +43,30 @@ export default function LoginPage() {
 
 
   const [pendingRedirect, setPendingRedirect] = useState('');
+  const [adminRolePicker, setAdminRolePicker] = useState(false);
+  // Rate limiting: max 5 attempts, then 30s cooldown
+  const [loginAttempts, setLoginAttempts] = useState(0);
+  const [lockUntil, setLockUntil] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
+  useEffect(() => {
+    if (lockUntil <= Date.now()) return;
+    const t = setInterval(() => {
+      const rem = Math.ceil((lockUntil - Date.now()) / 1000);
+      if (rem <= 0) { setCooldown(0); clearInterval(t); }
+      else setCooldown(rem);
+    }, 1000);
+    return () => clearInterval(t);
+  }, [lockUntil]);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { signInWithPassword, signInWithGoogle, demoLogin, signUp, isAuthenticated, loading: authLoading, resetPassword, updateUserPassword, user, updateProfile } = useAuth();
+  const { signInWithOTP, verifyOTP, signInWithPassword, signInWithGoogle, demoLogin, signUp, isAuthenticated, loading: authLoading, resetPassword, updateUserPassword, user, updateProfile } = useAuth();
+
+  // OTP resend countdown timer
+  useEffect(() => {
+    if (otpCountdown <= 0) return;
+    const t = setInterval(() => setOtpCountdown(p => p <= 1 ? 0 : p - 1), 1000);
+    return () => clearInterval(t);
+  }, [otpCountdown]);
 
   // Auto-redirect when auth state becomes authenticated
   useEffect(() => {
@@ -78,6 +109,37 @@ export default function LoginPage() {
     setLoading(false);
   };
 
+  const handleSendOTP = async (e) => {
+    e.preventDefault();
+    if (!/^[6-9]\d{9}$/.test(otpPhone)) { setError('Enter a valid 10-digit Indian mobile number'); return; }
+    setLoading(true); setError('');
+    const result = await signInWithOTP(otpPhone);
+    if (result.success) {
+      setOtpSent(true);
+      setOtpCountdown(60);
+      setSuccess('OTP sent to +91 ' + otpPhone + '. Check your SMS.');
+    } else {
+      setError(result.error || 'Failed to send OTP. Try again.');
+    }
+    setLoading(false);
+  };
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    if (otpCode.length !== 6) { setError('Enter the 6-digit OTP'); return; }
+    setLoading(true); setError('');
+    const result = await verifyOTP(otpPhone, otpCode);
+    if (result.success) {
+      setOtpVerified(true);
+      setOtpSent(false);
+      setSuccess('Phone verified! Now set your name and password.');
+      setError('');
+    } else {
+      setError(result.error || 'Invalid OTP. Try again.');
+    }
+    setLoading(false);
+  };
+
   const checkGooglePhoneUnique = (val) => {
     const clean = val.replace(/\D/g, '').slice(0, 10);
     setGooglePhone(clean);
@@ -114,6 +176,37 @@ export default function LoginPage() {
   const handlePasswordLogin = async (e) => {
     e.preventDefault();
     if (!loginId || !loginPassword) { setError('Please enter your email/mobile and password'); return; }
+
+    // Rate limit check
+    if (lockUntil > Date.now()) {
+      setError(`⏳ Too many attempts. Please wait ${Math.ceil((lockUntil - Date.now()) / 1000)} seconds.`);
+      return;
+    }
+
+    // Secret admin gate — verify against Supabase admin_config table
+    const FALLBACK_ADMIN_USER = 'admin@rythusphere.in';
+    const FALLBACK_ADMIN_PASS = 'RythuAdmin@2025';
+    try {
+      const { data: adminCfg } = await supabase
+        .from('admin_config')
+        .select('admin_username, admin_password')
+        .eq('id', 'default')
+        .single();
+      if (adminCfg && loginId.trim().toLowerCase() === (adminCfg.admin_username || '').toLowerCase() && loginPassword === adminCfg.admin_password) {
+        setLoading(false); setError('');
+        setAdminRolePicker(true);
+        return;
+      }
+    } catch {
+      // admin_config not available — use hardcoded fallback
+    }
+    // Hardcoded admin fallback
+    if (loginId.trim().toLowerCase() === FALLBACK_ADMIN_USER && loginPassword === FALLBACK_ADMIN_PASS) {
+      setLoading(false); setError('');
+      setAdminRolePicker(true);
+      return;
+    }
+
     setLoading(true); setError('');
     const email = loginId.includes('@') ? loginId : `${loginId}@rythusphere.in`;
 
@@ -131,15 +224,19 @@ export default function LoginPage() {
 
     try {
       const result = await attemptLogin();
-      if (result.success) { setPendingRedirect('/dashboard'); return; }
-      setError(result.error?.includes('Invalid') ? 'Invalid credentials. Check your mobile and password.' : (result.error || 'Login failed.'));
+      if (result.success) { setLoginAttempts(0); setPendingRedirect('/dashboard'); return; }
+      const newAttempts = loginAttempts + 1;
+      setLoginAttempts(newAttempts);
+      if (newAttempts >= 5) { setLockUntil(Date.now() + 30000); setCooldown(30); setError('🔒 Too many failed attempts. Locked for 30 seconds.'); setLoading(false); return; }
+      setError(result.error?.includes('Invalid') ? `Invalid credentials. ${5 - newAttempts} attempts remaining.` : (result.error || 'Login failed.'));
     } catch (err) {
       if (err.message === 'timeout') {
         // Auto-retry once after clearing everything again
         Object.keys(localStorage).filter(k => k.startsWith('lock:') || k.includes('sb-')).forEach(k => localStorage.removeItem(k));
         try {
           const retry = await attemptLogin();
-          if (retry.success) { setPendingRedirect('/dashboard'); return; }
+          if (retry.success) { setLoginAttempts(0); setPendingRedirect('/dashboard'); return; }
+          setLoginAttempts(p => p + 1);
           setError(retry.error || 'Login failed. Please try again.');
         } catch {
           setError('Login timed out. Close ALL other tabs and try again.');
@@ -157,6 +254,7 @@ export default function LoginPage() {
     setError(''); setSuccess('');
     setLoginId(''); setLoginPassword('');
     setNewPassword(''); setFullName(''); setForgotEmail('');
+    setOtpPhone(''); setOtpCode(''); setOtpSent(false);
   };
 
   const handleForgotPassword = async (e) => {
@@ -353,7 +451,6 @@ export default function LoginPage() {
           </form>
         ) : (
         <>
-        {/* Mode tabs — New User / Welcome Back */}
         <div style={{ display: 'flex', gap: 6, padding: 5, background: 'rgba(255,255,255,0.03)', borderRadius: 16, marginBottom: 24, border: '1px solid rgba(255,255,255,0.06)' }}>
           <button onClick={() => switchMode('new')} style={{
             flex: 1, padding: '14px 8px', fontSize: '0.85rem', fontWeight: 700,
@@ -395,8 +492,8 @@ export default function LoginPage() {
           </h1>
           <p style={{ color: '#64748b', marginTop: 6, fontSize: '0.84rem' }}>
             {step === 'forgot' ? 'Enter your email or mobile to receive a reset link'
-              : step === 'new' ? 'Sign up with Google to get started'
-              : 'Sign in with your mobile number & password'}
+              : step === 'new' ? 'Sign up with Google or Phone OTP'
+              : 'Sign in with your credentials'}
           </p>
         </div>
 
@@ -444,7 +541,88 @@ export default function LoginPage() {
           </form>
         )}
 
-        {/* ── New User (Google-only signup) ── */}
+        {/* ── Phone OTP Login ── */}
+        {step === 'otp' && (
+          <div key="otp-form" style={{ animation: 'slide-up 0.4s ease' }}>
+            {!otpSent ? (
+              <form onSubmit={handleSendOTP}>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    📱 Mobile Number
+                  </label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ padding: '14px 12px', borderRadius: 12, background: 'rgba(15,20,35,0.6)', border: '1.5px solid rgba(255,255,255,0.08)', color: '#64748b', fontSize: '0.92rem', whiteSpace: 'nowrap' }}>+91</div>
+                    <input type="tel" value={otpPhone} onChange={e => setOtpPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      placeholder="Enter 10-digit number" maxLength={10} className="auth-input" style={{ flex: 1 }} autoFocus
+                    />
+                  </div>
+                  {otpPhone.length === 10 && /^[6-9]/.test(otpPhone) && (
+                    <div style={{ color: '#10b981', fontSize: '0.78rem', marginTop: 6 }}>✅ Valid number</div>
+                  )}
+                </div>
+                {error && (
+                  <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: '12px 16px', color: '#f87171', fontSize: '0.84rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span>⚠️</span> {error}
+                  </div>
+                )}
+                <button type="submit" disabled={loading || otpPhone.length !== 10} className="auth-btn-primary" style={{
+                  background: otpPhone.length === 10 ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : 'rgba(255,255,255,0.05)',
+                  color: otpPhone.length === 10 ? '#fff' : '#475569',
+                  boxShadow: otpPhone.length === 10 ? '0 4px 20px rgba(59,130,246,0.25)' : 'none',
+                  opacity: loading ? 0.7 : 1,
+                }}>
+                  {loading ? '⏳ Sending OTP...' : '📲 Send OTP'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOTP}>
+                <div style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 12, padding: '12px 16px', color: '#60a5fa', fontSize: '0.84rem', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span>📲</span> OTP sent to +91 {otpPhone}
+                </div>
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    🔢 Enter 6-Digit OTP
+                  </label>
+                  <input type="text" value={otpCode} onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="Enter OTP from SMS" maxLength={6} className="auth-input"
+                    style={{ textAlign: 'center', fontSize: '1.3rem', letterSpacing: '8px', fontWeight: 700 }} autoFocus
+                  />
+                </div>
+                {error && (
+                  <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 12, padding: '12px 16px', color: '#f87171', fontSize: '0.84rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span>⚠️</span> {error}
+                  </div>
+                )}
+                {success && (
+                  <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12, padding: '12px 16px', color: '#10b981', fontSize: '0.84rem', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span>✅</span> {success}
+                  </div>
+                )}
+                <button type="submit" disabled={loading || otpCode.length !== 6} className="auth-btn-primary" style={{
+                  background: otpCode.length === 6 ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)',
+                  color: otpCode.length === 6 ? '#fff' : '#475569',
+                  boxShadow: otpCode.length === 6 ? '0 4px 20px rgba(16,185,129,0.25)' : 'none',
+                  opacity: loading ? 0.7 : 1, marginBottom: 12,
+                }}>
+                  {loading ? '⏳ Verifying...' : '✅ Verify OTP & Sign In'}
+                </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                  <button type="button" onClick={() => { setOtpSent(false); setOtpCode(''); setError(''); }} style={{
+                    background: 'none', border: 'none', color: '#64748b', fontSize: '0.82rem', cursor: 'pointer', padding: 0,
+                  }}>← Change Number</button>
+                  <button type="button" onClick={handleSendOTP} disabled={otpCountdown > 0 || loading} style={{
+                    background: 'none', border: 'none', color: otpCountdown > 0 ? '#475569' : '#3b82f6',
+                    fontSize: '0.82rem', cursor: otpCountdown > 0 ? 'default' : 'pointer', fontWeight: 600, padding: 0,
+                  }}>
+                    {otpCountdown > 0 ? `Resend in ${otpCountdown}s` : '🔄 Resend OTP'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
+
+        {/* ── New User (Google + Phone OTP signup) ── */}
         {step === 'new' && (
           <div key="new-user-info" style={{ animation: 'slide-up 0.4s ease' }}>
             <div style={{
@@ -456,9 +634,111 @@ export default function LoginPage() {
                 Join RythuSphere Today
               </h3>
               <p style={{ color: '#64748b', fontSize: '0.84rem', lineHeight: 1.6, margin: 0 }}>
-                Click <strong style={{ color: '#e2e8f0' }}>"Continue with Google"</strong> above to create your account instantly. After signing up, you'll set your phone number and password.
+                Sign up with <strong style={{ color: '#e2e8f0' }}>Google</strong> above, or use <strong style={{ color: '#60a5fa' }}>Phone OTP</strong> below.
               </p>
             </div>
+
+            {/* Phone OTP Signup Section */}
+            <div style={{ background: 'rgba(59,130,246,0.04)', border: '1px solid rgba(59,130,246,0.12)', borderRadius: 14, padding: '20px', marginBottom: 16 }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#60a5fa', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                📱 Sign Up with Phone OTP
+              </div>
+              {!otpSent && !otpVerified && (
+                <form onSubmit={handleSendOTP}>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: 'block', fontSize: '0.72rem', color: '#94a3b8', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Mobile Number</label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <div style={{ padding: '12px 10px', borderRadius: 10, background: 'rgba(15,20,35,0.6)', border: '1.5px solid rgba(255,255,255,0.08)', color: '#64748b', fontSize: '0.88rem' }}>+91</div>
+                      <input type="tel" value={otpPhone} onChange={e => setOtpPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        placeholder="Enter 10-digit number" maxLength={10} className="auth-input" style={{ flex: 1 }}
+                      />
+                    </div>
+                  </div>
+                  {error && <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 14px', color: '#f87171', fontSize: '0.8rem', marginBottom: 12 }}>⚠️ {error}</div>}
+                  <button type="submit" disabled={loading || otpPhone.length !== 10} className="auth-btn-primary" style={{
+                    background: otpPhone.length === 10 ? 'linear-gradient(135deg, #3b82f6, #2563eb)' : 'rgba(255,255,255,0.05)',
+                    color: otpPhone.length === 10 ? '#fff' : '#475569',
+                    opacity: loading ? 0.7 : 1, fontSize: '0.85rem',
+                  }}>
+                    {loading ? '⏳ Sending...' : '📲 Send OTP'}
+                  </button>
+                </form>
+              )}
+              {otpSent && !otpVerified && (
+                <form onSubmit={handleVerifyOTP}>
+                  <div style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '10px 14px', color: '#60a5fa', fontSize: '0.8rem', marginBottom: 14 }}>
+                    📲 OTP sent to +91 {otpPhone}
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: 'block', fontSize: '0.72rem', color: '#94a3b8', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Enter 6-Digit OTP</label>
+                    <input type="text" value={otpCode} onChange={e => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="000000" maxLength={6} className="auth-input"
+                      style={{ textAlign: 'center', fontSize: '1.3rem', letterSpacing: '8px', fontWeight: 700 }} autoFocus
+                    />
+                  </div>
+                  {error && <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 14px', color: '#f87171', fontSize: '0.8rem', marginBottom: 12 }}>⚠️ {error}</div>}
+                  <button type="submit" disabled={loading || otpCode.length !== 6} className="auth-btn-primary" style={{
+                    background: otpCode.length === 6 ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)',
+                    color: otpCode.length === 6 ? '#fff' : '#475569',
+                    opacity: loading ? 0.7 : 1, fontSize: '0.85rem', marginBottom: 8,
+                  }}>
+                    {loading ? '⏳ Verifying...' : '✅ Verify OTP'}
+                  </button>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                    <button type="button" onClick={() => { setOtpSent(false); setOtpCode(''); setError(''); }} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '0.78rem', cursor: 'pointer', padding: 0 }}>← Change Number</button>
+                    <button type="button" onClick={handleSendOTP} disabled={otpCountdown > 0} style={{ background: 'none', border: 'none', color: otpCountdown > 0 ? '#475569' : '#3b82f6', fontSize: '0.78rem', cursor: otpCountdown > 0 ? 'default' : 'pointer', fontWeight: 600, padding: 0 }}>
+                      {otpCountdown > 0 ? `Resend in ${otpCountdown}s` : '🔄 Resend OTP'}
+                    </button>
+                  </div>
+                </form>
+              )}
+              {otpVerified && (
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!otpFullName.trim()) { setError('Please enter your full name'); return; }
+                  if (otpPassword.length < 6) { setError('Password must be at least 6 characters'); return; }
+                  setLoading(true); setError('');
+                  const res = await updateUserPassword(otpPassword);
+                  if (res.success) {
+                    await updateProfile({ full_name: otpFullName, phone: otpPhone, role: 'farmer' });
+                    setSuccess('Account created! Redirecting...');
+                    setPendingRedirect('/onboarding');
+                  } else { setError(res.error || 'Failed to set password'); }
+                  setLoading(false);
+                }}>
+                  <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, padding: '10px 14px', color: '#10b981', fontSize: '0.8rem', marginBottom: 14 }}>
+                    ✅ Phone +91 {otpPhone} verified! Set up your account below.
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: 'block', fontSize: '0.72rem', color: '#94a3b8', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Full Name</label>
+                    <input type="text" value={otpFullName} onChange={e => setOtpFullName(e.target.value)}
+                      placeholder="Enter your full name" className="auth-input" autoFocus
+                    />
+                  </div>
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ display: 'block', fontSize: '0.72rem', color: '#94a3b8', marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Set Password</label>
+                    <div style={{ position: 'relative' }}>
+                      <input type={showOtpPassword ? 'text' : 'password'} value={otpPassword} onChange={e => setOtpPassword(e.target.value)}
+                        placeholder="Min 6 characters" className="auth-input"
+                      />
+                      <button type="button" onClick={() => setShowOtpPassword(!showOtpPassword)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '0.9rem' }}>
+                        {showOtpPassword ? '🙈' : '👁️'}
+                      </button>
+                    </div>
+                  </div>
+                  {error && <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 10, padding: '10px 14px', color: '#f87171', fontSize: '0.8rem', marginBottom: 12 }}>⚠️ {error}</div>}
+                  {success && <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 10, padding: '10px 14px', color: '#10b981', fontSize: '0.8rem', marginBottom: 12 }}>✅ {success}</div>}
+                  <button type="submit" disabled={loading || !otpFullName.trim() || otpPassword.length < 6} className="auth-btn-primary" style={{
+                    background: (otpFullName.trim() && otpPassword.length >= 6) ? 'linear-gradient(135deg, #10b981, #059669)' : 'rgba(255,255,255,0.05)',
+                    color: (otpFullName.trim() && otpPassword.length >= 6) ? '#fff' : '#475569',
+                    opacity: loading ? 0.7 : 1, fontSize: '0.85rem',
+                  }}>
+                    {loading ? '⏳ Creating...' : '🚀 Create Account & Continue'}
+                  </button>
+                </form>
+              )}
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {['✅ Free 6-month trial for farmers', '✅ 24 AI-powered modules', '✅ Telugu, Hindi & English support', '✅ Andhra Pradesh focused'].map((item, i) => (
                 <div key={i} style={{ color: '#94a3b8', fontSize: '0.84rem', padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)' }}>
@@ -528,6 +808,76 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Admin Role Picker Modal */}
+      {adminRolePicker && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(12px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'fadeIn 0.3s ease',
+        }}>
+          <div style={{
+            width: 560, maxWidth: '94vw', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            borderRadius: 24, padding: '36px 32px', boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
+            border: '1px solid rgba(255,255,255,0.08)',
+          }}>
+            <div style={{ textAlign: 'center', marginBottom: 28 }}>
+              <div style={{ fontSize: '2rem', marginBottom: 8 }}>🛡️</div>
+              <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#e2e8f0', letterSpacing: '-0.02em' }}>
+                Admin Access Granted
+              </div>
+              <div style={{ fontSize: '0.82rem', color: '#64748b', marginTop: 6 }}>
+                Select a role to view the platform as that user type
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+              {[
+                { role: 'admin', icon: '🛡️', label: 'Admin', desc: 'Full control panel', color: '#ef4444', path: '/admin' },
+                { role: 'farmer', icon: '🌾', label: 'Farmer', desc: 'Crop, weather, market', color: '#22c55e', path: '/dashboard' },
+                { role: 'industrial', icon: '🏭', label: 'Industrial', desc: 'Bulk orders & procurement', color: '#3b82f6', path: '/industrial-dashboard' },
+                { role: 'broker', icon: '🤝', label: 'Broker', desc: 'Trade & commission', color: '#f59e0b', path: '/broker-dashboard' },
+                { role: 'supplier', icon: '🏪', label: 'Supplier', desc: 'Input store & sales', color: '#8b5cf6', path: '/supplier-dashboard' },
+                { role: 'customer', icon: '🛍️', label: 'Customer', desc: 'Buy farm produce', color: '#06b6d4', path: '/customer-dashboard' },
+                { role: 'labour', icon: '👷', label: 'Labour', desc: 'Job listings & hire', color: '#f97316', path: '/labour-dashboard' },
+              ].map(r => (
+                <button key={r.role} onClick={async () => {
+                  // Clear real Supabase session so demo role is not overridden on reload
+                  Object.keys(localStorage).filter(k => k.startsWith('sb-') && k.endsWith('-auth-token')).forEach(k => localStorage.removeItem(k))
+                  demoLogin(r.role);
+                  localStorage.setItem('agri_admin_token', 'admin_authenticated');
+                  localStorage.setItem('rythu_user_role', r.role);
+                  localStorage.setItem('agri360_admin_viewing_as', r.role);
+                  localStorage.setItem('agri360_is_admin_session', 'true');
+                  localStorage.setItem('agri360_onboarding_complete', 'true');
+                  localStorage.setItem('rythusphere_onboarding_complete', 'true');
+                  localStorage.setItem('agri360_payments', JSON.stringify({ role: r.role, status: 'verified' }));
+                  setAdminRolePicker(false);
+                  setSuccess(`✅ Viewing as ${r.label}...`);
+                  setTimeout(() => { window.location.href = r.path; }, 300);
+                }} style={{
+                  padding: '18px 12px', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(255,255,255,0.03)', cursor: 'pointer', transition: 'all 0.25s',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = r.color + '18'; e.currentTarget.style.borderColor = r.color + '50'; e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 24px ${r.color}30`; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
+                >
+                  <div style={{ fontSize: '1.8rem' }}>{r.icon}</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: r.color }}>{r.label}</div>
+                  <div style={{ fontSize: '0.68rem', color: '#64748b', lineHeight: 1.4 }}>{r.desc}</div>
+                </button>
+              ))}
+            </div>
+
+            <button onClick={() => setAdminRolePicker(false)} style={{
+              width: '100%', padding: '10px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.1)',
+              background: 'transparent', color: '#64748b', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
+            }}>✕ Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

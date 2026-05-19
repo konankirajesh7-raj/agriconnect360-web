@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const EXPERTS = [
   { id: 1, name: 'Dr. Rajesh Kumar', role: 'Agronomist', speciality: 'Paddy & Cotton', rating: 4.8, consultations: 340, available: true, languages: ['EN', 'HI', 'KN'], photo: '👨‍🔬' },

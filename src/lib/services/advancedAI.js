@@ -4,23 +4,24 @@
  */
 import { supabase } from '../supabase';
 
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const AI_PROXY_URL = `${SUPABASE_URL}/functions/v1/ai-proxy`;
 
 async function geminiRequest(prompt, options = {}) {
   try {
-    const res = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
+    const res = await fetch(AI_PROXY_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: options.temperature || 0.7, maxOutputTokens: options.maxTokens || 1024 },
-      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'apikey': SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ prompt }),
     });
     const data = await res.json();
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    return data?.text || '';
   } catch (e) {
-    console.warn('Gemini request failed:', e.message);
     return null;
   }
 }

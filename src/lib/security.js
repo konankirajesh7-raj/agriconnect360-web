@@ -91,11 +91,11 @@ export const searchLimiter = new RateLimiter(30, 60000);
 /** 15A.7 — CSP Header Configuration */
 export const CSP_POLICY = {
   'default-src': ["'self'"],
-  'script-src': ["'self'", "'unsafe-inline'", 'https://apis.google.com', 'https://generativelanguage.googleapis.com'],
+  'script-src': ["'self'", "'unsafe-inline'", 'https://apis.google.com'],
   'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
   'font-src': ["'self'", 'https://fonts.gstatic.com'],
   'img-src': ["'self'", 'data:', 'blob:', 'https://*.supabase.co', 'https://openweathermap.org'],
-  'connect-src': ["'self'", 'https://*.supabase.co', 'wss://*.supabase.co', 'https://generativelanguage.googleapis.com', 'https://api.openweathermap.org', 'https://api.data.gov.in'],
+  'connect-src': ["'self'", 'https://*.supabase.co', 'wss://*.supabase.co', 'https://api.openweathermap.org', 'https://api.data.gov.in'],
   'frame-src': ["'none'"],
   'object-src': ["'none'"],
   'base-uri': ["'self'"],
@@ -107,7 +107,7 @@ export function generateCSPHeader() {
 
 /** 15A.8 — Secrets Audit */
 export function auditSecrets() {
-  const envVars = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'VITE_GEMINI_API_KEY', 'VITE_OPENWEATHER_KEY'];
+  const envVars = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'VITE_OPENWEATHER_API_KEY', 'VITE_DATA_GOV_API_KEY'];
   return envVars.map(key => ({
     key,
     exists: !!import.meta.env[key],

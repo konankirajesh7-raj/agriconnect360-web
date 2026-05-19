@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useAuth } from '../lib/hooks/useAuth';
 import { useSupabaseQuery, useSupabaseMutation } from '../lib/hooks/useSupabaseQuery';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const SOIL_ICONS = { 'Black Cotton':'🟤', 'Red Loamy':'🔴', 'Alluvial':'🟡', 'Sandy Loam':'🟠', 'Clay':'⬛', 'Laterite':'🟫' };
 const IRR_ICONS = { 'Borewell':'🔵', 'Canal':'🌊', 'River':'🏞️', 'Rainfed':'🌧️', 'Drip':'💧', 'Sprinkler':'🚿' };
@@ -14,7 +16,14 @@ const MOCK_FIELDS = [
 ];
 
 export default function FieldsPage() {
-  const { data: fields, loading, isLive, refetch } = useSupabaseQuery('fields', { select:'*', orderBy:{ column:'created_at', ascending:false }, limit:200 }, MOCK_FIELDS);
+  const { t, tx } = useLanguage();
+  const { user } = useAuth();
+  const uid = user?.id;
+
+  const fieldFilters = useMemo(() => uid ? [{ column: 'farmer_id', op: 'eq', value: uid }] : [], [uid]);
+  const myMockFields = useMemo(() => MOCK_FIELDS.filter(f => f.farmer_id === 1), []);
+
+  const { data: fields, loading, isLive, refetch } = useSupabaseQuery('fields', { select:'*', filters: fieldFilters, orderBy:{ column:'created_at', ascending:false }, limit:200, enabled: !!uid }, myMockFields);
   const { insert, loading: saving } = useSupabaseMutation('fields');
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ field_name:'', area_acres:'', soil_type:'Black Cotton', irrigation_type:'Canal', survey_number:'', current_crop:'' });

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const CROPS_LIST = ['Paddy','Cotton','Sugarcane','Chilli','Maize','Groundnut','Wheat','Vegetables','Banana','Tomato'];
 const BUYER_TYPES = ['Mandi / APMC','Private Trader','Broker','Factory','FCI','Direct Consumer','Cooperative','Export'];
@@ -35,9 +36,12 @@ const INP = { width:'100%', padding:'10px 14px', borderRadius:6, border:'1px sol
 const LBL = { display:'block', fontSize:'0.78rem', color:'var(--text-muted)', marginBottom:4, fontWeight:600 };
 
 export default function SalesPage() {
-  const { data: dbSales, isLive } = useSupabaseQuery('sales', { orderBy:{ column:'sale_date', ascending:false }, limit:200 }, INIT_SALES);
+  const { t, tx } = useLanguage();
+  const { data: dbSales, isLive, loading: salesLoading } = useSupabaseQuery('sales', { orderBy:{ column:'sale_date', ascending:false }, limit:200 }, INIT_SALES);
+  const { data: dbMonthly } = useSupabaseQuery('monthly_revenue', { orderBy:{ column:'month', ascending:true }, limit:12 }, MONTHLY_DATA);
   const [localSales, setLocalSales] = useState(INIT_SALES);
   const sales = isLive ? dbSales : localSales;
+  const monthlyData = dbMonthly || MONTHLY_DATA;
 
   const [tab, setTab] = useState('overview');
   const [showAdd, setShowAdd] = useState(false);
@@ -63,15 +67,24 @@ export default function SalesPage() {
   const totalNet      = sales.reduce((s,r) => s+(r.net_amount||r.total_amount||0), 0);
   const totalQty      = sales.reduce((s,r) => s+(r.quantity_quintals||0), 0);
   const pendingCount  = sales.filter(s => s.payment_status==='pending').length;
-  const totalExpenses = MONTHLY_DATA.reduce((s,m)=>s+m.expenses,0);
-  const totalProfit   = MONTHLY_DATA.reduce((s,m)=>s+(m.revenue-m.expenses),0);
+  const totalExpenses = monthlyData.reduce((s,m)=>s+(m.expenses||0),0);
+  const totalProfit   = monthlyData.reduce((s,m)=>s+((m.revenue||0)-(m.expenses||0)),0);
+
+  // Compute buyer distribution dynamically from sales data
+  const buyerDist = useMemo(() => {
+    const COLORS = ['#22c55e','#3b82f6','#f59e0b','#8b5cf6','#ef4444','#06b6d4'];
+    const types = {};
+    sales.forEach(s => { const bt = s.buyer_type || 'Other'; types[bt] = (types[bt]||0) + (s.total_amount||0); });
+    const total = Object.values(types).reduce((a,b)=>a+b,0) || 1;
+    return Object.entries(types).map(([name, val], i) => ({ name, value: Math.round((val/total)*100), color: COLORS[i%COLORS.length] }));
+  }, [sales]);
+  const activeBuyerDist = buyerDist.length > 0 ? buyerDist : BUYER_DIST;
 
   const monthlyWithNew = useMemo(() => {
     const newSales = localSales.filter(s => !INIT_SALES.find(i=>i.id===s.id));
-    if (!newSales.length) return MONTHLY_DATA;
-    const apr = MONTHLY_DATA.find(m=>m.month==='Apr');
-    return MONTHLY_DATA.map(m => m.month==='Apr' ? { ...m, revenue: m.revenue + newSales.reduce((s,r)=>s+(r.total_amount||0),0) } : m);
-  }, [localSales]);
+    if (!newSales.length) return monthlyData;
+    return monthlyData.map(m => m.month==='Apr' ? { ...m, revenue: (m.revenue||0) + newSales.reduce((s,r)=>s+(r.total_amount||0),0) } : m);
+  }, [localSales, monthlyData]);
 
   const tabs = [
     { id:'overview',      icon:'📊', label:'Overview' },
@@ -139,14 +152,14 @@ export default function SalesPage() {
               <div style={{ fontSize:'0.85rem', fontWeight:600, color:'var(--text-secondary)', marginBottom:12 }}>Sales by Buyer Type</div>
               <ResponsiveContainer width="100%" height={180}>
                 <PieChart>
-                  <Pie data={BUYER_DIST} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" paddingAngle={3}>
-                    {BUYER_DIST.map((c,i)=><Cell key={i} fill={c.color}/>)}
+                  <Pie data={activeBuyerDist} cx="50%" cy="50%" innerRadius={45} outerRadius={70} dataKey="value" paddingAngle={3}>
+                    {activeBuyerDist.map((c,i)=><Cell key={i} fill={c.color}/>)}
                   </Pie>
                   <Tooltip/>
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-                {BUYER_DIST.map(b=>(
+                {activeBuyerDist.map(b=>(
                   <div key={b.name} style={{ display:'flex', alignItems:'center', gap:4, fontSize:'0.72rem', color:'var(--text-muted)' }}>
                     <div style={{ width:8, height:8, borderRadius:'50%', background:b.color }}/>{b.name} ({b.value}%)
                   </div>

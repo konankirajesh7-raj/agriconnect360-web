@@ -1,9 +1,12 @@
 /**
  * Service Worker — RythuSphere PWA
- * Phase 10A: Offline caching, background sync, cache-first for Weather/Prices
+ * Versioned caching with auto-cleanup of old caches on update
  */
 
-const CACHE_NAME = 'rythusphere-v1';
+const CACHE_VERSION = 'v2';
+const CACHE_NAME = 'rythusphere-' + CACHE_VERSION;
+const API_CACHE = 'rythusphere-api-' + CACHE_VERSION;
+
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -11,27 +14,23 @@ const STATIC_ASSETS = [
   '/logo.svg',
 ];
 
-const API_CACHE = 'rythusphere-api-v1';
 const API_CACHE_DURATION = 4 * 60 * 60 * 1000; // 4 hours
 
 // ── Install: Pre-cache app shell ────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('🌾 Service Worker: Caching app shell');
-      return cache.addAll(STATIC_ASSETS);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
   self.skipWaiting();
 });
 
-// ── Activate: Clean old caches ──────────────────────────────────────────────
+// ── Activate: Delete ALL old caches that don't match current version ────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) =>
       Promise.all(
         cacheNames
-          .filter((name) => name !== CACHE_NAME && name !== API_CACHE)
+          .filter((name) => name.startsWith('rythusphere-') && name !== CACHE_NAME && name !== API_CACHE)
           .map((name) => caches.delete(name))
       )
     )
@@ -154,8 +153,6 @@ self.addEventListener('sync', (event) => {
 });
 
 async function processOfflineQueue() {
-  console.log('🔄 Background sync: Processing offline queue...');
-  // The actual queue processing is handled by offlineQueue.js in the main thread
   const clients = await self.clients.matchAll();
   clients.forEach(client => {
     client.postMessage({ type: 'PROCESS_OFFLINE_QUEUE' });
@@ -163,7 +160,6 @@ async function processOfflineQueue() {
 }
 
 async function refreshPrices() {
-  console.log('💰 Background sync: Refreshing market prices...');
   const clients = await self.clients.matchAll();
   clients.forEach(client => {
     client.postMessage({ type: 'REFRESH_PRICES' });

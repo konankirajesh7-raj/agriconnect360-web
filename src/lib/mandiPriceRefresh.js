@@ -15,7 +15,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const DATA_GOV_API = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070";
-const DATA_GOV_KEY = Deno.env.get("DATA_GOV_API_KEY") || "579b464db66ec23bdd000001cdd3946e44ce4aad7209ff7b23ac571b";
+const DATA_GOV_KEY = Deno.env.get("DATA_GOV_API_KEY") || "";
 
 const CROP_MAP = {
   "paddy(dhan)(common)": "Paddy", "rice": "Paddy", "paddy": "Paddy",

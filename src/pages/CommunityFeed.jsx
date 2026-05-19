@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCommunityFeed, ROLE_COLORS, ROLE_ICONS, timeAgo } from '../lib/hooks/useCommunityFeed';
 import PostUploadModal from '../components/PostUploadModal';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const RC = ROLE_COLORS, RI = ROLE_ICONS;
 

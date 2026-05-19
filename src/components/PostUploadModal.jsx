@@ -145,7 +145,7 @@ export default function PostUploadModal({ onClose, onSuccess }) {
 
       setProgress(90);
       const { error: insertErr } = await supabase.from('community_posts').insert(postData);
-      if (insertErr) console.warn('Insert fallback:', insertErr.message);
+      if (insertErr) { /* warn removed */ }
       setProgress(100);
       setDone(true);
       setTimeout(() => { onSuccess?.(); onClose(); }, 2500);

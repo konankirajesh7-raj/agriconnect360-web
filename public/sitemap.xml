@@ -1,44 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://www.agriconnect360.in/home</loc>
-    <lastmod>2026-04-20</lastmod>
+    <loc>https://rythusphere.in/</loc>
+    <lastmod>2026-05-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://www.agriconnect360.in/features</loc>
-    <lastmod>2026-04-20</lastmod>
+    <loc>https://rythusphere.in/home</loc>
+    <lastmod>2026-05-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://rythusphere.in/features</loc>
+    <lastmod>2026-05-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://www.agriconnect360.in/about</loc>
-    <lastmod>2026-04-20</lastmod>
+    <loc>https://rythusphere.in/about</loc>
+    <lastmod>2026-05-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.agriconnect360.in/pricing</loc>
-    <lastmod>2026-04-20</lastmod>
+    <loc>https://rythusphere.in/pricing</loc>
+    <lastmod>2026-05-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.agriconnect360.in/contact-us</loc>
-    <lastmod>2026-04-20</lastmod>
+    <loc>https://rythusphere.in/contact-us</loc>
+    <lastmod>2026-05-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://www.agriconnect360.in/landing</loc>
-    <lastmod>2026-04-20</lastmod>
+    <loc>https://rythusphere.in/store</loc>
+    <lastmod>2026-05-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://rythusphere.in/blog</loc>
+    <lastmod>2026-05-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://rythusphere.in/landing</loc>
+    <lastmod>2026-05-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.agriconnect360.in/login</loc>
-    <lastmod>2026-04-20</lastmod>
+    <loc>https://rythusphere.in/login</loc>
+    <lastmod>2026-05-06</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>

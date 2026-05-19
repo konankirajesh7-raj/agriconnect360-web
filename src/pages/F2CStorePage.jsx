@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const PRODUCTS = [
   { id: 1, name: 'Sona Masuri Rice (25kg)', farmer: 'Ravi Kumar', village: 'Mangalagiri', price: 1200, mrp: 1600, rating: 4.7, reviews: 142, organic: false, image: '🍚', category: 'Grains', inStock: true },
@@ -14,6 +15,7 @@ const PRODUCTS = [
 const CATEGORIES = ['All', ...new Set(PRODUCTS.map(p => p.category))];
 
 export default function F2CStorePage() {
+  const { t, tx } = useLanguage();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
   const [organicOnly, setOrganicOnly] = useState(false);

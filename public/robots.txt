@@ -1,7 +1,8 @@
-# AgriConnect 360 — www.agriconnect360.in
+# RythuSphere — rythusphere.in
 # Smart Farming Platform for Andhra Pradesh
 
 User-agent: *
+Allow: /
 Allow: /home
 Allow: /features
 Allow: /about
@@ -9,8 +10,17 @@ Allow: /pricing
 Allow: /contact-us
 Allow: /landing
 Allow: /login
-Disallow: /api/
+Allow: /store
+Allow: /blog
+
+# Protected app routes — no indexing
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /onboarding
+Disallow: /subscription
 Disallow: /settings
+Disallow: /profile
+Disallow: /api/
 Disallow: /farmers
 Disallow: /fields
 Disallow: /crops
@@ -33,5 +43,10 @@ Disallow: /qa
 Disallow: /network
 Disallow: /weather
 Disallow: /market-prices
+Disallow: /customer-dashboard
+Disallow: /industrial-dashboard
+Disallow: /broker-dashboard
+Disallow: /supplier-dashboard
+Disallow: /labour-dashboard
 
-Sitemap: https://www.agriconnect360.in/sitemap.xml
+Sitemap: https://rythusphere.in/sitemap.xml

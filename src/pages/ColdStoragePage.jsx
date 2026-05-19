@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../lib/hooks/useAuth';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 const AP_DISTRICTS = ['All Locations','Guntur','Krishna','Anantapur','Chittoor','Kurnool','Prakasam','Nellore','East Godavari','West Godavari','Visakhapatnam','Vizianagaram','Srikakulam','Kadapa'];
 const DISTRICT_COORDS = [
   { n:'Guntur', lat:16.3067, lon:80.4365 }, { n:'Krishna', lat:16.5062, lon:80.6480 },
@@ -191,6 +193,7 @@ const PREV_BOOKINGS = [
 ];
 
 export default function ColdStoragePage() {
+  const { user, farmerProfile } = useAuth();
   const [view, setView] = useState('list');
   const [selected, setSelected] = useState(null);
   const [booking, setBooking] = useState(null);
@@ -199,6 +202,45 @@ export default function ColdStoragePage() {
   const [gpsDistrict, setGpsDistrict] = useState('');
   const [myBookings, setMyBookings] = useState(PREV_BOOKINGS);
   const [showBookings, setShowBookings] = useState(false);
+  const [allFacilities, setAllFacilities] = useState(FACILITIES);
+  const [showAddListing, setShowAddListing] = useState(false);
+  const [listingForm, setListingForm] = useState({ name:'', location:'', district:'Guntur', capacity:'', available:'', price:'', temp:'-10°C to 5°C', contact:'' });
+  const [listingSaving, setListingSaving] = useState(false);
+  const [listingSuccess, setListingSuccess] = useState(false);
+  const userRole = farmerProfile?.role || localStorage.getItem('rythu_user_role') || 'farmer';
+  const canAddListing = !['customer','labour'].includes(userRole);
+
+  // Fetch from Supabase
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase.from('cold_storage_units').select('*').eq('status','available').limit(50);
+        if (data?.length) {
+          const dbUnits = data.map(u => ({
+            id:u.id, name:u.name, location:u.location||u.district, district:u.district, lat:16.3, lng:80.4,
+            distance:5, capacity:u.capacity_tons||500, available:u.available_tons||200,
+            pricePerDay:u.price_per_ton_month?u.price_per_ton_month/30:3, temp:u.temperature_range||'-10°C to 5°C',
+            rating:u.rating||4.0, phone:u.contact||'-', type:'Cold Room', crops:['General'], img:'🏭'
+          }));
+          setAllFacilities([...dbUnits, ...FACILITIES]);
+        }
+      } catch {}
+    })();
+  }, []);
+
+  // Fetch user's past bookings from Supabase
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const { data } = await supabase.from('cold_storage_bookings').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+        if (data?.length) {
+          const mapped = data.map(d => ({ id: d.id, facility: d.facility_name, crop: d.crop, qty: d.quantity_tons, from: d.from_date, to: d.to_date, cost: d.estimated_cost, status: d.status || 'active' }));
+          setMyBookings(prev => [...mapped, ...prev.filter(b => !mapped.find(m => m.id === b.id))]);
+        }
+      } catch {}
+    })();
+  }, [user?.id]);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -210,12 +252,23 @@ export default function ColdStoragePage() {
     }, () => {}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
   }, []);
 
-  let filtered = FACILITIES.filter(f => f.name.toLowerCase().includes(search.toLowerCase()) || f.location.toLowerCase().includes(search.toLowerCase()));
+  let filtered = allFacilities.filter(f => f.name.toLowerCase().includes(search.toLowerCase()) || f.location.toLowerCase().includes(search.toLowerCase()));
   if (locFilter !== 'All Locations') filtered = filtered.filter(f => f.district === locFilter);
 
   function handleBookingDone(bk) {
-    setMyBookings(prev => [{ id:`BK-${String(prev.length+1).padStart(3,'0')}`, facility:bk.facility, crop:bk.crop, qty:bk.qty, from:bk.from, to:bk.to, cost:bk.cost, status:'active' }, ...prev]);
+    const newBk = { id:`BK-${String(myBookings.length+1).padStart(3,'0')}`, facility:bk.facility, crop:bk.crop, qty:bk.qty, from:bk.from, to:bk.to, cost:bk.cost, status:'active' };
+    setMyBookings(prev => [newBk, ...prev]);
     setBooking(null);
+    if (user?.id) {
+      // Save booking to Supabase
+      supabase.from('cold_storage_bookings').insert({
+        user_id: user.id, facility_name: bk.facility, crop: bk.crop,
+        quantity_tons: bk.qty, from_date: bk.from, to_date: bk.to,
+        estimated_cost: bk.cost, contact_name: farmerProfile?.name || '',
+        contact_phone: farmerProfile?.phone || '', status: 'active'
+      }).then(() => {});
+      supabase.from('notifications').insert({ user_id:user.id, title:'❄️ Cold Storage Booked', body:`${bk.facility} — ${bk.qty} MT from ${bk.from} to ${bk.to}. Cost: ₹${bk.cost}`, type:'finance', read:false }).then(()=>{});
+    }
   }
 
   return (
@@ -261,6 +314,11 @@ export default function ColdStoragePage() {
           📦 My Bookings
           {myBookings.filter(b=>b.status==='active').length > 0 && <span style={{ position:'absolute',top:-4,right:-4,minWidth:16,height:16,borderRadius:8,background:'#ef4444',color:'#fff',fontSize:'0.55rem',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',padding:'0 3px' }}>{myBookings.filter(b=>b.status==='active').length}</span>}
         </button>
+        {canAddListing && (
+          <button onClick={() => setShowAddListing(true)} style={{ padding:'7px 16px',borderRadius:999,fontSize:'0.75rem',fontWeight:600,cursor:'pointer',border:'1px solid rgba(139,92,246,0.4)',background:'rgba(139,92,246,0.15)',color:'#a78bfa',transition:'all .15s' }}>
+            ➕ Add My Listing
+          </button>
+        )}
       </div>
 
       {/* My Bookings */}
@@ -333,6 +391,71 @@ export default function ColdStoragePage() {
 
       <DetailModal facility={selected} onClose={() => setSelected(null)} onBook={f => { setSelected(null); setBooking(f); }} />
       <BookingModal facility={booking} onClose={() => setBooking(null)} onSave={handleBookingDone} />
+
+      {showAddListing && (
+        <div style={cs.overlay} onClick={() => { setShowAddListing(false); setListingSuccess(false); }}>
+          <div style={cs.modal} onClick={e => e.stopPropagation()}>
+            <div style={cs.mHead}>
+              <div style={{ fontSize:'1rem',fontWeight:800,color:'var(--text-primary)' }}>➕ Add Cold Storage Listing</div>
+              <button style={cs.close} onClick={() => { setShowAddListing(false); setListingSuccess(false); }}>✕</button>
+            </div>
+            <div style={cs.mBody}>
+              {listingSuccess ? (
+                <div style={{ textAlign:'center',padding:30 }}>
+                  <div style={{ fontSize:'3rem',marginBottom:12 }}>✅</div>
+                  <div style={{ fontWeight:700,fontSize:'1.05rem',color:'#34d399',marginBottom:6 }}>Listing Added!</div>
+                  <div style={{ fontSize:'0.82rem',color:'var(--text-muted)',marginBottom:18 }}>Your cold storage is now visible to all users.</div>
+                  <button style={{...cs.btn,width:'auto',padding:'10px 32px'}} onClick={() => { setShowAddListing(false); setListingSuccess(false); }}>Done</button>
+                </div>
+              ) : (
+                <>
+                  <div style={cs.row}>
+                    <div style={{ flex:1 }}><label style={cs.label}>Facility Name *</label><input value={listingForm.name} onChange={e => setListingForm(p=>({...p,name:e.target.value}))} placeholder="e.g. My Cold Storage" style={cs.input} /></div>
+                  </div>
+                  <div style={cs.row}>
+                    <div style={{ flex:1 }}><label style={cs.label}>Location *</label><input value={listingForm.location} onChange={e => setListingForm(p=>({...p,location:e.target.value}))} placeholder="e.g. Guntur, AP" style={cs.input} /></div>
+                    <div style={{ flex:1 }}><label style={cs.label}>District *</label>
+                      <select value={listingForm.district} onChange={e => setListingForm(p=>({...p,district:e.target.value}))} style={{...cs.input,appearance:'auto'}}>
+                        {AP_DISTRICTS.filter(d => d !== 'All Locations').map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div style={cs.row}>
+                    <div style={{ flex:1 }}><label style={cs.label}>Total Capacity (MT) *</label><input type="number" value={listingForm.capacity} onChange={e => setListingForm(p=>({...p,capacity:e.target.value}))} placeholder="e.g. 5000" style={cs.input} /></div>
+                    <div style={{ flex:1 }}><label style={cs.label}>Available (MT)</label><input type="number" value={listingForm.available} onChange={e => setListingForm(p=>({...p,available:e.target.value}))} placeholder="e.g. 2000" style={cs.input} /></div>
+                  </div>
+                  <div style={cs.row}>
+                    <div style={{ flex:1 }}><label style={cs.label}>Price (₹/MT/month)</label><input type="number" value={listingForm.price} onChange={e => setListingForm(p=>({...p,price:e.target.value}))} placeholder="e.g. 100" style={cs.input} /></div>
+                    <div style={{ flex:1 }}><label style={cs.label}>Temperature Range</label><input value={listingForm.temp} onChange={e => setListingForm(p=>({...p,temp:e.target.value}))} style={cs.input} /></div>
+                  </div>
+                  <div style={cs.row}>
+                    <div style={{ flex:1 }}><label style={cs.label}>Contact Phone *</label><input value={listingForm.contact} onChange={e => setListingForm(p=>({...p,contact:e.target.value.replace(/\D/g,'').slice(0,10)}))} placeholder="9876543210" maxLength={10} style={cs.input} /></div>
+                  </div>
+                  <button style={{...cs.btn, opacity: listingSaving || !listingForm.name || !listingForm.capacity || !listingForm.contact ? 0.5 : 1}} disabled={listingSaving || !listingForm.name || !listingForm.capacity || !listingForm.contact} onClick={async () => {
+                    setListingSaving(true);
+                    try {
+                      await supabase.from('cold_storage_units').insert({
+                        name: listingForm.name, location: listingForm.location, district: listingForm.district,
+                        capacity_tons: parseFloat(listingForm.capacity) || 0, available_tons: parseFloat(listingForm.available) || 0,
+                        price_per_ton_month: parseFloat(listingForm.price) || 0, temperature_range: listingForm.temp,
+                        contact: listingForm.contact, status: 'available',
+                      });
+                      setListingSuccess(true);
+                      setListingForm({ name:'', location:'', district:'Guntur', capacity:'', available:'', price:'', temp:'-10°C to 5°C', contact:'' });
+                      const { data } = await supabase.from('cold_storage_units').select('*').eq('status','available').limit(50);
+                      if (data?.length) {
+                        const dbUnits = data.map(u => ({ id:u.id, name:u.name, location:u.location||u.district, district:u.district, lat:16.3, lng:80.4, distance:5, capacity:u.capacity_tons||500, available:u.available_tons||200, pricePerDay:u.price_per_ton_month?u.price_per_ton_month/30:3, temp:u.temperature_range||'-10°C to 5°C', rating:u.rating||4.0, phone:u.contact||'-', type:'Cold Room', crops:['General'], img:'🏭' }));
+                        setAllFacilities([...dbUnits, ...FACILITIES]);
+                      }
+                    } catch {}
+                    setListingSaving(false);
+                  }}>{listingSaving ? '⏳ Saving...' : '📋 Add Listing'}</button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

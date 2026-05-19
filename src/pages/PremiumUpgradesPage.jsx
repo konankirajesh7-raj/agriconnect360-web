@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/hooks/useAuth';
 import { premiumDB } from '../lib/supabase';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const TABS = [
   { id: 'disease', label: '12A AI Disease', icon: '🧬' },
@@ -10,9 +11,7 @@ const TABS = [
   { id: 'whatsapp', label: '12D WhatsApp Bot', icon: '💬' },
   { id: 'store', label: '12E F2C Store', icon: '🛒' },
   { id: 'analytics', label: '12F Analytics & ML', icon: '📈' },
-  { id: 'iot', label: '12G IoT Farming', icon: '📡' },
   { id: 'finance', label: '12H Financial', icon: '🏦' },
-  { id: 'gamification', label: '12I Gamification', icon: '🎮' },
 ];
 
 const DISTRICTS = ['Guntur', 'Krishna', 'Kurnool', 'Nellore', 'Visakhapatnam', 'Anantapur', 'Kadapa', 'Eluru'];
@@ -24,11 +23,7 @@ const FALLBACK_STORE_LISTINGS = [
   { id: 'demo-3', produce_name: 'Groundnut', district: 'Kurnool', farmer_name: 'Satish Yadav', price_per_kg: 62, grade: 'B', available_qty_kg: 420, season: 'Rabi', bulk_discount_pct: 12, delivery_tracking_id: 'TRK-98213' },
 ];
 
-const FALLBACK_LEADERBOARD = [
-  { id: 'lb1', farmer_name: 'Lakshmi Devi', district: 'Krishna', agri_coins: 1640 },
-  { id: 'lb2', farmer_name: 'Ramesh Rao', district: 'Guntur', agri_coins: 1475 },
-  { id: 'lb3', farmer_name: 'Priya Reddy', district: 'Nellore', agri_coins: 1310 },
-];
+
 
 const FALLBACK_LOAN_MARKETPLACE = [
   { id: 'loan-1', lender_name: 'Kisan Credit NBFC', interest_rate: 11.5, max_amount: 200000 },
@@ -121,9 +116,10 @@ function parseDiagnosisPayload(payloadText) {
 }
 
 async function runGeminiVisionDiagnosis({ imageDataUrl, cropName, symptoms, language }) {
-  const key = import.meta.env.VITE_GEMINI_API_KEY || '';
-  if (!key) {
-    throw new Error('Gemini API key is missing (VITE_GEMINI_API_KEY).');
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+  const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    throw new Error('Supabase not configured. AI proxy unavailable.');
   }
 
   const mimeTypeMatch = imageDataUrl?.match(/^data:(.*?);base64,/);
@@ -139,25 +135,21 @@ Symptoms: ${symptoms || 'Not provided'}
 Reply in ${replyLanguage} strictly as JSON with keys:
 diseaseName, severity, treatment, prevention, recommendedPesticide, confidence, outbreakRisk.`;
 
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/ai-vision-proxy`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{
-        parts: [
-          { text: prompt },
-          { inlineData: { mimeType, data: base64 } },
-        ],
-      }],
-      generationConfig: { temperature: 0.25, maxOutputTokens: 800 },
-    }),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ prompt, imageBase64: base64, mimeType }),
   });
 
   const json = await res.json();
   if (!res.ok) {
-    throw new Error(json?.error?.message || `Gemini vision request failed (${res.status})`);
+    throw new Error(json?.error || `AI vision proxy error (${res.status})`);
   }
-  return json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  return json?.text || '';
 }
 
 function buildReportHtml(report) {
@@ -272,15 +264,7 @@ export default function PremiumUpgradesPage() {
   });
   const [analyticsSaved, setAnalyticsSaved] = useState('');
 
-  // 12G — IoT
-  const [sensorForm, setSensorForm] = useState({
-    district: 'Guntur',
-    soil_moisture: 38,
-    soil_ph: 6.8,
-    temperature_c: 31,
-    device_provider: 'Fasal',
-  });
-  const [sensorData, setSensorData] = useState([]);
+
 
   // 12H — Finance
   const [kccTracker, setKccTracker] = useState({
@@ -297,14 +281,7 @@ export default function PremiumUpgradesPage() {
   });
   const [taxInputs, setTaxInputs] = useState({ income: 850000, expenses: 420000, deductions: 150000 });
 
-  // 12I — Gamification
-  const [gameProfile, setGameProfile] = useState({
-    streak_days: 6,
-    agri_coins: 420,
-    referral_code: 'AGRI-REFER-360',
-    challenges_completed: 4,
-  });
-  const [leaderboard, setLeaderboard] = useState(FALLBACK_LEADERBOARD);
+
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -349,22 +326,11 @@ export default function PremiumUpgradesPage() {
       if (!error && Array.isArray(data) && data.length) setStoreListings(data.map((row) => normalizeRecordId(row, 'listing')));
     });
 
-    premiumDB.iot.getSensors(farmerId).then(({ data, error }) => {
-      if (!error && Array.isArray(data)) setSensorData(data);
-    });
-
     premiumDB.finance.getKcc(farmerId).then(({ data, error }) => {
       if (!error && data) setKccTracker((prev) => ({ ...prev, ...data }));
     });
     premiumDB.finance.getLoanMarketplace().then(({ data, error }) => {
       if (!error && Array.isArray(data) && data.length) setLoanMarketplace(data);
-    });
-
-    premiumDB.gamification.getProfile(farmerId).then(({ data, error }) => {
-      if (!error && data) setGameProfile((prev) => ({ ...prev, ...data }));
-    });
-    premiumDB.gamification.getLeaderboard().then(({ data, error }) => {
-      if (!error && Array.isArray(data) && data.length) setLeaderboard(data.map((row) => normalizeRecordId(row, 'leaderboard')));
     });
   }, [farmerId]);
 
@@ -612,32 +578,10 @@ export default function PremiumUpgradesPage() {
     setStoreListings((prev) => [saved, ...prev]);
   }
 
-  async function saveSensorData() {
-    const payload = {
-      ...sensorForm,
-      farmer_id: Number(farmerId) || 0,
-      recorded_at: new Date().toISOString(),
-    };
-    const { data, error } = await premiumDB.iot.insertSensorData(payload);
-    const saved = error ? { ...payload, id: `local-s-${Date.now()}` } : data;
-    setSensorData((prev) => [saved, ...prev].slice(0, 200));
-  }
-
   async function saveKccTracker() {
     await premiumDB.finance.upsertKcc({
       ...kccTracker,
       farmer_id: Number(farmerId) || 0,
-      updated_at: new Date().toISOString(),
-    });
-  }
-
-  async function saveGameProfile(nextProfile) {
-    setGameProfile(nextProfile);
-    await premiumDB.gamification.upsertProfile({
-      ...nextProfile,
-      farmer_id: Number(farmerId) || 0,
-      farmer_name: farmerProfile?.name || 'Farmer',
-      district: farmerProfile?.district || 'Guntur',
       updated_at: new Date().toISOString(),
     });
   }
@@ -648,7 +592,7 @@ export default function PremiumUpgradesPage() {
         <div>
           <div className="section-title">💎 Phase 12 — Premium Upgrades</div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>
-            AI Disease Detection, Push Alerts, Reports, WhatsApp, F2C Store, Analytics, IoT, Finance and Gamification
+            AI Disease Detection, Push Alerts, Reports, WhatsApp, F2C Store, Analytics & Finance
           </div>
         </div>
         <button className="btn btn-outline" onClick={() => navigate('/store')} style={{ padding: '8px 14px', fontSize: '0.82rem' }}>
@@ -1054,43 +998,7 @@ export default function PremiumUpgradesPage() {
         </div>
       )}
 
-      {activeTab === 'iot' && (
-        <div className="card" style={{ padding: 22 }}>
-          <div style={{ fontWeight: 700, marginBottom: 6, fontFamily: 'var(--font-display)', fontSize: '1rem' }}>📡 IoT Smart Farming Dashboard</div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 16 }}>
-            Fasal/CropIn sensor integration • Soil moisture triggers • Smart irrigation scheduling
-          </div>
 
-          <div className="prem-iot-inputs">
-            <select value={sensorForm.device_provider} onChange={(e) => setSensorForm((p) => ({ ...p, device_provider: e.target.value }))}>
-              <option>Fasal</option>
-              <option>CropIn</option>
-              <option>RythuSphere Sensor</option>
-            </select>
-            <input type="number" value={sensorForm.soil_moisture} onChange={(e) => setSensorForm((p) => ({ ...p, soil_moisture: Number(e.target.value) }))} placeholder="Soil moisture %" />
-            <input type="number" value={sensorForm.soil_ph} onChange={(e) => setSensorForm((p) => ({ ...p, soil_ph: Number(e.target.value) }))} placeholder="Soil pH" />
-            <input type="number" value={sensorForm.temperature_c} onChange={(e) => setSensorForm((p) => ({ ...p, temperature_c: Number(e.target.value) }))} placeholder="Temp °C" />
-            <button className="btn btn-primary" style={{ padding: '9px 12px' }} onClick={saveSensorData}>📡 Save Reading</button>
-          </div>
-
-          <div className={`prem-iot-status ${sensorForm.soil_moisture < 30 ? 'warn' : 'ok'}`}>
-            <div>🚿 Smart irrigation: <b>{sensorForm.soil_moisture < 35 ? 'Irrigate today (2 cycles of 25 mins)' : 'Next irrigation in ~18 hours'}</b></div>
-            <div style={{ marginTop: 4 }}>
-              {sensorForm.soil_moisture < 30 ? '⚠️ Dry soil alert triggered for this field.' : '✅ Soil moisture in acceptable range.'}
-            </div>
-          </div>
-
-          <div className="prem-iot-history">
-            {sensorData.slice(0, 20).map((row) => (
-              <div key={row.id || row.recorded_at} className="prem-iot-row">
-                <span>📡 {row.device_provider} • 💧 {row.soil_moisture}% • pH {row.soil_ph}</span>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem' }}>{new Date(row.recorded_at || Date.now()).toLocaleString('en-IN')}</span>
-              </div>
-            ))}
-            {!sensorData.length && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: 16 }}>No IoT sensor readings yet. Save your first reading above.</div>}
-          </div>
-        </div>
-      )}
 
       {activeTab === 'finance' && (
         <div className="card" style={{ padding: 22 }}>
@@ -1160,79 +1068,7 @@ export default function PremiumUpgradesPage() {
         </div>
       )}
 
-      {activeTab === 'gamification' && (
-        <div className="card" style={{ padding: 22 }}>
-          <div style={{ fontWeight: 700, marginBottom: 6, fontFamily: 'var(--font-display)', fontSize: '1rem' }}>🎮 Gamification & Rewards</div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 16 }}>
-            Earn AgriCoins through daily logins, challenges, and referrals. Compete on the leaderboard!
-          </div>
 
-          <div className="prem-game-stats">
-            <div className="prem-game-stat streak">
-              <div className="icon">🔥</div>
-              <div className="stat-value">{gameProfile.streak_days}</div>
-              <div className="stat-label">Day Streak</div>
-            </div>
-            <div className="prem-game-stat coins">
-              <div className="icon">🪙</div>
-              <div className="stat-value">{gameProfile.agri_coins}</div>
-              <div className="stat-label">AgriCoins</div>
-            </div>
-            <div className="prem-game-stat">
-              <div className="icon">🏅</div>
-              <div className="stat-value">{gameProfile.challenges_completed}</div>
-              <div className="stat-label">Challenges Done</div>
-            </div>
-            <div className="prem-game-stat">
-              <div className="icon">👥</div>
-              <div className="stat-value">{gameProfile.referral_code}</div>
-              <div className="stat-label">Referral Code</div>
-            </div>
-          </div>
-
-          <div className="prem-game-actions">
-            <button className="btn btn-primary" style={{ padding: '9px 14px', fontSize: '0.82rem' }} onClick={() => saveGameProfile({ ...gameProfile, streak_days: gameProfile.streak_days + 1, agri_coins: gameProfile.agri_coins + 25 })}>
-              ✅ Daily Login (+25 🪙)
-            </button>
-            <button className="btn btn-outline" style={{ padding: '9px 14px', fontSize: '0.82rem' }} onClick={() => saveGameProfile({ ...gameProfile, challenges_completed: gameProfile.challenges_completed + 1, agri_coins: gameProfile.agri_coins + 80 })}>
-              🏅 Complete Challenge (+80 🪙)
-            </button>
-            <button className="btn btn-outline" style={{ padding: '9px 14px', fontSize: '0.82rem' }} onClick={() => saveGameProfile({ ...gameProfile, agri_coins: gameProfile.agri_coins + 50 })}>
-              👥 Referral Signup (+50 🪙)
-            </button>
-          </div>
-
-          <div className="prem-game-bottom">
-            <div className="prem-game-panel">
-              <div className="panel-title">🏆 Leaderboard</div>
-              {leaderboard.map((row, idx) => (
-                <div key={row.id || idx} className="prem-leaderboard-row">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className="rank">{idx + 1}</span>
-                    <span>{row.farmer_name || row.name || 'Farmer'} ({row.district || 'AP'})</span>
-                  </div>
-                  <span className="coins">🪙 {row.agri_coins}</span>
-                </div>
-              ))}
-              {!leaderboard.length && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', padding: 12 }}>No leaderboard data yet.</div>}
-            </div>
-
-            <div className="prem-game-panel">
-              <div className="panel-title">🏆 Seasonal Contests</div>
-              {[
-                ['📸', 'Best crop photo contest (Kharif)'],
-                ['💧', 'Highest water efficiency challenge'],
-                ['🌾', 'Top yield improver in district'],
-              ].map(([emoji, c]) => (
-                <div key={c} className="prem-contest-row">
-                  <span>{emoji} {c}</span>
-                  <button className="btn btn-outline" style={{ padding: '5px 10px', fontSize: '0.72rem' }}>Join</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

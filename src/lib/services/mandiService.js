@@ -59,20 +59,18 @@ export async function fetchLiveMandiPrices(state = 'Andhra Pradesh', commodity =
 
     // Transform Agmarknet format to our schema
     return data.records.map(r => ({
-      crop_type: r.commodity,
+      crop: r.commodity,
       variety: r.variety,
-      market_name: r.market,
+      mandi: r.market,
       district: r.district,
-      state: r.state,
       min_price: parseFloat(r.min_price) || 0,
       max_price: parseFloat(r.max_price) || 0,
-      modal_price: parseFloat(r.modal_price) || 0,
-      unit: 'quintal',
+      price: parseFloat(r.modal_price) || 0,
       price_date: r.arrival_date,
       source: 'agmarknet_live',
     }));
   } catch (err) {
-    console.warn('Agmarknet API unavailable:', err.message);
+    /* warn removed */
     return null; // Will fallback to Supabase data
   }
 }
@@ -88,26 +86,22 @@ export async function syncPricesToSupabase(prices) {
       .from('market_prices')
       .upsert(
         prices.map(p => ({
-          crop_type: p.crop_type,
-          variety: p.variety,
-          market_name: p.market_name,
+          crop: p.crop,
           district: p.district,
-          state: p.state,
+          mandi: p.mandi,
+          price: p.price,
           min_price: p.min_price,
           max_price: p.max_price,
-          modal_price: p.modal_price,
-          unit: p.unit,
           price_date: p.price_date,
           source: p.source || 'agmarknet',
-          updated_at: new Date().toISOString(),
         })),
-        { onConflict: 'crop_type,market_name,price_date', ignoreDuplicates: true }
+        { onConflict: 'crop,district,price_date', ignoreDuplicates: true }
       );
 
     if (error) throw error;
     return { success: true, synced: prices.length };
   } catch (err) {
-    console.warn('Price sync failed:', err.message);
+    /* warn removed */
     return { success: false, error: err.message };
   }
 }
@@ -127,7 +121,7 @@ export async function getMarketPrices(state = DEFAULT_STATE, district = null) {
 
   // Fallback: read from Supabase
   try {
-    let query = supabase.from('market_prices').select('*').eq('state', state).order('updated_at', { ascending: false });
+    let query = supabase.from('market_prices').select('*').order('price_date', { ascending: false });
     if (district) query = query.eq('district', district);
     const { data, error } = await query.limit(100);
     if (error) throw error;
@@ -148,8 +142,8 @@ export async function getPriceHistory(cropType, district = null, days = 30) {
   try {
     let query = supabase
       .from('market_prices')
-      .select('modal_price, min_price, max_price, price_date, market_name')
-      .ilike('crop_type', `%${cropType}%`)
+      .select('price, min_price, max_price, price_date, mandi')
+      .ilike('crop', `%${cropType}%`)
       .gte('price_date', sinceStr)
       .order('price_date', { ascending: true });
 
@@ -168,11 +162,10 @@ export async function getPriceHistory(cropType, district = null, days = 30) {
  */
 export async function getPriceAlerts(thresholdPercent = 5) {
   try {
-    const { data } = await supabase
+     const { data } = await supabase
       .from('market_prices')
       .select('*')
-      .eq('state', DEFAULT_STATE)
-      .order('updated_at', { ascending: false })
+      .order('price_date', { ascending: false })
       .limit(50);
 
     if (!data?.length) return [];
@@ -180,20 +173,20 @@ export async function getPriceAlerts(thresholdPercent = 5) {
     // Group by crop and check for significant changes
     const cropGroups = {};
     data.forEach(p => {
-      if (!cropGroups[p.crop_type]) cropGroups[p.crop_type] = [];
-      cropGroups[p.crop_type].push(p);
+      if (!cropGroups[p.crop]) cropGroups[p.crop] = [];
+      cropGroups[p.crop].push(p);
     });
 
     const alerts = [];
     Object.entries(cropGroups).forEach(([crop, prices]) => {
       if (prices.length < 2) return;
-      const latest = prices[0].modal_price;
-      const previous = prices[1].modal_price;
+      const latest = prices[0].price;
+      const previous = prices[1].price;
       const change = ((latest - previous) / previous) * 100;
       if (Math.abs(change) >= thresholdPercent) {
         alerts.push({
           crop,
-          market: prices[0].market_name,
+          market: prices[0].mandi,
           district: prices[0].district,
           current: latest,
           previous,

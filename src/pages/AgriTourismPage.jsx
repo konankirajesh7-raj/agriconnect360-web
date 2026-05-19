@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../lib/hooks/useAuth';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const EXPERIENCES = [
   { id:1, title:'Organic Rice Farm Stay', farmer:'Ravi Kumar', village:'Mangalagiri, Guntur', price:1500, rating:4.8, reviews:45, duration:'1 Day', category:'Farm Stay', image:'🌾', highlights:['Organic paddy harvesting','Traditional cooking class','Bullock cart ride','Campfire dinner'], maxGuests:8, isMine:false },
@@ -9,24 +12,56 @@ const EXPERIENCES = [
 ];
 
 export default function AgriTourismPage() {
+  const { t, tx } = useLanguage();
+  const { user, farmerProfile } = useAuth();
   const [tab, setTab] = useState('browse');
   const [booked, setBooked] = useState([]);
   const [filter, setFilter] = useState('All');
   const [listings, setListings] = useState(EXPERIENCES);
   const [showAdd, setShowAdd] = useState(false);
   const [newExp, setNewExp] = useState({ title:'', price:'', duration:'Half Day', category:'Tour', highlights:'', maxGuests:'', desc:'' });
-  const [myListings, setMyListings] = useState([
-    { id:100, title:'My Paddy Field Tour', farmer:'You', village:'Your Village', price:500, rating:0, reviews:0, duration:'3 Hours', category:'Tour', image:'🌾', highlights:['Walk through paddy fields','Learn organic methods','Fresh farm lunch'], maxGuests:10, isMine:true, earnings:3500, bookings:7 },
-  ]);
+  const [myListings, setMyListings] = useState([]);
+
+  // Load user's bookings from Supabase
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const { data } = await supabase.from('agritourism_bookings').select('*').eq('user_id', user.id);
+        if (data?.length) setBooked(data.map(d => d.listing_id));
+      } catch {}
+    })();
+  }, [user?.id]);
+
+  // Fetch from Supabase
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data: all } = await supabase.from('agritourism_listings').select('*').eq('status','active').order('created_at',{ascending:false}).limit(50);
+        if (all?.length) {
+          const mapped = all.map(a => ({ id:a.id, title:a.title, farmer:a.contact||'Farmer', village:a.location||a.district, price:a.price_per_person||0, rating:a.rating||0, reviews:a.reviews||0, duration:'Half Day', category:'Tour', image:'🌿', highlights:(a.activities||'').split(',').filter(Boolean), maxGuests:10, isMine:a.user_id===user?.id }));
+          setListings([...mapped, ...EXPERIENCES]);
+        }
+        if (user?.id) {
+          const { data: mine } = await supabase.from('agritourism_listings').select('*').eq('user_id', user.id);
+          if (mine?.length) setMyListings(mine.map(m => ({ id:m.id, title:m.title, farmer:'You', village:m.location, price:m.price_per_person||0, rating:m.rating||0, reviews:m.reviews||0, duration:'Half Day', category:'Tour', image:'🌿', highlights:(m.activities||'').split(',').filter(Boolean), maxGuests:10, isMine:true, earnings:0, bookings:0 })));
+        }
+      } catch {}
+    })();
+  }, [user?.id]);
 
   const categories = ['All', 'Farm Stay', 'Tour', 'Festival'];
   const filtered = filter === 'All' ? listings : listings.filter(e => e.category === filter);
   const INP = { width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.85rem', boxSizing:'border-box' };
 
-  const addListing = () => {
+  const addListing = async () => {
     if (!newExp.title || !newExp.price) return;
-    const item = { id:Date.now(), title:newExp.title, farmer:'You', village:'Your Village', price:Number(newExp.price), rating:0, reviews:0, duration:newExp.duration, category:newExp.category, image:'🌿', highlights:newExp.highlights.split(',').map(h=>h.trim()).filter(Boolean), maxGuests:Number(newExp.maxGuests)||10, isMine:true, earnings:0, bookings:0 };
+    const item = { id:Date.now(), title:newExp.title, farmer:'You', village:farmerProfile?.district||'AP', price:Number(newExp.price), rating:0, reviews:0, duration:newExp.duration, category:newExp.category, image:'🌿', highlights:newExp.highlights.split(',').map(h=>h.trim()).filter(Boolean), maxGuests:Number(newExp.maxGuests)||10, isMine:true, earnings:0, bookings:0 };
     setMyListings(prev => [...prev, item]);
+    setListings(prev => [...prev, item]);
+    if (user?.id) {
+      supabase.from('agritourism_listings').insert({ user_id:user.id, title:newExp.title, description:newExp.desc, location:farmerProfile?.district||'AP', district:farmerProfile?.district, price_per_person:Number(newExp.price), activities:newExp.highlights, contact:farmerProfile?.name||'Farmer' }).then(()=>{});
+    }
     setShowAdd(false);
     setNewExp({ title:'', price:'', duration:'Half Day', category:'Tour', highlights:'', maxGuests:'', desc:'' });
   };
@@ -74,7 +109,19 @@ export default function AgriTourismPage() {
                 </div>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:14, paddingTop:12, borderTop:'1px solid rgba(255,255,255,0.06)' }}>
                   <span style={{ fontSize:'1.2rem', fontWeight:800, color:'#10b981' }}>₹{e.price}<span style={{ fontSize:'0.72rem', fontWeight:400, color:'var(--text-muted)' }}>/person</span></span>
-                  <button onClick={() => setBooked(prev => prev.includes(e.id) ? prev.filter(x=>x!==e.id) : [...prev,e.id])} style={{ padding:'9px 20px', borderRadius:10, fontWeight:700, fontSize:'0.8rem', cursor:'pointer', border:booked.includes(e.id)?'1px solid rgba(16,185,129,0.3)':'none', background:booked.includes(e.id)?'transparent':'linear-gradient(135deg,#059669,#10b981)', color:booked.includes(e.id)?'#34d399':'#fff' }}>
+                  <button onClick={() => {
+                    const wasBooked = booked.includes(e.id);
+                    setBooked(prev => wasBooked ? prev.filter(x=>x!==e.id) : [...prev,e.id]);
+                    if (!wasBooked && user?.id) {
+                      supabase.from('agritourism_bookings').insert({
+                        user_id: user.id, listing_id: e.id, guests: 1,
+                        booking_date: new Date().toISOString().split('T')[0],
+                        total_price: e.price, status: 'confirmed',
+                        contact_name: farmerProfile?.name || '', contact_phone: farmerProfile?.phone || ''
+                      }).then(() => {});
+                      supabase.from('notifications').insert({ user_id: user.id, title: '🌿 AgriTourism Booked', body: `${e.title} — ₹${e.price}/person`, type: 'finance', read: false }).then(() => {});
+                    }
+                  }} style={{ padding:'9px 20px', borderRadius:10, fontWeight:700, fontSize:'0.8rem', cursor:'pointer', border:booked.includes(e.id)?'1px solid rgba(16,185,129,0.3)':'none', background:booked.includes(e.id)?'transparent':'linear-gradient(135deg,#059669,#10b981)', color:booked.includes(e.id)?'#34d399':'#fff' }}>
                     {booked.includes(e.id) ? '✓ Booked' : '📅 Book Now'}
                   </button>
                 </div>

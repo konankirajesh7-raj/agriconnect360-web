@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const MOCK_QA = [
   { _id: '1', question: 'My paddy leaves are turning yellow. What should I do?', farmer_id: 1, category: 'disease', answered_by: 'ai', answer: 'Yellow leaves in paddy can indicate nitrogen deficiency or bacterial leaf blight. Apply urea at 20kg/acre and monitor for 5 days.', upvotes: 45, views: 234, is_published: true, createdAt: '2024-12-10' },
@@ -12,6 +13,7 @@ const CAT_COLORS = { pest: '#ef4444', disease: '#f97316', soil: '#22c55e', marke
 const ANSWERED_LABELS = { ai: { label: '🤖 AI', color: '#8b5cf6' }, expert: { label: '👨‍🏫 Expert', color: '#22c55e' }, community: { label: '👥 Community', color: '#3b82f6' } };
 
 export default function QAPage() {
+  const { t, tx } = useLanguage();
   const { data: questions, loading, isLive } = useSupabaseQuery('qa_questions', { orderBy: { column: 'created_at', ascending: false }, limit: 200 }, MOCK_QA);
   const [filter, setFilter] = useState('all');
 

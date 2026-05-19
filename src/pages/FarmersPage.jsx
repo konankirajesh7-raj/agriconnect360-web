@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { farmersDB } from '../lib/supabase';
 import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 import { useAuth } from '../lib/hooks/useAuth';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const MOCK_FARMERS = [
   { id: 1, name: 'Ramaiah Gowda', mobile: '9876543210', district: 'Guntur', village: 'Tenali', is_verified: true, is_active: true, total_land_acres: 3.5, crops: 'Cotton, Paddy' },
@@ -13,6 +14,7 @@ const MOCK_FARMERS = [
 ];
 
 export default function FarmersPage() {
+  const { t, tx } = useLanguage();
   const { isAdmin } = useAuth();
   const { data: farmers, loading, isLive } = useSupabaseQuery(
     'farmers',

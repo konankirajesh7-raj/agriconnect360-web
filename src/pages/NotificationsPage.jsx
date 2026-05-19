@@ -1,6 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../lib/hooks/useAuth';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
-const INITIAL = [
+function timeAgo(d) { if(!d) return ''; const s=Math.floor((Date.now()-new Date(d))/1000); if(s<60) return 'just now'; if(s<3600) return `${Math.floor(s/60)} min ago`; if(s<86400) return `${Math.floor(s/3600)} hours ago`; return `${Math.floor(s/86400)} days ago`; }
+
+const DEMO = [
   { id: 1, icon: '🌧️', title: 'Heavy Rain Alert — Guntur District', body: 'IMD predicts 65mm rainfall in next 48 hours. Delay spraying operations.', type: 'weather', time: '10 min ago', read: false, snoozed: false },
   { id: 2, icon: '💰', title: 'Cotton price up ₹200/Q at Adoni APMC', body: 'Current price: ₹7,200/Q. Consider selling if holding > 30Q.', type: 'market', time: '1 hour ago', read: false, snoozed: false },
   { id: 3, icon: '🌱', title: 'Crop Calendar: Apply fertilizer (Paddy Day 45)', body: 'Recommended: Urea 50kg/acre + DAP 25kg/acre for tillering stage.', type: 'crop', time: '3 hours ago', read: false, snoozed: false },
@@ -13,18 +18,46 @@ const INITIAL = [
 
 const CATEGORIES = ['all', 'weather', 'market', 'crop', 'finance', 'gamification', 'social', 'asset'];
 const CAT_ICONS = { all: '📋', weather: '🌧️', market: '💰', crop: '🌱', finance: '🛡️', gamification: '🏆', social: '📱', asset: '🚜' };
+const TYPE_ICONS = { weather:'🌧️', market:'💰', crop:'🌱', finance:'🛡️', gamification:'🏆', social:'📱', asset:'🚜' };
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState(INITIAL);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState(DEMO);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [quietHours, setQuietHours] = useState(false);
+
+  // Load from Supabase
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const { data } = await supabase.from('notifications').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(50);
+        if (data?.length) {
+          const mapped = data.map(n => ({
+            id: n.id, icon: TYPE_ICONS[n.type] || '📋', title: n.title, body: n.body || n.message || '',
+            type: n.type || 'crop', time: timeAgo(n.created_at), read: n.read || false, snoozed: n.snoozed || false,
+          }));
+          setNotifications([...mapped, ...DEMO]);
+        }
+      } catch {}
+    })();
+  }, [user?.id]);
 
   const filtered = useMemo(() => notifications.filter(n => !n.snoozed && (categoryFilter === 'all' || n.type === categoryFilter)), [notifications, categoryFilter]);
   const unread = notifications.filter(n => !n.read).length;
 
-  function markRead(id) { setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n)); }
-  function markAllRead() { setNotifications(prev => prev.map(n => ({ ...n, read: true }))); }
-  function snooze(id) { setNotifications(prev => prev.map(n => n.id === id ? { ...n, snoozed: true } : n)); }
+  function markRead(id) {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    if (typeof id === 'string') supabase.from('notifications').update({ read: true }).eq('id', id).then(() => {});
+  }
+  function markAllRead() {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    if (user?.id) supabase.from('notifications').update({ read: true }).eq('user_id', user.id).then(() => {});
+  }
+  function snooze(id) {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, snoozed: true } : n));
+    if (typeof id === 'string') supabase.from('notifications').update({ snoozed: true }).eq('id', id).then(() => {});
+  }
 
   return (
     <div className="animated">

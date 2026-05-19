@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
-import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
+import React, { useState, useMemo } from 'react';
+import { getCropAdvisory } from '../lib/googleApis';
+import { useSupabaseQuery, useSupabaseMutation } from '../lib/hooks/useSupabaseQuery';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/hooks/useAuth';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const MOCK_CROPS = [
   { id: '1', farmer_id: 1, crop_type: 'Paddy', variety: 'BPT-5204', current_stage: 'vegetative', sowing_date: '2024-07-15', area_used_acres: 2.5, health_score: 85, season: 'Kharif', days_since_sow: 95, expected_harvest: '2024-12-10' },
@@ -28,35 +31,85 @@ const STAGE_TASKS = {
   harvested: ['Dry produce to safe moisture level', 'Grade and sort by quality', 'Transport to nearest APMC', 'Record sale and profit'],
 };
 
+const SOIL_ICONS = { 'Black Cotton':'🟤', 'Red Loamy':'🔴', 'Alluvial':'🟡', 'Sandy Loam':'🟠', 'Clay':'⬛', 'Laterite':'🟫' };
+const IRR_ICONS = { 'Borewell':'🔵', 'Canal':'🌊', 'River':'🏞️', 'Rainfed':'🌧️', 'Drip':'💧', 'Sprinkler':'🚿' };
+const MOCK_FIELDS = [
+  { id:1, field_name:'North Plot', area_acres:2.5, soil_type:'Black Cotton', irrigation_type:'Borewell', survey_number:'SY-101', current_crop:'Paddy', health:88 },
+  { id:2, field_name:'South Plot', area_acres:1.0, soil_type:'Red Loamy', irrigation_type:'Canal', survey_number:'SY-102', current_crop:'Cotton', health:72 },
+  { id:3, field_name:'Home Field', area_acres:3.0, soil_type:'Alluvial', irrigation_type:'River', survey_number:'SY-201', current_crop:'Sugarcane', health:95 },
+  { id:4, field_name:'Dry Field', area_acres:1.5, soil_type:'Sandy Loam', irrigation_type:'Rainfed', survey_number:'SY-301', current_crop:'Groundnut', health:65 },
+];
+
 export default function CropsPage() {
   const navigate = useNavigate();
-  const { data: crops, loading, isLive } = useSupabaseQuery('crops', { orderBy: { column: 'created_at', ascending: false }, limit: 200 }, MOCK_CROPS);
+  const { user } = useAuth();
+  const uid = user?.id;
+
+  // Only show current user's crops & fields — filter by farmer_id
+  const cropFilters = useMemo(() => uid ? [{ column: 'farmer_id', op: 'eq', value: uid }] : [], [uid]);
+  const fieldFilters = useMemo(() => uid ? [{ column: 'farmer_id', op: 'eq', value: uid }] : [], [uid]);
+
+  // Default sample data for new users (only 2 items, not all farmers)
+  const myMockCrops = useMemo(() => MOCK_CROPS.filter(c => c.farmer_id === 1), []);
+  const myMockFields = useMemo(() => MOCK_FIELDS.filter(f => f.id <= 2), []);
+
+  const { data: crops, loading, isLive } = useSupabaseQuery('crops', { filters: cropFilters, orderBy: { column: 'created_at', ascending: false }, limit: 200, enabled: !!uid }, myMockCrops);
+  const { data: fields, loading: fieldsLoading, refetch: refetchFields } = useSupabaseQuery('fields', { select:'*', filters: fieldFilters, orderBy:{ column:'created_at', ascending:false }, limit:200, enabled: !!uid }, myMockFields);
+  const { insert, loading: saving } = useSupabaseMutation('fields');
   const [stageFilter, setStageFilter] = useState('all');
-  const [activeTab, setActiveTab] = useState('tracking');
+  const [activeTab, setActiveTab] = useState('fields');
   const [selectedCrop, setSelectedCrop] = useState(null);
+  const [aiAdvice, setAiAdvice] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showAddField, setShowAddField] = useState(false);
+  const [fieldForm, setFieldForm] = useState({ field_name:'', area_acres:'', soil_type:'Black Cotton', irrigation_type:'Canal', survey_number:'', current_crop:'' });
+  const [selectedField, setSelectedField] = useState(null);
 
   const stages = ['all', ...STAGE_ORDER];
   const filtered = stageFilter === 'all' ? crops : crops.filter(c => c.current_stage === stageFilter);
   const stageCounts = STAGE_ORDER.reduce((acc, s) => { acc[s] = crops.filter(c => c.current_stage === s).length; return acc; }, {});
+  const totalAcres = fields.reduce((s,f) => s+(parseFloat(f.area_acres)||0), 0);
 
+  const handleAddField = async () => {
+    if (!fieldForm.field_name || !fieldForm.area_acres) return;
+    const record = { ...fieldForm, area_acres: parseFloat(fieldForm.area_acres), farmer_id: uid };
+    const result = await insert(record);
+    if (result.success) {
+      setShowAddField(false);
+      setFieldForm({ field_name:'', area_acres:'', soil_type:'Black Cotton', irrigation_type:'Canal', survey_number:'', current_crop:'' });
+      refetchFields();
+    } else {
+      // localStorage fallback if Supabase table doesn't exist
+      const localField = { ...record, id: Date.now(), created_at: new Date().toISOString() };
+      const stored = JSON.parse(localStorage.getItem(`rythu_fields_${uid}`) || '[]');
+      stored.unshift(localField);
+      localStorage.setItem(`rythu_fields_${uid}`, JSON.stringify(stored));
+      setShowAddField(false);
+      setFieldForm({ field_name:'', area_acres:'', soil_type:'Black Cotton', irrigation_type:'Canal', survey_number:'', current_crop:'' });
+      refetchFields();
+    }
+  };
+
+  const { t } = useLanguage();
   const tabs = [
-    { id: 'tracking', icon: '🌱', label: 'Crop Tracking' },
-    { id: 'calendar', icon: '📅', label: 'Crop Calendar' },
-    { id: 'timeline', icon: '📊', label: 'Growth Timeline' },
+    { id: 'fields', icon: '🌾', label: t('myFields') },
+    { id: 'tracking', icon: '🌱', label: t('cropTracking') },
+    { id: 'calendar', icon: '📅', label: t('cropCalendar') },
+    { id: 'timeline', icon: '📊', label: t('growthTimeline') },
   ];
 
   return (
     <div className="animated">
       <div className="section-header">
         <div>
-          <div className="section-title">🌱 Crop Lifecycle Management</div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>Track, manage, and optimize your crop journey from sowing to market</div>
+          <div className="section-title">🌾 {t('myFarm')}</div>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>{t('myFields')}, {t('crops')}, {t('cropTracking')} — {fields.length} {t('fields')} • {totalAcres.toFixed(1)} {t('acres')}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '8px 14px' }} onClick={() => navigate('/premium?tab=disease')}>
-            📷 Camera/Upload Disease Scan
+            📷 {t('cameraUpload')}
           </button>
-          <button className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>+ Record Crop</button>
+          <button className="btn btn-primary" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>+ {t('recordCrop')}</button>
         </div>
       </div>
 
@@ -71,6 +124,88 @@ export default function CropsPage() {
             }}>{t.icon} {t.label}</button>
         ))}
       </div>
+
+      {/* ── My Fields Tab ── */}
+      {activeTab === 'fields' && (
+        <div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
+            {[
+              { l:'Total Fields', v:fields.length, i:'🌾', c:'#22c55e' },
+              { l:'Total Acres', v:totalAcres.toFixed(1), i:'📐', c:'#3b82f6' },
+              { l:'Soil Types', v:[...new Set(fields.map(f=>f.soil_type).filter(Boolean))].length, i:'🧱', c:'#f59e0b' },
+              { l:'Avg Health', v:fields.length ? Math.round(fields.reduce((s,f)=>s+(f.health||70),0)/fields.length)+'%' : '—', i:'💚', c:'#8b5cf6' },
+            ].map(s => (
+              <div key={s.l} style={{ background:'var(--bg-card)', border:'1px solid var(--border)', borderRadius:12, padding:14, textAlign:'center' }}>
+                <div style={{ fontSize:'1.4rem', marginBottom:4 }}>{s.i}</div>
+                <div style={{ fontSize:'1.4rem', fontWeight:800, color:s.c }}>{s.v}</div>
+                <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{s.l}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:14 }}>
+            <button onClick={() => setShowAddField(true)} style={{ padding:'8px 16px', borderRadius:10, border:'none', background:'linear-gradient(135deg,#22c55e,#16a34a)', color:'#fff', fontWeight:700, fontSize:'0.85rem', cursor:'pointer' }}>+ Add Field</button>
+          </div>
+          {fieldsLoading ? <div style={{ textAlign:'center', padding:40, color:'var(--text-muted)' }}>⟳ Loading...</div> : (
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap:14 }}>
+              {fields.map(f => (
+                <div key={f.id} className="card" style={{ padding:0, overflow:'hidden', cursor:'pointer', borderLeft:`4px solid ${(f.health||70)>=80?'#22c55e':(f.health||70)>=60?'#f59e0b':'#ef4444'}` }}
+                  onClick={() => setSelectedField(selectedField?.id === f.id ? null : f)}>
+                  <div style={{ padding:'16px 18px' }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
+                      <div>
+                        <div style={{ fontWeight:800, fontSize:'0.95rem' }}>{f.field_name}</div>
+                        <div style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>📋 {f.survey_number || 'No survey'}</div>
+                      </div>
+                      <span style={{ fontSize:'1.4rem', fontWeight:800, color:(f.health||70)>=80?'#22c55e':(f.health||70)>=60?'#f59e0b':'#ef4444' }}>{f.health||70}%</span>
+                    </div>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:10 }}>
+                      <div style={{ background:'var(--bg-primary)', borderRadius:8, padding:'8px 10px' }}>
+                        <div style={{ fontSize:'0.65rem', color:'var(--text-muted)' }}>Area</div>
+                        <div style={{ fontWeight:700, fontSize:'0.9rem' }}>📐 {f.area_acres} ac</div>
+                      </div>
+                      <div style={{ background:'var(--bg-primary)', borderRadius:8, padding:'8px 10px' }}>
+                        <div style={{ fontSize:'0.65rem', color:'var(--text-muted)' }}>Current Crop</div>
+                        <div style={{ fontWeight:700, fontSize:'0.9rem' }}>🌱 {f.current_crop || '—'}</div>
+                      </div>
+                    </div>
+                    <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+                      <span style={{ padding:'3px 10px', borderRadius:10, fontSize:'0.72rem', fontWeight:600, background:'rgba(139,69,19,0.1)', color:'#8b4513' }}>{SOIL_ICONS[f.soil_type]||'🟤'} {f.soil_type}</span>
+                      <span style={{ padding:'3px 10px', borderRadius:10, fontSize:'0.72rem', fontWeight:600, background:'rgba(59,130,246,0.1)', color:'#3b82f6' }}>{IRR_ICONS[f.irrigation_type]||'💧'} {f.irrigation_type}</span>
+                    </div>
+                    <div style={{ height:6, background:'var(--bg-primary)', borderRadius:3, overflow:'hidden' }}>
+                      <div style={{ height:'100%', borderRadius:3, width:`${f.health||70}%`, background:(f.health||70)>=80?'#22c55e':(f.health||70)>=60?'#f59e0b':'#ef4444', transition:'width 0.5s' }} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {fields.length === 0 && <div style={{ textAlign:'center', padding:40, color:'var(--text-muted)', gridColumn:'1/-1' }}><div style={{ fontSize:'2rem', marginBottom:8 }}>🌾</div>No fields added yet</div>}
+            </div>
+          )}
+          {/* Add Field Modal */}
+          {showAddField && (
+            <div style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)' }} onClick={() => setShowAddField(false)}>
+              <div className="card" style={{ width:440, padding:24 }} onClick={e => e.stopPropagation()}>
+                <div style={{ fontWeight:800, fontSize:'1rem', marginBottom:16 }}>🌾 Add New Field</div>
+                {[
+                  { label:'Field Name *', key:'field_name', placeholder:'e.g. North Plot' },
+                  { label:'Area (Acres) *', key:'area_acres', placeholder:'e.g. 2.5', type:'number' },
+                  { label:'Current Crop', key:'current_crop', placeholder:'e.g. Paddy' },
+                  { label:'Survey Number', key:'survey_number', placeholder:'e.g. SY-101' },
+                ].map(field => (
+                  <div key={field.key} style={{ marginBottom:12 }}>
+                    <label style={{ display:'block', fontSize:'0.75rem', color:'var(--text-muted)', marginBottom:4, fontWeight:600 }}>{field.label}</label>
+                    <input style={{ width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.88rem', boxSizing:'border-box' }} type={field.type||'text'} placeholder={field.placeholder} value={fieldForm[field.key]} onChange={e => setFieldForm(p => ({...p, [field.key]:e.target.value}))} />
+                  </div>
+                ))}
+                <div style={{ display:'flex', gap:10 }}>
+                  <button onClick={handleAddField} disabled={saving||!fieldForm.field_name} style={{ flex:1, padding:10, borderRadius:8, border:'none', background:'linear-gradient(135deg,#22c55e,#16a34a)', color:'#fff', fontWeight:700, cursor:'pointer', opacity:fieldForm.field_name?1:0.5 }}>{saving ? '⟳ Saving...' : '✅ Save Field'}</button>
+                  <button onClick={() => setShowAddField(false)} style={{ flex:1, padding:10, borderRadius:8, border:'1px solid var(--border)', background:'transparent', color:'var(--text-primary)', cursor:'pointer' }}>Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {activeTab === 'tracking' && (
         <>
@@ -247,6 +382,31 @@ export default function CropsPage() {
           })}
         </div>
       )}
+
+      {/* AI Crop Advisory */}
+      <div className="card" style={{ padding: 20, marginTop: 20, border: '1px solid rgba(139,92,246,0.2)', background: 'linear-gradient(135deg, rgba(139,92,246,0.04), rgba(59,130,246,0.03))' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.95rem', color: '#a78bfa' }}>🧠 Gemini AI Crop Advisory</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Get AI-powered farming recommendations for any crop</div>
+            </div>
+            <button onClick={async () => {
+              const crop = selectedCrop?.crop_type || 'Paddy';
+              const season = selectedCrop?.season || 'Kharif';
+              setAiLoading(true);
+              try {
+                const result = await getCropAdvisory(crop, 'Guntur', season);
+                setAiAdvice(result.text);
+              } catch (e) { setAiAdvice('⚠️ AI advisory unavailable: ' + e.message); }
+              setAiLoading(false);
+            }} disabled={aiLoading} style={{
+              padding: '8px 18px', borderRadius: 10, border: '1px solid rgba(167,139,250,0.3)',
+              background: 'rgba(167,139,250,0.1)', color: '#a78bfa', cursor: 'pointer',
+              fontSize: '0.78rem', fontWeight: 700,
+            }}>{aiLoading ? '⏳ Analyzing...' : aiAdvice ? '🔄 Refresh' : '✨ Get AI Advisory'}</button>
+          </div>
+          {aiAdvice && <div style={{ fontSize: '0.82rem', lineHeight: 1.8, color: 'var(--text-secondary)', whiteSpace: 'pre-line', maxHeight: 400, overflowY: 'auto' }}>{aiAdvice}</div>}
+      </div>
     </div>
   );
 }

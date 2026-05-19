@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const FEATURES = [
   { icon: '📊', title: 'Smart Dashboard', desc: 'Complete farm management at a glance with 24+ modules' },
@@ -30,6 +31,7 @@ const TESTIMONIALS = [
 ];
 
 export default function LandingPage() {
+  const { t, tx } = useLanguage();
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Navbar */}

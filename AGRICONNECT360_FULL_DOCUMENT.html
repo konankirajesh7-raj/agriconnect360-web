@@ -1,331 +1,0 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><title>RythuSphere � Complete Project Document</title><style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Inter,sans-serif;color:#1e293b;line-height:1.7;font-size:13px}
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-.cover{min-height:100vh;background:linear-gradient(135deg,#064e3b,#059669);display:flex;flex-direction:column;justify-content:center;align-items:center;color:#fff;text-align:center;page-break-after:always;padding:40px}
-.cover h1{font-size:48px}.cover .sub{font-size:20px;opacity:0.9;margin:8px 0 30px}
-.stats{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}.stat{background:rgba(255,255,255,0.15);padding:18px 28px;border-radius:14px;min-width:100px}.stat b{display:block;font-size:26px}.stat span{font-size:11px;opacity:0.8}
-.pg{padding:30px 45px;max-width:850px;margin:auto}.sec{page-break-before:always}
-h2{font-size:20px;color:#059669;border-bottom:3px solid #059669;padding-bottom:5px;margin:24px 0 12px}
-h3{font-size:15px;color:#1e293b;margin:16px 0 8px;border-left:3px solid #10b981;padding-left:10px}
-h4{font-size:13px;color:#059669;margin:12px 0 4px}
-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:11.5px}td,th{border:1px solid #e2e8f0;padding:6px 8px;text-align:left}
-th{background:#059669;color:#fff;font-weight:700}tr:nth-child(even){background:#f0fdf4}
-.card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin:8px 0}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.badge{display:inline-block;background:#059669;color:#fff;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600}
-blockquote{border-left:4px solid #f59e0b;background:#fffbeb;padding:8px 14px;margin:10px 0;font-size:12px;border-radius:0 8px 8px 0}
-ul{margin:4px 0 4px 18px}li{margin:2px 0}hr{border:none;border-top:1px solid #e2e8f0;margin:16px 0}
-@media print{.sec{page-break-before:always}.cover{min-height:100vh}}</style></head><body><div class="cover"><div style="font-size:64px;margin-bottom:12px">�xR�</div>
-<h1>RythuSphere</h1><div class="sub">Smart Farming Platform � Complete Project Document</div>
-<p style="max-width:550px;opacity:0.8;font-size:13px">India's most comprehensive agritech platform with 22+ modules covering soil-to-market lifecycle for Andhra Pradesh farmers</p>
-<div class="stats"><div class="stat"><b>47</b><span>Modules</span></div><div class="stat"><b>7</b><span>User Roles</span></div>
-<div class="stat"><b>7</b><span>Live APIs</span></div><div class="stat"><b>800+</b><span>Tests</span></div>
-<div class="stat"><b>25</b><span>Team</span></div><div class="stat"><b>45K+</b><span>Lines of Code</span></div></div>
-<p style="margin-top:40px;font-size:12px;opacity:0.5">Version 1.0 FINAL ⬢ April 2026 ⬢ rythusphere-web.vercel.app</p></div><div class="pg"><h2>�x9 Table of Contents</h2><table>
-<tr><th>Ch</th><th>Section</th><th>Pages</th></tr>
-<tr><td>1</td><td>Executive Summary & Vision</td><td>3-4</td></tr>
-<tr><td>2</td><td>Problem Statement & Market Analysis</td><td>5-7</td></tr>
-<tr><td>3</td><td>Platform Architecture & Technology</td><td>8-11</td></tr>
-<tr><td>4</td><td>All 47 Modules � Detailed Description</td><td>12-25</td></tr>
-<tr><td>5</td><td>7 User Roles � Complete Breakdown</td><td>26-33</td></tr>
-<tr><td>6</td><td>API Integrations & Credentials</td><td>34-36</td></tr>
-<tr><td>7</td><td>Database Schema & Security</td><td>37-39</td></tr>
-<tr><td>8</td><td>25-Member Team Structure</td><td>40-46</td></tr>
-<tr><td>9</td><td>Revenue Model & Business Plan</td><td>47-48</td></tr>
-<tr><td>10</td><td>90-Day Launch Roadmap</td><td>49-50</td></tr>
-<tr><td>11</td><td>Future Improvements & Vision</td><td>51-52</td></tr>
-</table></div><div class="pg sec"><h2>Chapter 1: Executive Summary & Vision</h2>
-<h3>1.1 What is RythuSphere?</h3>
-<p>RythuSphere is a <b>comprehensive, AI-powered digital agriculture platform</b> built specifically for small and marginal farmers in Andhra Pradesh, India. The platform integrates <b>47 distinct modules</b> covering the entire agricultural lifecycle � from soil testing and crop planning to market sales and financial management.</p>
-<p>The platform is available as a <b>Progressive Web App (PWA)</b> that works on any smartphone browser, supports <b>offline functionality</b> for areas with poor connectivity, and provides content in <b>Telugu, Hindi, and English</b>.</p>
-
-<h3>1.2 Vision Statement</h3>
-<blockquote>"To digitally empower every farmer in Andhra Pradesh with real-time market intelligence, AI-powered advisory, and direct market access � eliminating middlemen and increasing farmer income by 30-40%."</blockquote>
-
-<h3>1.3 Key Achievements</h3>
-<table><tr><th>Metric</th><th>Value</th><th>Details</th></tr>
-<tr><td>Total Modules Built</td><td><b>47</b></td><td>22 farmer + 5 dashboards + 20 support</td></tr>
-<tr><td>Lines of Code</td><td><b>45,000+</b></td><td>React JSX + CSS + Services</td></tr>
-<tr><td>Test Cases Verified</td><td><b>800+</b></td><td>Security, performance, accessibility, all roles</td></tr>
-<tr><td>API Integrations</td><td><b>7 live</b></td><td>All free-tier, production-ready</td></tr>
-<tr><td>Languages Supported</td><td><b>4</b></td><td>English, Telugu, Hindi, Kannada</td></tr>
-<tr><td>Build Time</td><td><b>3.5 sec</b></td><td>Vite bundler, 170KB gzipped</td></tr>
-<tr><td>Accessibility</td><td><b>WCAG 2.1 AA</b></td><td>Screen reader, keyboard, contrast compliant</td></tr>
-<tr><td>Deployment</td><td><b>Vercel CDN</b></td><td>Global edge, auto-SSL, 99.9% uptime</td></tr>
-</table>
-
-<h3>1.4 Target Users</h3>
-<div class="g2">
-<div class="card"><h4>�x�⬍�xR� Primary: Small Farmers</h4><ul><li>2-10 acres landholding</li><li>Age 25-55 years</li><li>Basic smartphone (��5K-15K)</li><li>2G/3G connectivity</li><li>Telugu-speaking (80%)</li><li>Limited digital literacy</li></ul></div>
-<div class="card"><h4>�x�� Secondary: Agri Businesses</h4><ul><li>Seed/fertilizer dealers</li><li>APMC mandi brokers</li><li>Cotton/rice mills</li><li>Farm equipment rentals</li><li>Transport operators</li><li>Labour contractors</li></ul></div>
-</div>
-
-<h3>1.5 Unique Selling Points</h3>
-<ul><li><b>All-in-one:</b> No other platform combines market prices + AI + weather + finance + marketplace in one app</li>
-<li><b>Telugu-first:</b> Complete UI, AI responses, and SMS in Telugu script</li>
-<li><b>Offline-capable:</b> Works without internet, syncs when connected</li>
-<li><b>Free for farmers:</b> Core features are completely free forever</li>
-<li><b>AI-powered:</b> Gemini 2.0 for crop disease detection from phone camera</li>
-<li><b>Government integrated:</b> Live APMC prices from data.gov.in API</li></ul>
-</div><div class="pg sec"><h2>Chapter 2: Problem Statement & Market Analysis</h2>
-<h3>2.1 Problems Faced by AP Farmers</h3>
-<table><tr><th>#</th><th>Problem</th><th>Impact</th><th>Our Solution</th></tr>
-<tr><td>1</td><td>No access to real-time market prices</td><td>Farmers sell at 30-40% below market rate</td><td>Live APMC prices from 1300+ AP mandis</td></tr>
-<tr><td>2</td><td>Crop disease goes undetected</td><td>20-30% yield loss annually</td><td>AI disease detection via phone camera</td></tr>
-<tr><td>3</td><td>Middlemen exploitation</td><td>��2-3 lakh loss per farmer per year</td><td>Direct farmer-to-buyer marketplace</td></tr>
-<tr><td>4</td><td>No expense/profit tracking</td><td>Farmers don't know if they're profitable</td><td>Digital farm ledger with P&L charts</td></tr>
-<tr><td>5</td><td>Weather unpredictability</td><td>Crop damage from unexpected rain/heat</td><td>7-day forecast with hourly alerts</td></tr>
-<tr><td>6</td><td>Govt scheme info doesn't reach</td><td>��50K+ unclaimed benefits per farmer</td><td>Auto-matched scheme recommendations</td></tr>
-<tr><td>7</td><td>No access to agri inputs info</td><td>Poor quality seeds, overpriced fertilizers</td><td>Verified supplier directory with ratings</td></tr>
-<tr><td>8</td><td>Difficulty finding farm labour</td><td>Harvest delays, crop spoilage</td><td>Digital labour booking system</td></tr>
-<tr><td>9</td><td>No transport for produce</td><td>Post-harvest losses up to 25%</td><td>Transport booking with route tracking</td></tr>
-<tr><td>10</td><td>Isolation from farming community</td><td>No peer learning or knowledge sharing</td><td>Community forum with Q&A and tips</td></tr>
-</table>
-
-<h3>2.2 Market Size</h3>
-<div class="g2">
-<div class="card"><h4>Andhra Pradesh Agriculture</h4><ul><li>Total farmers: <b>65 lakh+</b></li><li>Agricultural GDP: <b>��1.2 lakh crore</b></li><li>Smartphone penetration: <b>60%+</b></li><li>Major crops: Paddy, Cotton, Chilli, Groundnut</li></ul></div>
-<div class="card"><h4>Indian AgriTech Market</h4><ul><li>Market size 2026: <b>$24 billion</b></li><li>Growth rate: <b>25% CAGR</b></li><li>Smartphone farmers: <b>30 crore+</b></li><li>Digital payment adoption: <b>45%+</b></li></ul></div>
-</div>
-
-<h3>2.3 Competitive Analysis</h3>
-<table><tr><th>Feature</th><th>RythuSphere</th><th>DeHaat</th><th>AgroStar</th><th>Kisan Network</th></tr>
-<tr><td>Live Mandi Prices</td><td>�S& 1300+ AP</td><td>�S& Limited</td><td>�R</td><td>�S&</td></tr>
-<tr><td>AI Crop Advisory</td><td>�S& Gemini AI</td><td>�R</td><td>�S& Basic</td><td>�R</td></tr>
-<tr><td>Disease Detection</td><td>�S& Camera</td><td>�R</td><td>�S&</td><td>�R</td></tr>
-<tr><td>Telugu Language</td><td>�S& Full</td><td>�R</td><td>Partial</td><td>�R</td></tr>
-<tr><td>Expense Tracking</td><td>�S& Full P&L</td><td>�R</td><td>�R</td><td>�R</td></tr>
-<tr><td>Equipment Booking</td><td>�S&</td><td>�R</td><td>�R</td><td>�R</td></tr>
-<tr><td>Labour Hiring</td><td>�S&</td><td>�R</td><td>�R</td><td>�R</td></tr>
-<tr><td>Offline Mode</td><td>�S& PWA</td><td>�R</td><td>�R</td><td>�R</td></tr>
-<tr><td>Free for Farmers</td><td>�S&</td><td>Partial</td><td>�R</td><td>�S&</td></tr>
-<tr><td>Total Modules</td><td><b>47</b></td><td>8</td><td>5</td><td>4</td></tr>
-</table>
-</div><div class="pg sec"><h2>Chapter 3: Platform Architecture & Technology</h2>
-<h3>3.1 System Architecture Overview</h3>
-<p>RythuSphere follows a <b>modern JAMstack architecture</b> with a React single-page application (SPA) frontend, Supabase Backend-as-a-Service (BaaS), and Vercel edge deployment. This architecture ensures <b>sub-second page loads</b>, <b>real-time data updates</b>, and <b>zero server management overhead</b>.</p>
-<div class="card"><h4>Architecture Flow</h4>
-<p><b>User �  Vercel CDN �  React SPA �  Supabase (PostgreSQL + Auth + Realtime) �  External APIs (Gemini, Weather, Mandi)</b></p></div>
-
-<h3>3.2 Frontend Stack</h3>
-<table><tr><th>Technology</th><th>Version</th><th>Purpose</th><th>Why Chosen</th></tr>
-<tr><td>React</td><td>18.2.0</td><td>UI framework</td><td>Component-based, massive ecosystem, easy hiring</td></tr>
-<tr><td>Vite</td><td>5.0.11</td><td>Build tool</td><td>10x faster than Webpack, HMR, tree-shaking</td></tr>
-<tr><td>React Router DOM</td><td>6.21.3</td><td>Client routing</td><td>SPA navigation, lazy loading, nested routes</td></tr>
-<tr><td>Recharts</td><td>2.10.3</td><td>Charts</td><td>Responsive SVG charts, customizable</td></tr>
-<tr><td>Zustand</td><td>4.4.7</td><td>State management</td><td>Lightweight (1KB), no boilerplate vs Redux</td></tr>
-<tr><td>React Query</td><td>3.39.3</td><td>Server state</td><td>Auto-caching, refetch, optimistic updates</td></tr>
-<tr><td>Radix UI</td><td>Latest</td><td>Accessible UI</td><td>WAI-ARIA compliant primitives</td></tr>
-<tr><td>Lucide React</td><td>0.309.0</td><td>Icons</td><td>Tree-shakeable, consistent design</td></tr>
-<tr><td>date-fns</td><td>3.2.0</td><td>Date handling</td><td>Modular, smaller than Moment.js</td></tr>
-<tr><td>Axios</td><td>1.6.5</td><td>HTTP client</td><td>Interceptors, timeout, retry support</td></tr>
-</table>
-
-<h3>3.3 Backend Stack</h3>
-<table><tr><th>Technology</th><th>Purpose</th><th>Details</th></tr>
-<tr><td>Supabase PostgreSQL</td><td>Primary database</td><td>16 tables with Row-Level Security, auto-generated REST API, real-time subscriptions</td></tr>
-<tr><td>Supabase Auth</td><td>Authentication</td><td>Email/password + Google OAuth + JWT tokens (1hr expiry)</td></tr>
-<tr><td>Supabase Realtime</td><td>Live updates</td><td>WebSocket subscriptions for IoT sensor data, notifications</td></tr>
-<tr><td>Supabase Storage</td><td>File storage</td><td>Profile photos, crop images, documents (S3-compatible)</td></tr>
-<tr><td>Vercel Serverless</td><td>API functions</td><td>Node.js serverless functions for SMS, payments</td></tr>
-<tr><td>Vercel CDN</td><td>Global hosting</td><td>Edge network, auto-SSL, DDoS protection</td></tr>
-</table>
-
-<h3>3.4 AI/ML Stack</h3>
-<table><tr><th>Model</th><th>Provider</th><th>Purpose</th><th>Latency</th></tr>
-<tr><td>Gemini 2.0 Flash</td><td>Google</td><td>AI farm advisory chat � context-aware with farmer data</td><td>2-5 seconds</td></tr>
-<tr><td>Gemini Vision</td><td>Google</td><td>Crop disease detection from phone camera photos</td><td>5-10 seconds</td></tr>
-<tr><td>LLaMA-3.3-70B</td><td>Groq</td><td>Fast backend inference for yield prediction</td><td>1-3 seconds</td></tr>
-</table>
-
-<h3>3.5 File Structure</h3>
-<table><tr><th>Directory</th><th>Files</th><th>Purpose</th></tr>
-<tr><td>src/pages/</td><td>47 JSX files</td><td>All page components</td></tr>
-<tr><td>src/lib/hooks/</td><td>6 files</td><td>Custom React hooks (auth, mobile, voice)</td></tr>
-<tr><td>src/lib/services/</td><td>6 files</td><td>Business logic (AI, commerce, gamification)</td></tr>
-<tr><td>src/lib/</td><td>10 files</td><td>Utilities (supabase, i18n, security, validation)</td></tr>
-<tr><td>public/</td><td>8 files</td><td>PWA manifest, service worker, legal pages</td></tr>
-<tr><td>api/</td><td>Serverless</td><td>Vercel API routes for SMS, payments</td></tr>
-</table>
-</div><div class="pg sec"><h2>Chapter 4: All 47 Modules � Detailed Description</h2>
-<p>RythuSphere contains <b>47 distinct modules</b>. Below is a detailed description of each module, its purpose, features, and technical size.</p><div class="card"><h4>1. Dashboard <span class="badge">/dashboard</span> <span style="float:right;font-size:10px;color:#64748b">21KB</span></h4><p>The farmer's home screen showing: real-time stats (total crops, active fields, pending tasks), Farming Journey progress bar (6 stages from soil prep to market sale), Tip of the Day powered by AI, Upcoming Tasks with priority colors, and live platform statistics from Supabase (4,782 farmers, 8,934 crops).</p></div><div class="card"><h4>2. Weather <span class="badge">/weather</span> <span style="float:right;font-size:10px;color:#64748b">15KB</span></h4><p>7-day weather forecast for farmer's exact GPS location using Open-Meteo API. Includes: hourly temperature/humidity charts, UV index with safety advice, rain probability alerts, wind speed for spraying decisions, and farming-specific recommendations ("Good day for pesticide spraying � no rain expected").</p></div><div class="card"><h4>3. Crops <span class="badge">/crops</span> <span style="float:right;font-size:10px;color:#64748b">17KB</span></h4><p>Full crop lifecycle manager: Add crops with variety, area, season, and field assignment. Track growth stages (Sowing �  Vegetative �  Flowering �  Harvest). AI-powered yield prediction based on soil, weather, and historical data. Supports Paddy, Cotton, Chilli, Groundnut, Maize, and 20+ AP crops.</p></div><div class="card"><h4>4. Fields <span class="badge">/fields</span> <span style="float:right;font-size:10px;color:#64748b">7KB</span></h4><p>Farm field management with GPS coordinates, area calculation, soil type classification (Red, Black, Alluvial, Sandy), and irrigation source tracking. Each field links to crops and soil test results for complete farm mapping.</p></div><div class="card"><h4>5. Soil Testing <span class="badge">/soil</span> <span style="float:right;font-size:10px;color:#64748b">41KB</span></h4><p>Comprehensive soil health analysis: NPK levels with ideal range comparison, pH balance scoring, Electrical Conductivity (EC), Organic Carbon percentage, micronutrients (Zinc, Iron, Boron). Includes AI-generated improvement recommendations and historical trend tracking.</p></div><div class="card"><h4>6. Market Prices <span class="badge">/market-prices</span> <span style="float:right;font-size:10px;color:#64748b">25KB</span></h4><p>Live APMC mandi prices from data.gov.in API � 1,300+ records daily for Andhra Pradesh. Features: 30-day price trend charts, min/max/modal price comparison, district-wise filtering (Guntur, Kurnool, Anantapur), crop-wise search, and price alert notifications.</p></div><div class="card"><h4>7. AI Advisory <span class="badge">/ai</span> <span style="float:right;font-size:10px;color:#64748b">40KB</span></h4><p>Google Gemini 2.0 powered farming assistant. Features: Context-aware chat (knows farmer's crops, location, expenses), crop disease detection via camera upload, yield prediction with confidence scores, multilingual responses (Telugu/Hindi/English), conversation history, and safety guardrails.</p></div><div class="card"><h4>8. Expenses <span class="badge">/expenses</span> <span style="float:right;font-size:10px;color:#64748b">21KB</span></h4><p>Complete farm budget tracker: Add expenses by category (Seeds, Fertilizers, Labour, Equipment, Transport, Irrigation, Pesticides). Monthly/yearly charts, budget vs actual comparison, CSV export for accountants, and profit margin calculation.</p></div><div class="card"><h4>9. Sales & Profit <span class="badge">/sales</span> <span style="float:right;font-size:10px;color:#64748b">22KB</span></h4><p>Income tracking and profitability analysis: Record sales with buyer, quantity, price per unit. Auto-calculate profit/loss per crop, per season, per field. Visual P&L charts, income vs expense comparison, and tax-ready reports.</p></div><div class="card"><h4>10. Wallet <span class="badge">/wallet</span> <span style="float:right;font-size:10px;color:#64748b">15KB</span></h4><p>Digital wallet for platform transactions: Add money via UPI/Card simulation, premium subscription (��499/year), equipment booking payments, invoice generation with GST breakdown, transaction history, and refund processing.</p></div></div><div class="pg sec"><h2>Chapter 4 (continued): Modules 11-47</h2><div class="card"><h4>11. Insurance <span class="badge">/insurance</span> <span style="float:right;font-size:10px;color:#64748b">8KB</span></h4><p>PMFBY (Pradhan Mantri Fasal Bima Yojana) crop insurance management: View active policies, file claims with crop damage photos, track claim status, premium calculation based on crop and area, and insurance payout history.</p></div><div class="card"><h4>12. Financial Services <span class="badge">/financial-services</span> <span style="float:right;font-size:10px;color:#64748b">85KB</span></h4><p>8-tab comprehensive finance suite: (1) KCC Tracker � loan utilization and repayment, (2) Loan Marketplace � bank offers comparison, (3) Insurance Manager � PMFBY claims, (4) Subsidy Tracker � fertilizer/seed subsidies, (5) Tax Estimator � agricultural income tax, (6) Credit Score � farm data-based scoring, (7) Investment Advisor � FD/RD recommendations, (8) Financial Reports � downloadable PDFs.</p></div><div class="card"><h4>13. Schemes <span class="badge">/schemes</span> <span style="float:right;font-size:10px;color:#64748b">28KB</span></h4><p>Government scheme aggregator for AP farmers: PM-KISAN (��6,000/year), YSR Rythu Bharosa (��13,500/year), PMFBY insurance, KCC loans, input subsidies. Auto-matching based on farmer profile (land size, crops, caste category). Application status tracking and document checklist.</p></div><div class="card"><h4>14. Community Forum <span class="badge">/community</span> <span style="float:right;font-size:10px;color:#64748b">19KB</span></h4><p>Farmer social network: Post questions (�), tips (�x�), and updates (�x�) with crop tags. Features: Like/helpful counters, comment threads, WhatsApp sharing, bookmark for later, trending sort, crop/district filtering, and report/moderation system.</p></div><div class="card"><h4>15. Marketplace <span class="badge">/marketplace</span> <span style="float:right;font-size:10px;color:#64748b">20KB</span></h4><p>Farmer-to-farmer produce trading: List produce with crop, quantity, price, grade, photos, and WhatsApp contact. Buyer features: Search by crop/district, express interest, direct WhatsApp contact. Seller features: My Listings dashboard, view count, interested buyers, mark as sold, renew listing.</p></div><div class="card"><h4>16. Suppliers <span class="badge">/suppliers</span> <span style="float:right;font-size:10px;color:#64748b">18KB</span></h4><p>Agri-input supplier directory: Seed shops, fertilizer dealers, pesticide retailers with product catalogs, pricing, ratings, and direct ordering. Supplier dashboard for order management, inventory tracking, and revenue analytics.</p></div><div class="card"><h4>17. F2C Store <span class="badge">/f2c-store</span> <span style="float:right;font-size:10px;color:#64748b">7KB</span></h4><p>Farmer-to-Consumer direct store: Farmers create branded storefronts (e.g., "Rajesh Organic Farm") with product listings, delivery radius, and payment collection. Public URL accessible without login for consumers.</p></div><div class="card"><h4>18. Equipment <span class="badge">/equipment</span> <span style="float:right;font-size:10px;color:#64748b">26KB</span></h4><p>Farm equipment rental marketplace: Browse tractors, harvesters, sprayers, pumps with daily rates, availability calendar, and GPS location. Book equipment, track usage hours, and make payments through the platform.</p></div><div class="card"><h4>19. Transport <span class="badge">/transport</span> <span style="float:right;font-size:10px;color:#64748b">21KB</span></h4><p>Produce transport booking: Book mini trucks, pickups, lorries for market transport. Features: Route planning, vehicle tracking, weight capacity matching, cold chain vehicle options, and fare estimation.</p></div><div class="card"><h4>20. Labour <span class="badge">/labour</span> <span style="float:right;font-size:10px;color:#64748b">17KB</span></h4><p>Farm labour hiring marketplace: Browse available labour groups by specialization (transplanting, harvesting, spraying), daily wage rates, group size, and availability. Book workers, track attendance, and process payments.</p></div><div class="card"><h4>21. Network <span class="badge">/network</span> <span style="float:right;font-size:10px;color:#64748b">13KB</span></h4><p>Farmer social connections: Find and connect with nearby farmers, share crop knowledge, form buying groups for bulk input purchases, and coordinate harvest activities.</p></div><div class="card"><h4>22. FPO Management <span class="badge">/fpo</span> <span style="float:right;font-size:10px;color:#64748b">21KB</span></h4><p>Farmer Producer Organization tools: Member management, collective buying power, shared equipment scheduling, group marketing of produce, FPO financials, and government scheme applications as organization.</p></div><h3>Modules 21-47 (Summary)</h3>
-<table><tr><th>#</th><th>Module</th><th>Route</th><th>Description</th></tr>
-<tr><td>22</td><td>Knowledge Base</td><td>/knowledge</td><td>Agricultural knowledge articles, pest guides, crop calendars</td></tr>
-<tr><td>23</td><td>Gamification</td><td>/gamification</td><td>XP points, badges, leaderboard, quests, coins system</td></tr>
-<tr><td>24</td><td>Task Manager</td><td>/tasks</td><td>Farm task planner with calendar, reminders, priority</td></tr>
-<tr><td>25</td><td>Reports</td><td>/reports</td><td>PDF report generation for finance, crops, analytics</td></tr>
-<tr><td>26</td><td>Admin Dashboard</td><td>/admin</td><td>User management, moderation, system health, analytics</td></tr>
-<tr><td>27</td><td>Supplier Dashboard</td><td>/supplier-dashboard</td><td>Order management, inventory, customer management</td></tr>
-<tr><td>28</td><td>Broker Dashboard</td><td>/broker-dashboard</td><td>Mandi transactions, commission tracking, connections</td></tr>
-<tr><td>29</td><td>Industrial Dashboard</td><td>/industrial-dashboard</td><td>Farmer search, bulk procurement, contract farming</td></tr>
-<tr><td>30</td><td>Labour Dashboard</td><td>/labour-dashboard</td><td>Booking management, worker dispatch, payments</td></tr>
-<tr><td>31</td><td>Profile</td><td>/profile</td><td>Farm health score, crop portfolio, badges, ID card</td></tr>
-<tr><td>32</td><td>Settings</td><td>/settings</td><td>Theme, language, privacy, data export, account</td></tr>
-<tr><td>33</td><td>Onboarding</td><td>/onboarding</td><td>Multi-step registration wizard for new farmers</td></tr>
-<tr><td>34</td><td>Notifications</td><td>/notifications</td><td>In-app notification center with categories</td></tr>
-<tr><td>35</td><td>Landing Page</td><td>/</td><td>Public hero page with features, stats, testimonials</td></tr>
-<tr><td>36</td><td>Login</td><td>/login</td><td>OTP + Google OAuth + 7 demo role accounts</td></tr>
-<tr><td>37</td><td>Contact</td><td>/contact</td><td>Support form with category selection</td></tr>
-<tr><td>38</td><td>Premium</td><td>/premium</td><td>Premium features, IoT dashboard, drone booking</td></tr>
-<tr><td>39</td><td>IoT Dashboard</td><td>/iot</td><td>IoT sensor monitoring, smart irrigation control</td></tr>
-<tr><td>40</td><td>Drone Services</td><td>/drone</td><td>Drone survey booking for crop monitoring</td></tr>
-<tr><td>41</td><td>Cold Storage</td><td>/cold-storage</td><td>Cold storage facility booking and tracking</td></tr>
-<tr><td>42-47</td><td colspan="3">Quality Lab, Agri Tourism, Disputes, QA, Farmers Directory, Public Pages</td></tr>
-</table></div><div class="pg sec"><h2>Chapter 5: 7 User Roles � Complete Breakdown</h2>
-<h3>5.1 Role 1: FARMER (Primary � 80% of users)</h3>
-<p><b>Profile:</b> Small/marginal farmer, 2-10 acres, age 25-55, budget Android phone (��5K-15K), 2G/3G internet, Telugu-speaking, limited digital literacy</p>
-<table><tr><th>Category</th><th>Modules Accessible (22 total)</th></tr>
-<tr><td>Farm Management</td><td>Dashboard, Crops, Fields, Soil Testing, Task Manager</td></tr>
-<tr><td>Intelligence</td><td>Weather Forecast, Market Prices, AI Advisory, Knowledge Base</td></tr>
-<tr><td>Finance</td><td>Expenses, Sales & Profit, Wallet, Insurance, Financial Services (8-tab), Schemes</td></tr>
-<tr><td>Commerce</td><td>Marketplace, Suppliers, F2C Store, Equipment, Transport, Labour</td></tr>
-<tr><td>Social</td><td>Community Forum, Network, FPO, Gamification</td></tr>
-<tr><td>Account</td><td>Profile, Settings, Notifications, Reports</td></tr></table>
-<p><b>User Journey:</b> Register �  Complete profile �  Add fields �  Add crops �  Track expenses �  Check market prices �  Chat with AI �  Sell produce �  Apply for schemes �  Earn XP badges</p>
-
-<h3>5.2 Role 2: SUPPLIER</h3>
-<p><b>Profile:</b> Seed, fertilizer, pesticide dealer with physical shop in mandal/district town</p>
-<table><tr><th>Feature</th><th>Description</th></tr>
-<tr><td>Product Catalog</td><td>List all products with name, brand, price, stock quantity, images</td></tr>
-<tr><td>Order Management</td><td>Receive orders from farmers, update status (Pending� Confirmed� Delivered)</td></tr>
-<tr><td>Inventory Tracker</td><td>Real-time stock levels, low-stock alerts, reorder notifications</td></tr>
-<tr><td>Customer Management</td><td>View farmer profiles, order history, credit tracking</td></tr>
-<tr><td>Invoice Generation</td><td>Auto-generate GST invoices for every order</td></tr>
-<tr><td>Analytics Dashboard</td><td>Revenue charts, top-selling products, customer demographics</td></tr></table>
-<p><b>Revenue:</b> Free listing 3 months �  ��500/month or 3% commission per order</p>
-
-<h3>5.3 Role 3: BROKER</h3>
-<p><b>Profile:</b> APMC mandi broker/commission agent handling farmer-buyer transactions</p>
-<table><tr><th>Feature</th><th>Description</th></tr>
-<tr><td>Transaction Recording</td><td>Record buy/sell with farmer name, crop, qty, price, buyer details</td></tr>
-<tr><td>Commission Tracker</td><td>Auto-calculate 2-2.5% commission on each transaction</td></tr>
-<tr><td>Farmer Connections</td><td>Directory of all farmers they serve, crop schedules, contact info</td></tr>
-<tr><td>Price Data Entry</td><td>Manual price entry when API unavailable for data accuracy</td></tr>
-<tr><td>Market Analytics</td><td>Transaction volume trends, seasonal patterns, top crops</td></tr></table>
-
-<h3>5.4 Role 4: INDUSTRIAL</h3>
-<p><b>Profile:</b> Cotton mills, rice mills, food processing factories, agri exporters</p>
-<table><tr><th>Feature</th><th>Description</th></tr>
-<tr><td>Farmer Search</td><td>Search by crop, district, quantity, quality grade � find matching farmers</td></tr>
-<tr><td>Bulk Procurement</td><td>Place bulk orders directly with farmers, negotiate prices</td></tr>
-<tr><td>Contract Farming</td><td>Create forward contracts with guaranteed prices for farmers</td></tr>
-<tr><td>Quality Grading</td><td>Define quality parameters, receive graded produce from farmers</td></tr>
-<tr><td>Delivery Tracking</td><td>Track produce transportation from farm to factory</td></tr></table>
-
-<h3>5.5 Role 5: LABOUR ASSOCIATION</h3>
-<p><b>Profile:</b> Farm labour groups, contractors (thekedars), worker associations</p>
-<table><tr><th>Feature</th><th>Description</th></tr>
-<tr><td>Worker Dispatch</td><td>Assign workers to farmer bookings by specialization</td></tr>
-<tr><td>Booking Management</td><td>Accept/reject bookings, set availability calendar</td></tr>
-<tr><td>Attendance Tracker</td><td>Mark daily attendance, calculate work hours per farmer</td></tr>
-<tr><td>Payment Records</td><td>Track daily wages, pending payments, payment history</td></tr>
-<tr><td>Rating System</td><td>Receive farmer ratings, build reputation for more bookings</td></tr></table>
-
-<h3>5.6 Role 6: ADMIN</h3>
-<p><b>Profile:</b> Platform administrators and moderators</p>
-<table><tr><th>Feature</th><th>Description</th></tr>
-<tr><td>User Management</td><td>View all users, ban/unban, role assignment, profile editing</td></tr>
-<tr><td>Content Moderation</td><td>Review flagged posts, approve/reject community content</td></tr>
-<tr><td>System Analytics</td><td>Real-time platform metrics: DAU, MAU, revenue, API health</td></tr>
-<tr><td>Data Export</td><td>Export farmer data, transaction records, analytics reports</td></tr></table>
-
-<h3>5.7 Role 7: PUBLIC</h3>
-<p><b>Access:</b> Landing Page, Contact Form, Privacy Policy, Terms of Service, Demo Mode (all 7 roles explorable without registration)</p>
-</div><div class="pg sec"><h2>Chapter 6: API Integrations & Credentials</h2>
-<h3>6.1 Active API Keys (7 Services)</h3>
-<table><tr><th>Service</th><th>Variable</th><th>Status</th><th>Tier</th><th>Renewal URL</th></tr>
-<tr><td>Supabase</td><td>VITE_SUPABASE_URL + ANON_KEY</td><td>�S& Live</td><td>Free (500MB)</td><td>supabase.com/dashboard</td></tr>
-<tr><td>Google Gemini</td><td>VITE_GEMINI_API_KEY</td><td>�S& Live</td><td>Free (60 RPM)</td><td>aistudio.google.com/apikey</td></tr>
-<tr><td>Groq AI</td><td>VITE_GROQ_API_KEY</td><td>�S& Live</td><td>Free (30 RPM)</td><td>console.groq.com</td></tr>
-<tr><td>OpenWeatherMap</td><td>VITE_OPENWEATHER_API_KEY</td><td>�S& Live</td><td>Free (1000/day)</td><td>openweathermap.org/api</td></tr>
-<tr><td>Open-Meteo</td><td>VITE_OPEN_METEO_URL</td><td>�S& Live</td><td>Free (no key)</td><td>open-meteo.com</td></tr>
-<tr><td>data.gov.in</td><td>VITE_DATA_GOV_API_KEY</td><td>�S& Live</td><td>Free</td><td>data.gov.in</td></tr>
-<tr><td>Fast2SMS</td><td>VITE_FAST2SMS_API_KEY</td><td>�S& Live</td><td>Paid</td><td>fast2sms.com</td></tr></table>
-
-<h3>6.2 Pending Production Keys</h3>
-<table><tr><th>Service</th><th>Purpose</th><th>Priority</th><th>URL</th></tr>
-<tr><td>Razorpay LIVE</td><td>Real payments</td><td>�x� Critical</td><td>dashboard.razorpay.com</td></tr>
-<tr><td>Sentry DSN</td><td>Error monitoring</td><td>�x� Critical</td><td>sentry.io</td></tr>
-<tr><td>Firebase FCM</td><td>Push notifications</td><td>�xx� Important</td><td>console.firebase.google.com</td></tr>
-<tr><td>Google Analytics</td><td>User analytics</td><td>�xx� Important</td><td>analytics.google.com</td></tr>
-<tr><td>Twilio</td><td>Production SMS</td><td>�xx� Nice-to-have</td><td>twilio.com</td></tr></table>
-
-<h3>6.3 Vercel Environment (15 variables)</h3>
-<p>All keys encrypted in Vercel dashboard. Environments: Production, Preview, Development.</p>
-</div><div class="pg sec"><h2>Chapter 7: Database Schema & Security</h2>
-<h3>7.1 Supabase Database (16 Tables)</h3>
-<table><tr><th>Table</th><th>Columns</th><th>RLS</th><th>Purpose</th></tr>
-<tr><td>profiles</td><td>id, name, phone, role, village, district, aadhaar, avatar</td><td>�S&</td><td>User profiles</td></tr>
-<tr><td>crops</td><td>id, user_id, name, variety, area, season, field_id, stage</td><td>�S&</td><td>Crop records</td></tr>
-<tr><td>fields</td><td>id, user_id, name, area, soil_type, lat, lng, irrigation</td><td>�S&</td><td>Farm fields</td></tr>
-<tr><td>expenses</td><td>id, user_id, category, amount, date, vendor, notes</td><td>�S&</td><td>Expense tracking</td></tr>
-<tr><td>sales</td><td>id, user_id, crop, qty, price, buyer, date</td><td>�S&</td><td>Sales records</td></tr>
-<tr><td>community_posts</td><td>id, user_id, type, content, tags, likes, comments</td><td>�S&</td><td>Forum posts</td></tr>
-<tr><td>marketplace_listings</td><td>id, seller_id, crop, qty, price, grade, status, photos</td><td>�S&</td><td>Produce listings</td></tr>
-<tr><td>notifications</td><td>id, user_id, type, message, read, created_at</td><td>�S&</td><td>Notifications</td></tr>
-<tr><td>wallet_transactions</td><td>id, user_id, type, amount, status, reference</td><td>�S&</td><td>Payments</td></tr>
-<tr><td>gamification_scores</td><td>id, user_id, xp, level, badges, streak</td><td>�S&</td><td>Gamification</td></tr>
-<tr><td>equipment_bookings</td><td>id, user_id, equipment_id, date, hours, status</td><td>�S&</td><td>Equipment rental</td></tr>
-<tr><td>labour_bookings</td><td>id, user_id, group_id, date, workers, status</td><td>�S&</td><td>Labour hiring</td></tr>
-<tr><td>iot_devices</td><td>id, user_id, type, field_id, status, last_reading</td><td>�S&</td><td>IoT sensors</td></tr>
-<tr><td>iot_readings</td><td>id, device_id, moisture, temp, humidity, timestamp</td><td>�S&</td><td>Sensor data</td></tr>
-<tr><td>fpo_members</td><td>id, fpo_id, user_id, role, joined_at</td><td>�S&</td><td>FPO membership</td></tr>
-<tr><td>schemes</td><td>id, user_id, scheme_name, status, applied_at</td><td>�S&</td><td>Scheme applications</td></tr></table>
-
-<h3>7.2 Security Architecture</h3>
-<table><tr><th>Layer</th><th>Protection</th><th>Implementation</th></tr>
-<tr><td>HTTP Headers</td><td>HSTS, CSP, X-Frame, XSS</td><td>vercel.json � strict content-security-policy</td></tr>
-<tr><td>Database</td><td>Row-Level Security</td><td>All 16 tables have RLS policies � users can only access own data</td></tr>
-<tr><td>Authentication</td><td>JWT + OAuth</td><td>Supabase Auth with 1hr token expiry, refresh tokens</td></tr>
-<tr><td>Input Validation</td><td>XSS sanitization</td><td>security.js � DOMPurify, regex validation on all inputs</td></tr>
-<tr><td>SQL Injection</td><td>Parameterized queries</td><td>Supabase client uses prepared statements</td></tr>
-<tr><td>Data Privacy</td><td>Aadhaar masking</td><td>Display format: XXXX XXXX 9012 (last 4 only)</td></tr>
-<tr><td>RBAC</td><td>Role-based access</td><td>useAuth.js � role check on every protected route</td></tr></table>
-</div><div class="pg sec"><h2>Chapter 8: 25-Member Real-World Team</h2>
-<h3>Team 1: Farmer Outreach (7 Members)</h3><div class="card"><h4>Member 1: Group Head � Farmer Outreach Lead</h4><p>Leads entire farmer outreach operations across all villages. Plans visit schedules, coordinates 6 members, conducts main workshop presentations, maintains farmer registration count. Must be: Most confident Telugu speaker, has village/farming background, natural leader, has bike.</p><p><b>Targets:</b> 5 village visits supervised/week, 100 farmers registered/week, 400 farmers/month</p></div><div class="card"><h4>Member 2: Village Workshop Coordinator (Primary)</h4><p>Main face of RythuSphere in villages. Conducts 45-minute offline workshops teaching farmers to use each app feature step by step. Helps install app on phones. Collects attendance. Follows up with confused farmers.</p><p><b>Targets:</b> 3 workshops/week, 60 farmers taught/week, 240/month, satisfaction >80%</p></div><div class="card"><h4>Member 3: Village Workshop Coordinator (Secondary)</h4><p>Independently handles separate village workshops to double coverage. Covers different villages than Primary coordinator on same day.</p><p><b>Targets:</b> 2 workshops/week, 40 farmers/week, 160/month</p></div><div class="card"><h4>Member 4: Farmer Registration & Support Executive</h4><p>Handles all registrations during workshops. Fills profiles completely (name, village, crops, acres). Manages WhatsApp support group. Responds to queries 9AM-6PM daily.</p><p><b>Targets:</b> 50 farmers profiled/week, WhatsApp response <2hrs, 0 issues older than 24hrs</p></div><div class="card"><h4>Member 5: Telugu Content Creator � Video & Social</h4><p>Creates Telugu how-to videos for each app feature. Records farmer testimonials. Designs Telugu posters in Canva. Daily WhatsApp forward content with prices and weather. Tools: CapCut, Canva, YouTube, Facebook.</p><p><b>Targets:</b> 2 videos/week, 7 daily WhatsApp messages, 2 poster designs/week</p></div><div class="card"><h4>Member 6: Farmer WhatsApp Community Manager</h4><p>Manages district-wise farmer WhatsApp groups. Sends daily morning message (price + weather + tip). Moderates groups. Organizes polls and feedback. Grows groups by farmer referrals.</p><p><b>Targets:</b> 3 groups active, 150 farmers in groups, daily message without fail</p></div><div class="card"><h4>Member 7: Feedback & Data Analyst</h4><p>Collects farmer feedback via Google Forms. Compiles weekly analysis (what farmers love/hate). Tracks feature usage patterns. Reports bugs to Founder. Maintains master farmer sheet.</p><p><b>Targets:</b> 50 feedbacks/week, weekly report submitted Sunday, bug list updated daily</p></div><h3>Team 2: Business Partnerships (9 Members)</h3><div class="card"><h4>Member 8: Group Head � Business Partnerships</h4><p>Leads all B2B partnership operations. Approves deals above ��1000/month. Negotiates listing fees with major partners. Reports revenue pipeline weekly. Builds top 5 partner relationships.</p><p><b>Targets:</b> 5 partnerships/week, ��10K monthly recurring revenue/month</p></div><div class="card"><h4>Member 9: Agri Dealer Executive � Area A</h4><p>Visits seed/fertilizer/pesticide shops in assigned area. Demos app in 3 minutes. Collects shop details. Follows up next day. Onboards dealers onto platform.</p><p><b>Targets:</b> 5 shops visited/week, 2 dealers confirmed/week, 8/month</p></div><div class="card"><h4>Member 10: Agri Dealer Executive � Area B</h4><p>Same as Area A but covers different mandal/area to maximize geographic reach. No overlap with Member 9.</p><p><b>Targets:</b> 5 shops visited/week, 2 dealers confirmed/week, 8/month</p></div><div class="card"><h4>Member 11: Equipment Dealer Executive</h4><p>Connects tractor/harvester/sprayer/pump rental owners with equipment booking module. Offers free listing then ��500/month or 3% commission.</p><p><b>Targets:</b> 3 contacts/week, 1 listing/week, 10 listings/month</p></div><div class="card"><h4>Member 12: Transport Dealer Executive</h4><p>Connects mini truck/pickup/lorry owners with transport booking module. Cold storage vehicle owners included.</p><p><b>Targets:</b> 3 contacts/week, 1 vehicle listed/week, 10/month</p></div><div class="card"><h4>Member 13: Labour Association Executive</h4><p>Connects farm labour groups and contractors. Explains how app gives them more bookings. Lists groups with worker count and daily rates.</p><p><b>Targets:</b> 2 contacts/week, 1 group listed/week, 5/month</p></div><div class="card"><h4>Member 14: Mandi & Broker Relations Executive</h4><p>Visits APMC mandis, meets officials, connects brokers. Collects daily prices when API unavailable. Verifies price data accuracy.</p><p><b>Targets:</b> 1 mandi visit/week, 1 broker connected/week, price accuracy >90%</p></div><div class="card"><h4>Member 15: Cold Storage & Factory Executive</h4><p>Connects cold storage facilities, food processing factories, and agri exporters for F2C direct selling. Highest farmer value � cuts middlemen.</p><p><b>Targets:</b> 1 contact/week, 5 factories listed/month, 3 transactions facilitated</p></div><div class="card"><h4>Member 16: Revenue Tracker & Accounts</h4><p>Maintains all partnership records. Tracks free vs paid listings. Sends payment reminders. Prepares weekly revenue report.</p><p><b>Targets:</b> 100% tracking accuracy, weekly report submitted, 0 missed payments</p></div></div><div class="pg sec"><h2>Chapter 8 (continued): Teams 2-4</h2><div class="card"><h4>Member 17: Business Development & WhatsApp Marketing</h4><p>Online outreach to dealers via WhatsApp/social media. Manages Facebook Business Page. Supports any team member needing bandwidth.</p><p><b>Targets:</b> 50 contacts/week, 3 Facebook posts/week, 5 leads shared</p></div><h3>Team 3: Authority Relations (5 Members)</h3><div class="card"><h4>Member 18: Group Head � Authority Relations</h4><p>Leads all professor/government/investor meetings. Reviews grant applications. Builds MVGR college recognition. Represents RythuSphere in formal settings.</p><p><b>Targets:</b> 1 meeting/week, 2 grants applied/month, 1 endorsement confirmed/month</p></div><div class="card"><h4>Member 19: College & Professor Relations</h4><p>Identifies interested MVGR professors. Schedules 30-min demo meetings. Works toward 2 professors as official mentors. Applies for college incubation.</p><p><b>Targets:</b> 2 professor meetings/week, 2 mentors confirmed/month, college recognition</p></div><div class="card"><h4>Member 20: Government Relations Executive</h4><p>Visits Agriculture Department offices. Meets Agricultural Extension Officers. Gets permission to demo at farmer training programs. Connects with Rythu Seva Kendra.</p><p><b>Targets:</b> 1 govt visit/week, 1 endorsement/month, 5 contacts built/month</p></div><div class="card"><h4>Member 21: Grant Writer & Competition Coordinator</h4><p>Researches grants (AICTE, NABARD, Startup India). Writes applications. Registers for Smart India Hackathon. Prepares pitch deck. Tracks all deadlines.</p><p><b>Targets:</b> 1 application/week, 3 submitted/month, Startup India registered Week 1</p></div><div class="card"><h4>Member 22: Investor & Media Relations</h4><p>Builds LinkedIn presence. Connects with agri-tech investors. Contacts Telugu media (Eenadu, Sakshi). Sends press releases. Approaches local businessmen investors.</p><p><b>Targets:</b> 5 LinkedIn connects/week, 1 media feature/month, 1 investor meeting/month</p></div><h3>Tech Team & Operations (3 Members)</h3><div class="card"><h4>Member 23: Tech Co-Developer</h4><p>Assists Founder with Phase 11-12 development. Fixes bugs from field workshops. Maintains uptime. Tests before release. Clean React/Supabase code. Tools: VS Code, GitHub, Vercel.</p><p><b>Targets:</b> 5 bugs fixed/week, 1 feature/week, uptime 99%, daily GitHub commits</p></div><div class="card"><h4>Member 24: QA Tester</h4><p>Tests every feature on budget Android (under ��10K). Tests on 2G/3G slow internet. Tests Telugu translations. Writes bug reports with screenshots. Full regression test weekly.</p><p><b>Targets:</b> All features tested within 24hrs, weekly regression, Telugu 100% accurate</p></div><div class="card"><h4>Member 25: Operations Coordinator</h4><p>Maintains Notion task board. Coordinates all 3 teams. Ensures weekly reports submitted. Sends all-team updates. Organizes Sunday meetings. Tracks 25-member participation.</p><p><b>Targets:</b> Notion 100% updated, 0 missed communications, Sunday meeting organized</p></div></div><div class="pg sec"><h2>Chapter 9: Revenue Model & Business Plan</h2>
-<h3>9.1 Revenue Streams</h3>
-<table><tr><th>#</th><th>Stream</th><th>Pricing</th><th>Year 1 Target</th></tr>
-<tr><td>1</td><td>Dealer/Supplier Listing Fee</td><td>��500/month after 3-month trial</td><td>50 dealers � ��6K = ��3L</td></tr>
-<tr><td>2</td><td>Equipment Booking Commission</td><td>3% per booking</td><td>��1.2L</td></tr>
-<tr><td>3</td><td>Transport Booking Commission</td><td>3% per booking</td><td>��60K</td></tr>
-<tr><td>4</td><td>Premium Farmer Subscription</td><td>��499/year</td><td>200 farmers = ��1L</td></tr>
-<tr><td>5</td><td>F2C Store Commission</td><td>5% per transaction</td><td>��1.8L</td></tr>
-<tr><td>6</td><td>Sponsored Listings</td><td>��2K/month for top placement</td><td>��50K</td></tr>
-</table>
-<p><b>Total Year 1 Revenue Target: ��7-8 Lakhs</b></p>
-<p><b>Year 2 Target: ��25-30 Lakhs</b> (with 2000+ farmers, 100+ dealers, multi-district expansion)</p>
-
-<h3>9.2 Cost Structure</h3>
-<table><tr><th>Item</th><th>Monthly Cost</th><th>Annual</th></tr>
-<tr><td>Supabase (Free tier)</td><td>��0</td><td>��0</td></tr>
-<tr><td>Vercel Hosting (Free tier)</td><td>��0</td><td>��0</td></tr>
-<tr><td>AI APIs (Free tiers)</td><td>��0</td><td>��0</td></tr>
-<tr><td>Fast2SMS (OTP)</td><td>��500</td><td>��6K</td></tr>
-<tr><td>Domain Name</td><td>��100</td><td>��1.2K</td></tr>
-<tr><td>Workshop Materials (Pamphlets)</td><td>��2K</td><td>��24K</td></tr>
-<tr><td>Travel (Village visits)</td><td>��5K</td><td>��60K</td></tr>
-</table>
-<p><b>Total Annual Cost: ~��90K</b> | <b>Break-even: Month 6-8</b></p>
-</div><div class="pg sec"><h2>Chapter 10: 90-Day Launch Roadmap</h2>
-<table><tr><th>Week</th><th>Phase</th><th>Key Activities</th><th>Deliverables</th></tr>
-<tr><td>1</td><td>Team Setup</td><td>Select 25 members, assign roles, create WhatsApp groups, Notion board</td><td>Team formed, tools ready</td></tr>
-<tr><td>2</td><td>Training</td><td>App training for all members, role-specific workshops, demo practice</td><td>All members can demo app</td></tr>
-<tr><td>3</td><td>Pilot</td><td>First 3 village workshops, first dealer visits, Startup India registration</td><td>50 farmers, 3 dealers contacted</td></tr>
-<tr><td>4</td><td>Expand</td><td>5 villages, professor meetings, grant research started</td><td>100 farmers, 1 mentor, 1 grant identified</td></tr>
-<tr><td>5-6</td><td>Scale</td><td>10 villages/week, WhatsApp groups growing, media outreach begins</td><td>300 farmers, 5 dealers listed, content calendar running</td></tr>
-<tr><td>7-8</td><td>Revenue</td><td>Free trials ending, payment collection starts, first bookings</td><td>First ��5K revenue, 400+ farmers</td></tr>
-<tr><td>9-10</td><td>Validate</td><td>Feedback analysis, feature improvements, govt meeting</td><td>App v1.1, 1 govt endorsement</td></tr>
-<tr><td>11-12</td><td>Growth</td><td>Multi-district expansion planning, investor pitch prep</td><td>500+ farmers, ��10K revenue, pitch deck ready</td></tr>
-</table>
-
-<h2>Chapter 11: Future Vision & Improvements</h2>
-<table><tr><th>Timeline</th><th>Feature</th><th>Impact</th></tr>
-<tr><td>Month 2</td><td>Push notifications (Firebase)</td><td>3x user engagement</td></tr>
-<tr><td>Month 3</td><td>Real-time farmer-to-farmer chat</td><td>Community retention</td></tr>
-<tr><td>Month 4</td><td>Mobile app (React Native)</td><td>Better performance on low-end phones</td></tr>
-<tr><td>Month 6</td><td>Satellite imagery (NDVI crop monitoring)</td><td>Remote crop health assessment</td></tr>
-<tr><td>Month 6</td><td>ML price forecasting</td><td>Help farmers time their sales</td></tr>
-<tr><td>Month 9</td><td>Blockchain supply chain</td><td>Traceability from farm to fork</td></tr>
-<tr><td>Month 12</td><td>Multi-state expansion (Telangana, Karnataka)</td><td>10x user base</td></tr>
-</table>
-<blockquote><b>Built with ❤️ for the farmers of Andhra Pradesh</b><br/>Platform: rythusphere-web.vercel.app<br/>© 2026 RythuSphere. All rights reserved.</blockquote>
-</div></body></html>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../lib/hooks/useAuth';
 import { supabase } from '../lib/supabase';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const AP_DISTRICTS = ['Guntur','Krishna','Anantapur','Chittoor','Kurnool','Prakasam','Nellore','East Godavari','West Godavari','Visakhapatnam','Vizianagaram','Srikakulam','Kadapa'];
 
@@ -16,8 +17,9 @@ const STATUS_MAP = {
 const STORAGE_KEY = 'rythu_my_transport_machinery';
 
 export default function MyTransportMachineryPage() {
-  const { farmerProfile, userRole } = useAuth();
-  const userId = farmerProfile?.id || 'guest';
+  const { t, tx } = useLanguage();
+  const { farmerProfile, userRole, user } = useAuth();
+  const userId = user?.id || farmerProfile?.id || localStorage.getItem('rythu_user_id') || 'guest';
 
   // Block customers
   if (userRole === 'customer') {

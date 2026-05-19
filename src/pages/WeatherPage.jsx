@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { getMapEmbedUrl, getWeatherInsight, GOOGLE_KEYS } from '../lib/googleApis';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../lib/hooks/useAuth';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const API = 'https://api.open-meteo.com/v1/forecast';
 
@@ -116,6 +120,7 @@ function RainEffect() {
 }
 
 export default function WeatherPage() {
+  const { user } = useAuth();
   const [w, setW] = useState(null);
   const [fc, setFc] = useState([]);
   const [hr, setHr] = useState([]);
@@ -126,9 +131,33 @@ export default function WeatherPage() {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsCity, setGpsCity] = useState('');
   const [gpsError, setGpsError] = useState('');
+  const [aiInsight, setAiInsight] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
   const ctrl = useRef(null);
 
-  // Find nearest known city — returns the actual LOCS entry
+  // Load saved weather location from Supabase
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const { data } = await supabase.from('farmer_preferences').select('weather_location').eq('farmer_id', user.id).single();
+        if (data?.weather_location) {
+          const saved = LOCS.find(l => l.n === data.weather_location);
+          if (saved) setLoc(saved);
+        }
+      } catch {}
+    })();
+  }, [user?.id]);
+
+  // Save weather location preference
+  const setLocAndSave = (l) => {
+    setLoc(l);
+    if (user?.id) {
+      supabase.from('farmer_preferences').upsert({ farmer_id: user.id, weather_location: l.n }, { onConflict: 'farmer_id' }).then(() => {});
+    }
+  };
+
+  // Find nearest known city
   const findNearest = (lat, lon) => {
     let best = LOCS[0], minD = Infinity;
     LOCS.forEach(l => {
@@ -147,7 +176,7 @@ export default function WeatherPage() {
     const nearest = findNearest(userLat, userLon);
     setGpsCity(`${nearest.n} (${userLat.toFixed(2)}°N, ${userLon.toFixed(2)}°E)`);
     setGpsError('');
-    setLoc(nearest);
+    setLocAndSave(nearest);
     setGpsLoading(false);
   };
 
@@ -169,7 +198,7 @@ export default function WeatherPage() {
         // Fallback: try without high accuracy
         navigator.geolocation.getCurrentPosition(
           handleGPSPosition,
-          (err) => { console.log('GPS skipped:', err.message); setGpsLoading(false); },
+          (err) => { setGpsLoading(false); },
           { enableHighAccuracy: false, timeout: 15000, maximumAge: 600000 }
         );
       },
@@ -211,17 +240,17 @@ export default function WeatherPage() {
 
       for (const url of urls) {
         try {
-          console.log('🌤️ Trying:', url.substring(0, 50) + '...');
+
           const r = await fetch(url, { signal: ac.signal });
-          if (!r.ok) { console.warn('❌ HTTP', r.status); continue; }
+          if (!r.ok) { /* warn removed */ continue; }
           const data = await r.json();
           if (data?.current?.temperature_2m !== undefined) {
-            console.log('✅ Live weather:', data.current.temperature_2m + '°C via', url.startsWith('/api') ? 'proxy' : 'direct');
+
             return data;
           }
         } catch (e) {
           if (e.name === 'AbortError') throw e;
-          console.warn('❌ Failed:', e.message);
+          /* warn removed */
         }
       }
       throw new Error('All methods failed');
@@ -240,7 +269,7 @@ export default function WeatherPage() {
       })
       .catch(e => {
         if (e.name === 'AbortError') return;
-        console.warn('🌤️ Using offline weather data');
+        /* warn removed */
         setW({ temp: 33, hum: 68, wind: 14, rain: 0, code: 1, feel: 35, pres: 1010 });
         const td = new Date();
         setFc([1,2,61,3,0,1,2].map((code, i) => { const d = new Date(td); d.setDate(d.getDate()+i); return { date: d.toISOString().split('T')[0], code, max: 36-i, min: 22+(i%2), rain: [0,2,15,8,0,0,3][i], wind: 14-i }; }));
@@ -262,6 +291,16 @@ export default function WeatherPage() {
       <div style={{ textAlign:'center' }}>
         <div style={{ fontSize:'3rem', marginBottom:16, animation:'floatUp 1.5s ease-in-out infinite' }}>🌤️</div>
         <div style={{ fontSize:'0.9rem' }}>Loading weather for {loc.n}...</div>
+      </div>
+    </div>
+  );
+
+  if (!w) return (
+    <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:400, color:'var(--text-muted)' }}>
+      <div style={{ textAlign:'center' }}>
+        <div style={{ fontSize:'3rem', marginBottom:16 }}>⚠️</div>
+        <div style={{ fontSize:'0.9rem', marginBottom:12 }}>Weather data unavailable for {loc.n}</div>
+        <button onClick={() => window.location.reload()} style={{ padding:'8px 20px', borderRadius:8, border:'1px solid var(--border)', background:'var(--accent)', color:'#fff', cursor:'pointer', fontSize:'0.85rem' }}>🔄 Retry</button>
       </div>
     </div>
   );
@@ -294,7 +333,7 @@ export default function WeatherPage() {
             </button>
             {gpsError && <span style={{ fontSize: '0.7rem', color: '#f87171', padding: '5px 8px' }}>{gpsError}</span>}
             {sq && fLocs.map(l => (
-              <button key={l.n} onClick={() => { setLoc(l); setSq(''); setGpsCity(''); }}
+              <button key={l.n} onClick={() => { setLocAndSave(l); setSq(''); setGpsCity(''); }}
                 style={{
                   padding: '5px 12px', borderRadius: 16, fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
                   background: loc.n === l.n ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)',
@@ -378,6 +417,43 @@ export default function WeatherPage() {
             );
           })}
         </div>
+
+        {/* Google Maps - Location View */}
+        {GOOGLE_KEYS.maps && (
+          <div style={{ background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(8px)', borderRadius: 12, padding: '12px 14px', marginTop: 14, border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: 700, marginBottom: 8 }}>🗺️ {loc.n} - Satellite View</div>
+            <div style={{ borderRadius: 10, overflow: 'hidden', height: 220 }}>
+              <iframe
+                src={getMapEmbedUrl(loc.n, 12) || `https://www.google.com/maps/embed/v1/view?key=${GOOGLE_KEYS.maps}&center=${loc.lat},${loc.lon}&zoom=12&maptype=roadmap`}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+                allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+                title={`Map of ${loc.n}`}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Gemini AI Weather Insight */}
+        {GOOGLE_KEYS.gemini && w && (
+          <div style={{ background: 'rgba(0,0,0,0.2)', backdropFilter: 'blur(8px)', borderRadius: 12, padding: '12px 14px', marginTop: 14, border: '1px solid rgba(139,92,246,0.3)', borderLeft: '3px solid #a78bfa' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#a78bfa' }}>🧠 Gemini AI Weather Analysis</div>
+              <button onClick={async () => {
+                setAiLoading(true);
+                try {
+                  const result = await getWeatherInsight({ temp: w.temp, humidity: w.hum, wind: w.wind, rain: w.rain, condition: wmo.label }, loc.n);
+                  setAiInsight(result.text);
+                } catch (e) { setAiInsight('⚠️ AI analysis unavailable: ' + e.message); }
+                setAiLoading(false);
+              }} disabled={aiLoading} style={{
+                padding: '4px 12px', borderRadius: 8, border: '1px solid rgba(167,139,250,0.3)',
+                background: 'rgba(167,139,250,0.1)', color: '#a78bfa', cursor: 'pointer',
+                fontSize: '0.7rem', fontWeight: 700,
+              }}>{aiLoading ? '⏳ Analyzing...' : aiInsight ? '🔄 Refresh' : '✨ Get AI Insight'}</button>
+            </div>
+            {aiInsight && <div style={{ fontSize: '0.78rem', lineHeight: 1.7, opacity: 0.9, whiteSpace: 'pre-line' }}>{aiInsight}</div>}
+          </div>
+        )}
       </div>
     </div>
   );

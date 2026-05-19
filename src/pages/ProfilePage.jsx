@@ -14,6 +14,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useAuth } from '../lib/hooks/useAuth';
 import { DEFAULT_STATE, DEFAULT_DISTRICT } from '../lib/supabase';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 import {
   clearStoredFPOMember,
   getMergedPhase11Profile,
@@ -79,6 +80,7 @@ const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
 function normalizeCropName(crop) {
+
   const normalized = String(crop || '')
     .trim()
     .toLowerCase()

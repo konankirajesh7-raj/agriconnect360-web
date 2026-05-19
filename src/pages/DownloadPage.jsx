@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 export default function DownloadPage() {
+  const { t, tx } = useLanguage();
   const [downloading, setDownloading] = useState(false);
 
   const handleDownload = () => {

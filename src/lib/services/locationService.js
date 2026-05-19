@@ -49,7 +49,7 @@ async function tryNominatim(lat, lng) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     const addr = json.address || {};
-    console.log('📍 Nominatim response:', JSON.stringify(addr));
+
     
     const village = addr.village || addr.hamlet || addr.town || addr.city_district || addr.suburb || addr.neighbourhood || addr.city || '';
     const mandal = addr.county || addr.town || addr.suburb || '';
@@ -69,7 +69,7 @@ async function tryNominatim(lat, lng) {
       lat, lng, timestamp: Date.now(), source: 'nominatim',
     };
   } catch (e) {
-    console.warn('Nominatim failed:', e.message);
+    /* warn removed */
     return null;
   }
 }
@@ -79,7 +79,7 @@ async function tryBigDataCloud(lat, lng) {
     const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
-    console.log('📍 BigDataCloud response:', json.locality, json.city, json.principalSubdivision);
+
 
     const village = json.locality || json.city || '';
     const mandal = json.localityInfo?.administrative?.find(a => a.order === 8)?.name || json.city || '';
@@ -97,7 +97,7 @@ async function tryBigDataCloud(lat, lng) {
       lat, lng, timestamp: Date.now(), source: 'bigdatacloud',
     };
   } catch (e) {
-    console.warn('BigDataCloud failed:', e.message);
+    /* warn removed */
     return null;
   }
 }

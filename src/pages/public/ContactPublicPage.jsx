@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getMapPlaceUrl, GOOGLE_KEYS } from '../../lib/googleApis';
 
 const CONTACT_METHODS = [
   { icon: '📞', title: 'Phone Support', desc: 'Helpline (6 AM – 9 PM)', value: '+91 6303369360', action: 'Call Now', sub: 'Available in Telugu & Hindi' },
@@ -181,6 +182,26 @@ export default function ContactPublicPage() {
           </div>
         </div>
       </section>
+      {/* Google Maps - Office Location */}
+      {GOOGLE_KEYS.maps && (
+        <section style={{ padding: '40px 5%', background: 'linear-gradient(135deg, #0a0a0f 0%, #0d1117 100%)' }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <span style={{ fontSize: '1.3rem' }}>🗺️</span>
+              <h3 style={{ color: '#e2e8f0', fontWeight: 800, marginTop: 8 }}>Our Location</h3>
+              <p style={{ color: '#64748b', fontSize: '0.85rem' }}>RythuSphere Head Office, Guntur, Andhra Pradesh</p>
+            </div>
+            <div style={{ borderRadius: 16, overflow: 'hidden', height: 320, border: '1px solid rgba(255,255,255,0.1)' }}>
+              <iframe
+                src={getMapPlaceUrl('Guntur Main Road')}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+                allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+                title="RythuSphere Office Location"
+              />
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

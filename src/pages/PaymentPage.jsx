@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/hooks/useAuth';
 import { supabase } from '../lib/supabase';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
-const DEFAULT_CFG = { upiId:'6303369360@mbk', phone:'6303369360', merchantName:'RythuSphere', couponCode:'AGRI360FREE', trialDays:180, farmerPrice:50, othersPrice:100 };
+const DEFAULT_CFG = { upiId:import.meta.env.VITE_UPI_ID||'', phone:import.meta.env.VITE_MERCHANT_PHONE||'', merchantName:import.meta.env.VITE_MERCHANT_NAME||'RythuSphere', couponCode:import.meta.env.VITE_COUPON_CODE||'AGRI360FREE', trialDays:Number(import.meta.env.VITE_TRIAL_DAYS)||180, farmerPrice:Number(import.meta.env.VITE_FARMER_PRICE)||50, othersPrice:Number(import.meta.env.VITE_OTHERS_PRICE)||100, supportEmail:import.meta.env.VITE_SUPPORT_EMAIL||'' };
 function getPlanForRole(role, cfg) {
   if (role === 'farmer') return { id:'farmer-plan', name:'Farmer Plan', price:cfg?.farmerPrice||50, period:'/ 6 months', features:['Full Dashboard & Analytics','AI Crop Advisory','Live Market Prices','Weather Intelligence','Gov Schemes & Subsidies','Equipment & Transport Booking','Community & Network','Marketplace Access'], color:'#10b981' };
   if (role === 'customer') return { id:'customer-plan', name:'Customer Plan', price:50, period:'/ 1 year', features:['Browse & Buy Produce','Supplier Access','Machinery & Equipment','Live Market Prices','Weather Intelligence','Community & Network','Marketplace Access','AI Assistant'], color:'#ec4899' };
@@ -177,7 +178,7 @@ function PaymentModal({ plan, config, onClose, onSubmit }) {
     try {
       await onSubmit(txnId.trim());
     } catch (err) {
-      console.warn('Payment submit error:', err);
+      /* warn removed */
       // Still close modal —payment was saved to localStorage as fallback
       onClose();
     } finally {
@@ -313,7 +314,7 @@ export default function PaymentPage() {
       let { data, error } = await supabase.from('subscription_payments').insert(payment).select();
       // If insert fails (e.g. user_role column doesn't exist), retry without it
       if (error) {
-        console.warn('Payment insert error, retrying without user_role:', error.message);
+        /* warn removed */
         const { user_role, ...paymentWithoutRole } = payment;
         const result = await supabase.from('subscription_payments').insert(paymentWithoutRole).select();
         data = result.data;
@@ -322,7 +323,7 @@ export default function PaymentPage() {
       if (!error && data && data[0]) setPayments(prev=>[data[0],...prev]);
       else setPayments(prev=>[{...payment,id:'l-'+Date.now()},...prev]);
     } catch (err) {
-      console.warn('Payment insert failed:', err);
+      /* warn removed */
       setPayments(prev=>[{...payment,id:'l-'+Date.now()},...prev]);
     }
     setShowModal(false);

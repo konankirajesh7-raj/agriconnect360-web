@@ -1,4 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../lib/hooks/useAuth';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const TODAY = new Date().toISOString().slice(0, 10);
 const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x.toISOString().slice(0,10); };
@@ -131,11 +134,30 @@ function AddTaskModal({ onAdd, onClose }) {
 }
 
 export default function TaskManagerPage() {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState(INITIAL);
   const [filter, setFilter] = useState('all');
   const [view, setView] = useState('list');
   const [showAdd, setShowAdd] = useState(false);
   const [doneAnim, setDoneAnim] = useState(null);
+
+  // Load tasks from Supabase
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const { data } = await supabase.from('farm_tasks').select('*').eq('user_id', user.id).order('due', { ascending: true }).limit(100);
+        if (data?.length) {
+          const dbTasks = data.map(t => ({
+            id: t.id, title: t.title, type: t.type || 'Custom', crop: t.crop || '-',
+            due: (t.due||'').split('T')[0], status: t.status || 'pending', priority: t.priority || 'medium',
+            auto: t.auto || false, recur: t.recur || '',
+          }));
+          setTasks([...dbTasks, ...INITIAL]);
+        }
+      } catch {}
+    })();
+  }, [user?.id]);
 
   const overdue = tasks.filter(t => t.status === 'pending' && t.due < TODAY).length;
   const todayCount = tasks.filter(t => t.due === TODAY && t.status === 'pending').length;
@@ -154,10 +176,18 @@ export default function TaskManagerPage() {
   function toggleDone(id) {
     const t = tasks.find(x => x.id === id);
     if (t && t.status === 'pending') { setDoneAnim(id); setTimeout(() => setDoneAnim(null), 600); }
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, status: t.status === 'done' ? 'pending' : 'done' } : t));
+    const newStatus = t?.status === 'done' ? 'pending' : 'done';
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));
+    if (typeof id === 'string') supabase.from('farm_tasks').update({ status: newStatus }).eq('id', id).then(() => {});
   }
 
-  function addTasks(newTasks) { setTasks(prev => [...prev, ...newTasks]); }
+  function addTasks(newTasks) {
+    setTasks(prev => [...prev, ...newTasks]);
+    if (user?.id) {
+      const rows = newTasks.map(t => ({ title: t.title, type: t.type, crop: t.crop, due: t.due, status: 'pending', priority: t.priority, auto: false, recur: t.recur, user_id: user.id }));
+      supabase.from('farm_tasks').insert(rows).then(() => {});
+    }
+  }
 
   return (
     <div className="animated">

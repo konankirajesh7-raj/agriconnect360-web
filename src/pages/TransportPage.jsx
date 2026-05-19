@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { getMapSearchUrl, getMapDirectionsUrl, GOOGLE_KEYS } from '../lib/googleApis';
+import { useSupabaseQuery, useSupabaseMutation } from '../lib/hooks/useSupabaseQuery';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const AP_DISTRICTS = ['All Locations','Guntur','Krishna','Anantapur','Chittoor','Kurnool','Prakasam','Nellore','East Godavari','West Godavari','Visakhapatnam','Vizianagaram','Srikakulam','Kadapa'];
 const DISTRICT_COORDS = [
@@ -36,13 +39,21 @@ const BOOKINGS = [
 const ST = { available:{bg:'rgba(34,197,94,0.1)',c:'#22c55e',t:'Available'}, on_trip:{bg:'rgba(245,158,11,0.1)',c:'#f59e0b',t:'On Trip'}, in_transit:{bg:'rgba(245,158,11,0.1)',c:'#f59e0b',t:'In Transit'}, delivered:{bg:'rgba(34,197,94,0.1)',c:'#22c55e',t:'Delivered'}, requested:{bg:'rgba(139,92,246,0.1)',c:'#a78bfa',t:'Requested'} };
 
 export default function TransportPage() {
+  const { t, tx } = useLanguage();
   const [tab, setTab] = useState('vehicles');
-  const [bookings, setBookings] = useState(BOOKINGS);
   const [typeFilter, setTypeFilter] = useState('all');
   const [locFilter, setLocFilter] = useState('All Locations');
   const [gpsDistrict, setGpsDistrict] = useState('');
   const [callModal, setCallModal] = useState(null);
   const [searchQ, setSearchQ] = useState('');
+  // Fetch drivers from Supabase, fallback to hardcoded DRIVERS
+  const { data: dbDrivers, loading: driversLoading } = useSupabaseQuery('transport_drivers', { select:'*', orderBy:{ column:'rating', ascending:false }, limit:100 }, DRIVERS);
+  // Fetch bookings from Supabase, fallback to hardcoded BOOKINGS
+  const { data: bookings, loading: bookingsLoading } = useSupabaseQuery('transport_bookings', { select:'*', orderBy:{ column:'created_at', ascending:false }, limit:50 }, BOOKINGS);
+  const { data: myVehicles, loading: vehiclesLoading, refetch: refetchVehicles } = useSupabaseQuery('transport_listings', { select:'*', orderBy:{ column:'created_at', ascending:false }, limit:50 }, []);
+  const { insert: insertVehicle, loading: vehicleSaving } = useSupabaseMutation('transport_listings');
+  const [showListForm, setShowListForm] = useState(false);
+  const [vForm, setVForm] = useState({ name:'', vehicle:'', type:'Mini Truck', cap:'', rate:'', location:'', district:'Guntur', phone:'' });
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -54,10 +65,25 @@ export default function TransportPage() {
     }, () => {}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
   }, []);
 
-  let filtered = typeFilter === 'all' ? DRIVERS : DRIVERS.filter(d => d.type === typeFilter);
+  // Normalize all drivers to consistent shape
+  const allDrivers = (dbDrivers || []).map(v => ({
+    id: v.id, name: v.name||'Driver', phone: v.phone||'', vehicle: v.vehicle||'Vehicle', type: v.type||'Mini Truck',
+    cap: v.cap||v.capacity||'', rate: v.rate||0, icon: v.type==='Tractor Trolley'?'🚜':v.type==='Large Truck'?'🚚':v.type==='Medium Truck'?'🚛':'🚐',
+    photo: v.photo||'👤', rating: v.rating||4.0, trips: v.trips||0, status: v.status||'available', loc: v.location||v.loc||'', district: v.district||'Guntur',
+  }));
+  let filtered = typeFilter === 'all' ? allDrivers : allDrivers.filter(d => d.type === typeFilter);
+  // Merge user-listed vehicles on top
+  if (myVehicles?.length) {
+    const dbV = myVehicles.map(v => ({
+      id: v.id, name: v.name||'Driver', phone: v.phone||'', vehicle: v.vehicle||'Vehicle', type: v.type||'Mini Truck',
+      cap: v.cap||v.capacity||'', rate: v.rate||0, icon: v.type==='Tractor Trolley'?'🚜':v.type==='Large Truck'?'🚚':v.type==='Medium Truck'?'🚛':'🚐',
+      photo: '👤', rating: v.rating||4.0, trips: v.trips||0, status: v.status||'available', loc: v.location||'', district: v.district||'Guntur',
+    }));
+    filtered = [...dbV.filter(d => typeFilter==='all' || d.type===typeFilter), ...filtered];
+  }
   if (locFilter !== 'All Locations') filtered = filtered.filter(d => d.district === locFilter);
   if (searchQ) filtered = filtered.filter(d => d.name.toLowerCase().includes(searchQ.toLowerCase()) || d.vehicle.toLowerCase().includes(searchQ.toLowerCase()) || d.loc.toLowerCase().includes(searchQ.toLowerCase()));
-  const types = ['all', ...new Set(DRIVERS.map(d => d.type))];
+  const types = ['all', ...new Set(allDrivers.map(d => d.type))];
 
   return (
     <div className="animated">
@@ -85,7 +111,7 @@ export default function TransportPage() {
 
       {/* Tabs */}
       <div style={{ display:'flex', gap:6, marginBottom:18 }}>
-        {[['vehicles','🚛','Find Vehicle'],['bookings','📋','My Bookings'],['tracking','📡','Track Shipment']].map(([id,icon,label])=>(
+        {[['vehicles','🚛','Find Vehicle'],['bookings','📋','My Bookings'],['tracking','📡','Track Shipment'],['my-vehicles','🚐','My Vehicles']].map(([id,icon,label])=>(
           <button key={id} onClick={()=>setTab(id)} style={{ padding:'9px 16px', borderRadius:20, border:'none', cursor:'pointer', fontSize:'0.8rem', fontWeight:700, background:tab===id?'linear-gradient(135deg,#3b82f6,#6366f1)':'var(--bg-card)', color:tab===id?'#fff':'var(--text-muted)', transition:'all 0.2s' }}>
             {icon} {label}
           </button>
@@ -231,6 +257,73 @@ export default function TransportPage() {
         </div>
       )}
 
+      {/* My Vehicles Tab */}
+      {tab==='my-vehicles' && (
+        <div>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+            <div>
+              <div style={{ fontWeight:700, fontSize:'1rem' }}>🚐 My Listed Vehicles</div>
+              <div style={{ fontSize:'0.78rem', color:'var(--text-muted)' }}>List your transport for others to book</div>
+            </div>
+            <button onClick={()=>setShowListForm(true)} style={{ padding:'10px 20px', borderRadius:10, border:'none', background:'linear-gradient(135deg,#3b82f6,#6366f1)', color:'#fff', fontWeight:700, fontSize:'0.85rem', cursor:'pointer' }}>+ List Vehicle</button>
+          </div>
+          {vehiclesLoading ? <div style={{ textAlign:'center', padding:40, color:'var(--text-muted)' }}>⟳ Loading...</div> : myVehicles.length === 0 ? (
+            <div className="card" style={{ padding:48, textAlign:'center' }}>
+              <div style={{ fontSize:'3rem', marginBottom:12 }}>🚛</div>
+              <div style={{ fontWeight:700, fontSize:'1rem', marginBottom:4 }}>No vehicles listed yet</div>
+              <div style={{ fontSize:'0.82rem', color:'var(--text-muted)' }}>Click "List Vehicle" to add your first vehicle</div>
+            </div>
+          ) : (
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))', gap:14 }}>
+              {myVehicles.map(v => (
+                <div key={v.id} className="card" style={{ padding:16 }}>
+                  <div style={{ display:'flex', gap:10, alignItems:'center', marginBottom:10 }}>
+                    <div style={{ width:42, height:42, borderRadius:10, background:'rgba(59,130,246,0.1)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'1.5rem' }}>🚛</div>
+                    <div>
+                      <div style={{ fontWeight:700, fontSize:'0.9rem' }}>{v.name}</div>
+                      <div style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>{v.vehicle}</div>
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', gap:10, marginBottom:8 }}>
+                    <span style={{ fontSize:'0.72rem', background:'rgba(59,130,246,0.1)', color:'#3b82f6', padding:'2px 8px', borderRadius:8, fontWeight:600 }}>{v.type}</span>
+                    <span style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>📦 {v.cap}</span>
+                    <span style={{ fontSize:'0.72rem', color:'var(--text-muted)' }}>📍 {v.location}</span>
+                  </div>
+                  <div style={{ fontSize:'1.2rem', fontWeight:800, color:'#22c55e' }}>₹{Number(v.rate)}/km</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* List Vehicle Modal */}
+          {showListForm && (
+            <div style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,0.6)', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)' }} onClick={()=>setShowListForm(false)}>
+              <div className="card" style={{ width:480, padding:28 }} onClick={e=>e.stopPropagation()}>
+                <div style={{ fontWeight:800, fontSize:'1.1rem', marginBottom:20 }}>🚛 List Your Vehicle</div>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:12 }}>
+                  <div><label style={{ display:'block', fontSize:'0.72rem', color:'var(--text-muted)', marginBottom:4, fontWeight:700 }}>Driver Name *</label><input style={{ width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.88rem', boxSizing:'border-box' }} placeholder="Your name" value={vForm.name} onChange={e=>setVForm(p=>({...p,name:e.target.value}))}/></div>
+                  <div><label style={{ display:'block', fontSize:'0.72rem', color:'var(--text-muted)', marginBottom:4, fontWeight:700 }}>Vehicle (Reg No.) *</label><input style={{ width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.88rem', boxSizing:'border-box' }} placeholder="Tata Ace (AP-07-AB-1234)" value={vForm.vehicle} onChange={e=>setVForm(p=>({...p,vehicle:e.target.value}))}/></div>
+                  <div><label style={{ display:'block', fontSize:'0.72rem', color:'var(--text-muted)', marginBottom:4, fontWeight:700 }}>Type</label><select style={{ width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.88rem', boxSizing:'border-box' }} value={vForm.type} onChange={e=>setVForm(p=>({...p,type:e.target.value}))}><option>Mini Truck</option><option>Medium Truck</option><option>Large Truck</option><option>Tractor Trolley</option></select></div>
+                  <div><label style={{ display:'block', fontSize:'0.72rem', color:'var(--text-muted)', marginBottom:4, fontWeight:700 }}>Capacity</label><input style={{ width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.88rem', boxSizing:'border-box' }} placeholder="e.g. 3T" value={vForm.cap} onChange={e=>setVForm(p=>({...p,cap:e.target.value}))}/></div>
+                  <div><label style={{ display:'block', fontSize:'0.72rem', color:'var(--text-muted)', marginBottom:4, fontWeight:700 }}>Rate (₹/km) *</label><input type="number" style={{ width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.88rem', boxSizing:'border-box' }} placeholder="22" value={vForm.rate} onChange={e=>setVForm(p=>({...p,rate:e.target.value}))}/></div>
+                  <div><label style={{ display:'block', fontSize:'0.72rem', color:'var(--text-muted)', marginBottom:4, fontWeight:700 }}>Location</label><input style={{ width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.88rem', boxSizing:'border-box' }} placeholder="e.g. Guntur" value={vForm.location} onChange={e=>setVForm(p=>({...p,location:e.target.value}))}/></div>
+                  <div style={{gridColumn:'1/-1'}}><label style={{ display:'block', fontSize:'0.72rem', color:'var(--text-muted)', marginBottom:4, fontWeight:700 }}>Phone</label><input style={{ width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.88rem', boxSizing:'border-box' }} placeholder="9876501234" value={vForm.phone} onChange={e=>setVForm(p=>({...p,phone:e.target.value}))}/></div>
+                </div>
+                <div style={{ display:'flex', gap:10 }}>
+                  <button onClick={async ()=>{
+                    if (!vForm.name || !vForm.vehicle || !vForm.rate) return;
+                    const result = await insertVehicle({ ...vForm, rate: parseFloat(vForm.rate), status:'available' });
+                    if (result.success) { setShowListForm(false); setVForm({ name:'', vehicle:'', type:'Mini Truck', cap:'', rate:'', location:'', district:'Guntur', phone:'' }); refetchVehicles(); }
+                  }} disabled={vehicleSaving||!vForm.name||!vForm.vehicle} style={{ flex:1, padding:12, borderRadius:10, border:'none', background:'linear-gradient(135deg,#3b82f6,#6366f1)', color:'#fff', fontWeight:700, cursor:'pointer', opacity:vForm.name&&vForm.vehicle?1:0.5 }}>
+                    {vehicleSaving ? '⟳ Saving...' : '✅ List Vehicle'}
+                  </button>
+                  <button onClick={()=>setShowListForm(false)} style={{ flex:1, padding:12, borderRadius:10, border:'1px solid var(--border)', background:'transparent', color:'var(--text-primary)', cursor:'pointer' }}>Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Driver Details Modal */}
       {callModal && (
         <div style={{ position:'fixed', inset:0, zIndex:1000, background:'rgba(0,0,0,0.65)', display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(4px)' }} onClick={()=>setCallModal(null)}>
@@ -257,6 +350,21 @@ export default function TransportPage() {
               <a href={`tel:${callModal.phone}`} style={{ flex:1, padding:12, borderRadius:10, background:'linear-gradient(135deg,#22c55e,#16a34a)', color:'#fff', fontWeight:800, fontSize:'0.95rem', textAlign:'center', textDecoration:'none' }}>📞 Call {callModal.phone}</a>
               <a href={`https://wa.me/91${callModal.phone}`} target="_blank" rel="noreferrer" style={{ padding:'12px 16px', borderRadius:10, background:'#25D366', color:'#fff', fontWeight:700, textDecoration:'none' }}>💬</a>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Google Maps - Transport Routes */}
+      {GOOGLE_KEYS.maps && (
+        <div className="card" style={{ padding: 16, marginTop: 16 }}>
+          <div style={{ fontWeight: 700, fontSize: '0.88rem', marginBottom: 10 }}>🗺️ Transport Routes - {locFilter === 'All Locations' ? 'Andhra Pradesh' : locFilter}</div>
+          <div style={{ borderRadius: 12, overflow: 'hidden', height: 280 }}>
+            <iframe
+              src={getMapSearchUrl(`transport services ${locFilter === 'All Locations' ? 'Andhra Pradesh' : locFilter}`)}
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+              title="Transport Routes Map"
+            />
           </div>
         </div>
       )}

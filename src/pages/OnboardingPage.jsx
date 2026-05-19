@@ -10,6 +10,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/hooks/useAuth';
 import { DEFAULT_STATE } from '../lib/supabase';
 import { AP_DISTRICTS, AP_MANDALS, CROP_OPTIONS } from '../lib/hooks/useOnboarding';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 import {
   getMergedPhase11Profile,
   saveStoredOnboardingData,
@@ -47,7 +48,6 @@ const ROLE_OPTIONS = [
   { id: 'broker', icon: '🤝', label: 'Broker / Trader', desc: 'Connect farmers to markets, negotiate deals', color: '#f59e0b' },
   { id: 'supplier', icon: '🏪', label: 'Input Supplier', desc: 'Sell seeds, fertilizers, pesticides', color: '#8b5cf6' },
   { id: 'labour', icon: '👷', label: 'Farm Labour', desc: 'Offer labour services, find work', color: '#ef4444' },
-  { id: 'fpo', icon: '🏢', label: 'FPO / Admin', desc: 'Manage farmer groups, FPO operations', color: '#06b6d4' },
 ];
 
 const STEP_META = [
@@ -55,7 +55,6 @@ const STEP_META = [
   { id: 'role', label: 'I am a...', icon: '🎯', desc: 'Select your role on the platform' },
   { id: 'personal', label: 'Personal Info', icon: '👤', desc: 'Your name and location details' },
   { id: 'farm', label: 'Details', icon: '🌾', desc: 'Your work-specific details' },
-  { id: 'govids', label: 'Government IDs', icon: '🏛️', desc: 'Aadhaar, KCC & referral code' },
 ];
 
 const CROP_TIPS = {
@@ -84,11 +83,12 @@ function buildInitialForm(profile = {}) {
   const merged = getMergedPhase11Profile(profile);
   return {
     language: merged.language || 'te',
-    role: merged.role || 'farmer',
+    role: merged.role || '',
     name: merged.name || '',
     gender: merged.gender || 'male',
     age: merged.age ?? '',
-    district: merged.district || 'Guntur',
+    phone: merged.phone || '',
+    district: merged.district || '',
     mandal: merged.mandal || '',
     village: merged.village || '',
     farm_area_acres: merged.farm_area_acres || merged.total_land_acres || '',
@@ -96,12 +96,12 @@ function buildInitialForm(profile = {}) {
     irrigation_type: merged.irrigation_type || 'Borewell',
     num_fields: merged.num_fields || '1',
     selectedCrops: merged.selectedCrops || merged.selected_crops || [],
+    customCrop: '',
     aadhaar_last4: merged.aadhaar_last4 || '',
     kisan_id: merged.kisan_id || '',
     referral_code: merged.referral_code || '',
     business_name: merged.business_name || '',
     business_type: merged.business_type || '',
-    phone: merged.phone || merged.mobile || '',
     password: '',
   };
 }
@@ -164,10 +164,15 @@ export default function OnboardingPage() {
     if (step === 2) {
       const hasName = form.name.trim().length >= 2;
       const hasDistrict = !!form.district;
-      return hasName && hasDistrict;
+      const hasMandal = !!form.mandal;
+      const hasVillage = !!form.village;
+      const hasAge = form.age && parseInt(form.age) >= 18;
+      const hasPhone = form.phone && form.phone.length === 10;
+      return hasName && hasDistrict && hasMandal && hasVillage && hasAge && hasPhone;
     }
     if (step === 3) {
-      if (form.role === 'farmer') return form.farm_area_acres > 0;
+      if (form.role === 'farmer') return form.farm_area_acres > 0 && form.selectedCrops.length > 0;
+      if (form.role === 'industrial' || form.role === 'broker' || form.role === 'supplier') return !!form.business_name;
       return true;
     }
     return true;
@@ -206,7 +211,7 @@ export default function OnboardingPage() {
 
       // Set/update password for all users
       if (form.password && form.password.length >= 6) {
-        try { await updateUserPassword(form.password); } catch (e) { console.warn('Password set failed:', e); }
+        try { await updateUserPassword(form.password); } catch (e) { /* warn removed */ }
       }
 
       // Register phone as taken
@@ -237,10 +242,43 @@ export default function OnboardingPage() {
       if (payload.role) {
         localStorage.setItem('rythu_user_role', payload.role);
       }
+
+      // Create fields and crops entries for Dashboard
+      if (farmerId && payload.role === 'farmer' && !isDemoMode) {
+        const { supabase } = await import('../lib/supabase');
+        const numFields = parseInt(form.num_fields, 10) || 1;
+        // Create field records
+        const fieldRows = [];
+        for (let i = 1; i <= numFields; i++) {
+          fieldRows.push({
+            farmer_id: farmerId,
+            name: `Field ${i}`,
+            area_acres: parseFloat(form.farm_area_acres) / numFields || 1,
+            soil_type: form.soil_type,
+            irrigation_type: form.irrigation_type,
+            district: form.district,
+            village: form.village,
+          });
+        }
+        supabase.from('fields').upsert(fieldRows, { onConflict: 'farmer_id,name', ignoreDuplicates: true }).then(() => {});
+        // Create crop records
+        if (form.selectedCrops?.length > 0) {
+          const cropRows = form.selectedCrops.map(c => ({
+            farmer_id: farmerId,
+            name: c,
+            season: 'Kharif',
+            status: 'growing',
+            area_acres: parseFloat(form.farm_area_acres) / form.selectedCrops.length || 1,
+            district: form.district,
+          }));
+          supabase.from('crops').upsert(cropRows, { onConflict: 'farmer_id,name', ignoreDuplicates: true }).then(() => {});
+        }
+      }
+
       setCompleted(true);
       setShowCropTips(true);
     } catch (err) {
-      console.error('Onboarding save failed:', err);
+      /* error log removed */
       // Still allow proceeding in demo mode
       saveStoredOnboardingData({
         ...payload,
@@ -253,18 +291,7 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleSkip = async () => {
-    localStorage.setItem('rythusphere_onboarding_complete', 'skipped');
-    // Save selected role even when skipping so dashboard shows correct portal
-    if (form.role && form.role !== 'farmer') {
-      try {
-        await updateProfile({ role: form.role, onboarding_completed: false });
-      } catch (e) {
-        console.warn('Skip role save failed:', e);
-      }
-    }
-    navigate(redirectPath);
-  };
+
 
   const handleFinish = () => {
     setShowCropTips(false);
@@ -352,7 +379,7 @@ export default function OnboardingPage() {
           <input value={form.name} onChange={e => update('name', e.target.value)} placeholder="Enter your full name" />
         </div>
         <div className="onb-field">
-          <label>Gender</label>
+          <label>Gender *</label>
           <div className="onb-gender-row">
             {['male', 'female', 'other'].map(g => (
               <button key={g} className={`onb-gender-btn ${form.gender === g ? 'active' : ''}`} onClick={() => update('gender', g)}>
@@ -362,28 +389,33 @@ export default function OnboardingPage() {
           </div>
         </div>
         <div className="onb-field">
-          <label>Age</label>
-          <input type="number" value={form.age} onChange={e => update('age', e.target.value)} placeholder="Age" min="18" max="100" />
+          <label>Age *</label>
+          <input type="number" value={form.age} onChange={e => update('age', e.target.value)} placeholder="Age (min 18)" min="18" max="100" />
+        </div>
+        <div className="onb-field">
+          <label>Phone Number *</label>
+          <input type="tel" value={form.phone} onChange={e => update('phone', e.target.value.replace(/\D/g,'').slice(0,10))} placeholder="10-digit mobile" maxLength={10} />
         </div>
         <div className="onb-field">
           <label>District *</label>
           <select value={form.district} onChange={e => { update('district', e.target.value); update('mandal', ''); update('village', ''); }}>
+            <option value="">Select District</option>
             {AP_DISTRICTS.map(d => <option key={d} value={d}>{d}</option>)}
           </select>
         </div>
         <div className="onb-field">
-          <label>Mandal</label>
+          <label>Mandal *</label>
           <select value={form.mandal} onChange={e => { update('mandal', e.target.value); update('village', ''); }}>
             <option value="">Select Mandal</option>
             {mandals.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
         <div className="onb-field full">
-          <label>Village / Town</label>
+          <label>Village / Town *</label>
           <input
             value={form.village || villageSearch}
             onChange={e => { setVillageSearch(e.target.value); update('village', e.target.value); }}
-            placeholder="Type to search villages..."
+            placeholder="Type village name or search..."
           />
           {villageSearch && filteredVillages.length > 0 && (
             <div className="onb-village-suggest">
@@ -426,7 +458,7 @@ export default function OnboardingPage() {
             </select>
           </div>
           <div className="onb-field full">
-            <label>Select Your Crops</label>
+            <label>Select Your Crops *</label>
             <div className="onb-crop-grid">
               {CROP_OPTIONS.map(crop => (
                 <div key={crop.id} className={`onb-crop-chip ${form.selectedCrops.includes(crop.id) ? 'active' : ''}`} onClick={() => toggleCrop(crop.id)}>
@@ -434,6 +466,24 @@ export default function OnboardingPage() {
                   {form.selectedCrops.includes(crop.id) && <span className="onb-crop-check">✓</span>}
                 </div>
               ))}
+            </div>
+            <div style={{ display:'flex', gap:8, marginTop:8 }}>
+              <input value={form.customCrop} onChange={e => update('customCrop', e.target.value)} placeholder="Add custom crop name..." style={{ flex:1 }} />
+              <button type="button" className="btn btn-primary" style={{ padding:'6px 14px', fontSize:'0.78rem' }} onClick={() => { if (form.customCrop.trim()) { toggleCrop(form.customCrop.trim().toLowerCase()); update('customCrop',''); } }}>+ Add</button>
+            </div>
+          </div>
+          {/* Registration Summary */}
+          <div className="onb-field full" style={{ marginTop:16 }}>
+            <div className="onb-summary-card">
+              <h4>👨‍🌾 Registration Summary</h4>
+              <div className="onb-summary-grid">
+                <div className="onb-summary-item"><span>Name</span><strong>{form.name || '—'}</strong></div>
+                <div className="onb-summary-item"><span>Phone</span><strong>{form.phone || '—'}</strong></div>
+                <div className="onb-summary-item"><span>District</span><strong>{form.district || '—'}</strong></div>
+                <div className="onb-summary-item"><span>Village</span><strong>{form.village || '—'}</strong></div>
+                <div className="onb-summary-item"><span>Farm Area</span><strong>{form.farm_area_acres || '0'} acres</strong></div>
+                <div className="onb-summary-item"><span>Crops</span><strong>{form.selectedCrops.length} selected</strong></div>
+              </div>
             </div>
           </div>
         </div>
@@ -586,93 +636,30 @@ export default function OnboardingPage() {
       </div>
     );
 
-    // FPO / Admin
-    return (
-      <div className="onb-step-content">
-        <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <span style={{ fontSize: '2rem' }}>🏢</span>
-          <div style={{ fontWeight: 700, color: '#06b6d4', marginTop: 4 }}>FPO / Organization Details</div>
-        </div>
-        <div className="onb-form-grid">
-          <div className="onb-field full">
-            <label>Organization Name *</label>
-            <input value={form.business_name} onChange={e => update('business_name', e.target.value)} placeholder="e.g. Guntur Farmer Producer Organization" />
-          </div>
-          <div className="onb-field">
-            <label>Registration Number</label>
-            <input value={form.kisan_id} onChange={e => update('kisan_id', e.target.value)} placeholder="FPO Reg. No." />
-          </div>
-          <div className="onb-field">
-            <label>Number of Members</label>
-            <input type="number" value={form.farm_area_acres} onChange={e => update('farm_area_acres', e.target.value)} placeholder="e.g. 200" min="1" />
-          </div>
-          <div className="onb-field full">
-            <label>Primary Crops Handled</label>
-            <div className="onb-crop-grid">
-              {CROP_OPTIONS.slice(0, 10).map(crop => (
-                <div key={crop.id} className={`onb-crop-chip ${form.selectedCrops.includes(crop.id) ? 'active' : ''}`} onClick={() => toggleCrop(crop.id)}>
-                  <span>{crop.icon}</span><span>{crop.name}</span>
-                  {form.selectedCrops.includes(crop.id) && <span className="onb-crop-check">✓</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderGovIDStep = () => {
+    // Default — show registration summary
     const roleLabel = ROLE_OPTIONS.find(ro => ro.id === form.role)?.label || 'User';
     const roleIcon = ROLE_OPTIONS.find(ro => ro.id === form.role)?.icon || '👤';
     return (
-    <div className="onb-step-content">
-      <div className="onb-form-grid">
-        <div className="onb-field">
-          <label>Aadhaar Last 4 Digits</label>
-          <input value={form.aadhaar_last4} onChange={e => update('aadhaar_last4', e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="XXXX" maxLength={4} />
-          <small>We only store last 4 digits for verification</small>
-        </div>
-        {(form.role === 'farmer' || form.role === 'fpo') && (
-        <div className="onb-field">
-          <label>Kisan Credit Card / ID</label>
-          <input value={form.kisan_id} onChange={e => update('kisan_id', e.target.value)} placeholder="Optional" />
-        </div>
-        )}
-        {(form.role !== 'farmer' && form.role !== 'labour') && (
-        <div className="onb-field">
-          <label>GSTIN / Business License</label>
-          <input value={form.kisan_id} onChange={e => update('kisan_id', e.target.value)} placeholder="Optional" />
-        </div>
-        )}
-        <div className="onb-field full">
-          <label>Referral Code</label>
-          <input value={form.referral_code} onChange={e => update('referral_code', e.target.value.toUpperCase())} placeholder="Enter referral code (optional)" />
-          <small>Got a code from a friend? Enter it to earn 50 AgriCoins! 🪙</small>
-        </div>
-
-        {/* Summary Preview */}
+      <div className="onb-step-content">
         <div className="onb-field full">
           <div className="onb-summary-card">
             <h4>{roleIcon} Registration Summary — {roleLabel}</h4>
             <div className="onb-summary-grid">
               <div className="onb-summary-item"><span>Name</span><strong>{form.name || '—'}</strong></div>
               <div className="onb-summary-item"><span>Role</span><strong>{roleLabel}</strong></div>
-              <div className="onb-summary-item"><span>District</span><strong>{form.district}</strong></div>
-              <div className="onb-summary-item"><span>Location</span><strong>{form.village || form.mandal || '—'}</strong></div>
-              {form.role === 'farmer' && <div className="onb-summary-item"><span>Farm Area</span><strong>{form.farm_area_acres || '0'} acres</strong></div>}
-              {form.role === 'farmer' && <div className="onb-summary-item"><span>Soil</span><strong>{form.soil_type}</strong></div>}
-              {form.business_name && <div className="onb-summary-item"><span>Business</span><strong>{form.business_name}</strong></div>}
+              <div className="onb-summary-item"><span>Phone</span><strong>{form.phone || '—'}</strong></div>
+              <div className="onb-summary-item"><span>District</span><strong>{form.district || '—'}</strong></div>
+              <div className="onb-summary-item"><span>Mandal</span><strong>{form.mandal || '—'}</strong></div>
+              <div className="onb-summary-item"><span>Village</span><strong>{form.village || '—'}</strong></div>
               <div className="onb-summary-item"><span>Language</span><strong>{LANGUAGES.find(l => l.code === form.language)?.label || 'English'}</strong></div>
             </div>
           </div>
         </div>
       </div>
-    </div>
     );
   };
 
-  const RENDERERS = [renderLanguageStep, renderRoleStep, renderPersonalStep, renderFarmStep, renderGovIDStep];
+  const RENDERERS = [renderLanguageStep, renderRoleStep, renderPersonalStep, renderFarmStep];
 
   /* ═══════════════ CROP TIPS MODAL ═════════════════════════════ */
   const renderCropTips = () => (
@@ -729,7 +716,7 @@ export default function OnboardingPage() {
             ) : (
               <button className="btn btn-primary" onClick={handleTutorialDone}>🚀 Start Farming!</button>
             )}
-            <button className="onb-tutorial-skip" onClick={handleTutorialDone}>Skip Tutorial</button>
+
           </div>
         </div>
       </div>
@@ -753,7 +740,7 @@ export default function OnboardingPage() {
             <div className="onb-logo-icon">🌾</div>
             <span>RythuSphere</span>
           </div>
-          <button className="onb-skip-btn" onClick={handleSkip}>Skip for now →</button>
+
         </div>
 
         {/* Progress Bar */}
@@ -790,7 +777,7 @@ export default function OnboardingPage() {
           )}
           <div style={{ flex: 1 }} />
           {step < STEP_META.length - 1 ? (
-            <button className="btn btn-primary onb-nav-btn" onClick={() => setStep(s => s + 1)} disabled={!canProceed()}>
+            <button className="btn btn-primary onb-nav-btn" onClick={() => setStep(s => s + 1)} disabled={!canProceed()} style={{ opacity: canProceed() ? 1 : 0.4, cursor: canProceed() ? 'pointer' : 'not-allowed' }}>
               Next Step →
             </button>
           ) : (

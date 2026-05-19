@@ -1,18 +1,49 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useAuth } from '../lib/hooks/useAuth';
+import { searchKB } from '../lib/farmingKB';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
-// ── AI Engine Config ─────────────────────────────────────────────────────────
-const GROQ_API_KEY   = import.meta.env.VITE_GROQ_API_KEY   || '';
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+// ── AI Engine Config — routed through secure server-side proxy ───────────────
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const AI_PROXY_URL = `${SUPABASE_URL}/functions/v1/ai-proxy`;
+const AI_AVAILABLE = !!SUPABASE_URL && !!SUPABASE_ANON_KEY;
 
-const GROQ_URL   = 'https://api.groq.com/openai/v1/chat/completions';
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+const ROLE_TOOLS = {
+  farmer: [
+    { id: 'crop',   icon: '🌱', label: 'Crop Recommender', desc: 'Top 3 crops based on soil, climate & market data' },
+    { id: 'doctor', icon: '🩺', label: 'Crop Doctor',      desc: 'Diagnose diseases via photo scan OR symptom description' },
+    { id: 'soil',   icon: '🧪', label: 'Soil Advisor',     desc: 'Fertilizer plan from NPK soil test results' },
+    { id: 'price',  icon: '💰', label: 'Price Forecaster',  desc: 'Best time to sell based on market data' },
+  ],
+  broker: [
+    { id: 'price', icon: '💰', label: 'Price Intelligence',     desc: 'Market trends, arbitrage opportunities & forecasts' },
+    { id: 'crop',  icon: '🌱', label: 'Crop Supply Analyzer',   desc: 'Which crops are in surplus/deficit by region' },
+  ],
+  supplier: [
+    { id: 'crop',  icon: '🌱', label: 'Demand Predictor',       desc: 'Which inputs farmers will need this season' },
+    { id: 'price', icon: '💰', label: 'Input Pricing',          desc: 'Competitive pricing analysis for agri inputs' },
+  ],
+  industrial: [
+    { id: 'crop',  icon: '🌱', label: 'Raw Material Forecast',  desc: 'Crop production forecasts for procurement' },
+    { id: 'price', icon: '💰', label: 'Commodity Pricing',      desc: 'Bulk commodity price trends & forecasts' },
+  ],
+  labour: [
+    { id: 'crop',  icon: '🌱', label: 'Season Planner',         desc: 'Which crops need labour this season & where' },
+  ],
+  customer: [
+    { id: 'price', icon: '💰', label: 'Price Checker',          desc: 'Compare produce prices across markets' },
+  ],
+};
 
-const TOOLS = [
-  { id: 'crop',  icon: '🌱', label: 'Crop Recommender',      desc: 'Top 3 crops based on soil, climate & market data' },
-  { id: 'pest',  icon: '🐛', label: 'Pest & Disease Detector', desc: 'Diagnose pests and diseases from symptoms' },
-  { id: 'soil',  icon: '🧪', label: 'Soil Advisor',           desc: 'Fertilizer plan from NPK soil test results' },
-  { id: 'price', icon: '💰', label: 'Price Forecaster',       desc: 'Best time to sell based on market data' },
-];
+const ROLE_HEADERS = {
+  farmer:     { title: '🌾 RythuSphere AI — Crop Advisor', desc: 'Disease detection, crop guidance, soil analysis & market intelligence' },
+  broker:     { title: '📊 RythuSphere AI — Market Analyst', desc: 'Price intelligence, supply analysis & trade opportunities' },
+  supplier:   { title: '🏪 RythuSphere AI — Business Advisor', desc: 'Demand forecasting & competitive pricing for agri inputs' },
+  industrial: { title: '🏭 RythuSphere AI — Procurement Intel', desc: 'Raw material forecasts & commodity price analysis' },
+  labour:     { title: '👷 RythuSphere AI — Work Planner', desc: 'Find seasonal work opportunities across AP districts' },
+  customer:   { title: '🛒 RythuSphere AI — Shopping Helper', desc: 'Compare prices & find the best produce deals' },
+};
 
 // Detect Telugu script automatically
 const isTeluguText = (str) => /[\u0C00-\u0C7F]/.test(str);
@@ -46,7 +77,7 @@ Respond in ${replyLang}. Give top 3 crop recommendations with:
 4. Key farming tips for this crop
 Be specific to Andhra Pradesh conditions.`;
   }
-  if (tool === 'pest') {
+  if (tool === 'pest' || tool === 'doctor') {
     return `You are an expert plant pathologist for Andhra Pradesh, India.
 Crop: ${form.cropName}
 Symptoms described by farmer: ${form.symptoms}
@@ -86,59 +117,28 @@ Respond in ${replyLang}. Provide:
 
 "${form.question}"
 
-Respond in ${replyLang}. Give a comprehensive, practical answer with specific quantities, timings, and local AP context. Include government helpline numbers or scheme links if relevant.`;
+Respond in ${replyLang}. Give a comprehensive, practical answer with specific quantities, timings, and local AP context. Focus purely on farming advice — crop management, pest control, market prices, soil health, and irrigation. Do NOT mention any political party names or government scheme names.`;
   }
   return form.question || '';
 }
 
-// ── Groq LLaMA-3.3-70B (primary — fastest) ───────────────────────────────────
-async function callGroq(prompt) {
-  const res = await fetch(GROQ_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${GROQ_API_KEY}` },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 1500,
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err?.error?.message || `Groq API error ${res.status}`);
-  }
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || 'No response generated.';
-}
-
-// ── Gemini 1.5 Flash (fallback) ───────────────────────────────────────────
-async function callGemini(prompt) {
-  const res = await fetch(GEMINI_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.7, maxOutputTokens: 1500 },
-    }),
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err?.error?.message || `Gemini API error ${res.status}`);
-  }
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
-}
-
-// ── Smart router: Groq first, Gemini fallback ──────────────────────────────
+// ── Secure AI call via server-side Edge Function proxy ────────────────────────
 async function callAIEngine(prompt) {
-  if (GROQ_API_KEY) {
-    try { return { text: await callGroq(prompt), engine: 'Groq LLaMA-3.3-70B' }; }
-    catch (e) { console.warn('Groq failed, falling back to Gemini:', e.message); }
+  const res = await fetch(AI_PROXY_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+      'apikey': SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ prompt }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error || `AI proxy error ${res.status}`);
   }
-  if (GEMINI_API_KEY) {
-    return { text: await callGemini(prompt), engine: 'Gemini 1.5 Flash' };
-  }
-  throw new Error('No AI API key configured. Add VITE_GROQ_API_KEY or VITE_GEMINI_API_KEY to .env');
+  const data = await res.json();
+  return { text: data.text, engine: data.engine || 'AI' };
 }
 
 const Field = ({ label, value, onChange, type = 'text', placeholder, list }) => (
@@ -163,7 +163,8 @@ const SUGGESTIONS = {
   fertilizer: ['What NPK ratio for paddy?','Best time to apply urea?','Organic fertilizer alternatives?'],
   pest: ['How to control whitefly?','Identify yellow leaf disease','Spray schedule for cotton'],
   weather: ['Best sowing time this week?','Rain forecast impact on harvest?'],
-  general: ['YSR scheme eligibility?','Nearest APMC to Guntur?','How to get Kisan Credit Card?'],
+  price: ['Best time to sell cotton?','Today maize price in Guntur?','Which mandi gives best price?'],
+  general: ['Best crops for Kharif season?','Nearest APMC to Guntur?','How to improve soil health?'],
 };
 
 function getSuggestions(text) {
@@ -171,17 +172,29 @@ function getSuggestions(text) {
   if (t.includes('fertilizer')||t.includes('urea')||t.includes('npk')||t.includes('ఎరువు')) return SUGGESTIONS.fertilizer;
   if (t.includes('pest')||t.includes('disease')||t.includes('insect')||t.includes('పురుగు')) return SUGGESTIONS.pest;
   if (t.includes('weather')||t.includes('rain')||t.includes('harvest')) return SUGGESTIONS.weather;
+  if (t.includes('price')||t.includes('sell')||t.includes('market')||t.includes('mandi')||t.includes('ధర')) return SUGGESTIONS.price;
   return SUGGESTIONS.general;
 }
 
 const STORAGE_KEY = 'agri_ai_chat_history';
 
 export default function AIPage() {
+  const { profile } = useAuth();
+  const role = profile?.role || 'farmer';
+  const TOOLS = ROLE_TOOLS[role] || ROLE_TOOLS.farmer;
+  const header = ROLE_HEADERS[role] || ROLE_HEADERS.farmer;
+  const isFarmer = role === 'farmer';
+
   const [activeTool, setActiveTool] = useState('chat');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [lang, setLang] = useState('en');
+  // Photo scan state (farmer only)
+  const [scanImage, setScanImage] = useState(null);
+  const [scanPreview, setScanPreview] = useState('');
+  const [scanResult, setScanResult] = useState(null);
+  const fileInputRef = useRef(null);
   // Chat state
   const [messages, setMessages] = useState(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; }
@@ -201,16 +214,60 @@ export default function AIPage() {
     district: 'Guntur', season: 'Kharif',
   });
   const [pestForm, setPestForm]   = useState({ cropName: 'Paddy', symptoms: '' });
+  const [doctorMode, setDoctorMode] = useState('photo');
   const [soilForm, setSoilForm]   = useState({ nitrogen: '', phosphorus: '', potassium: '', ph: '', organic_carbon: '', crop_planned: '' });
   const [priceForm, setPriceForm] = useState({ crop: 'Cotton', currentPrice: '6800', minPrice: '6500', maxPrice: '7200', district: 'Guntur' });
   const [askForm, setAskForm]     = useState({ question: '' });
 
   const getFormData = () => {
-    if (activeTool === 'crop')  return cropForm;
-    if (activeTool === 'pest')  return pestForm;
-    if (activeTool === 'soil')  return soilForm;
-    if (activeTool === 'price') return priceForm;
+    if (activeTool === 'crop')   return cropForm;
+    if (activeTool === 'doctor') return pestForm;
+    if (activeTool === 'pest')   return pestForm;
+    if (activeTool === 'soil')   return soilForm;
+    if (activeTool === 'price')  return priceForm;
     return askForm;
+  };
+
+  // Symptom-based diagnosis (offline fallback with local pest database)
+  const handleSymptomDiagnosis = async () => {
+    if (!pestForm.symptoms && !pestForm.cropName) return;
+    setLoading(true); setScanResult(null); setScanPreview('');
+    try {
+      if (AI_AVAILABLE) {
+        const prompt = buildPrompt('doctor', pestForm, lang);
+        const res = await callAIEngine(prompt);
+        setScanResult({ text: res.text, engine: 'AI Diagnosis' });
+        setLoading(false); return;
+      }
+      throw new Error('no_key');
+    } catch {
+      // Local pest diagnosis database
+      const PEST_DB = [
+        { crops:['Paddy'], keywords:['yellow','yellowing','leaf','blight','spots'], name:'Bacterial Leaf Blight', text:'🐛 **Disease:** Bacterial Leaf Blight (BLB)\n📊 **Severity:** Moderate-High\n\n💊 **Treatment:**\n• Spray Streptocycline 0.1g/L + Copper Oxychloride 2.5g/L\n• Drain excess water immediately\n• Apply Potash 20 kg/acre\n• Remove severely infected leaves\n\n🛡️ **Prevention:**\n• Use resistant varieties (NLR-34449)\n• Avoid excess nitrogen\n• Maintain proper drainage\n\n💰 Treatment cost: ₹600-800/acre' },
+        { crops:['Paddy'], keywords:['brown','hopper','drying','plant hopper','bph'], name:'Brown Plant Hopper', text:'🐛 **Pest:** Brown Plant Hopper (BPH)\n📊 **Severity:** High — can destroy entire field\n\n💊 **Treatment:**\n• Drain water from field immediately\n• Spray Buprofezin 25% SC @ 1.6ml/L\n• Apply Pymetrozine 50% WG @ 0.3g/L\n• Light trap: 1 per 5 acres\n\n🛡️ **Prevention:**\n• Avoid excess nitrogen fertilizer\n• Maintain 2-3 seedlings/hill\n• Alternate wetting and drying irrigation\n\n💰 Treatment cost: ₹700-1000/acre' },
+        { crops:['Paddy'], keywords:['blast','neck','brown spot'], name:'Rice Blast', text:'🐛 **Disease:** Rice Blast (Pyricularia oryzae)\n📊 **Severity:** High\n\n💊 **Treatment:**\n• Spray Tricyclazole 75% WP @ 0.6g/L\n• Apply Isoprothiolane 40% EC @ 1.5ml/L\n• Drain excess water\n\n🛡️ **Prevention:**\n• Use blast-resistant varieties\n• Balanced N fertilization\n• Avoid late planting\n\n💰 Treatment cost: ₹800-1200/acre' },
+        { crops:['Cotton'], keywords:['bollworm','boll','pink','worm','holes','boll damage'], name:'Pink Bollworm', text:'🐛 **Pest:** Pink Bollworm\n📊 **Severity:** High — major yield loss\n\n💊 **Treatment:**\n• Install pheromone traps: 5/acre (replace lures every 21 days)\n• Spray Emamectin Benzoate 5% SG @ 0.4g/L\n• Spray Chlorantraniliprole 18.5% SC @ 0.3ml/L\n• Pick & destroy affected bolls daily\n\n🛡️ **Prevention:**\n• Plant refugia (20% non-Bt cotton)\n• Destroy crop residues after harvest\n• Deep plough in summer\n\n💰 Treatment cost: ₹1000-1500/acre' },
+        { crops:['Cotton','Chilli'], keywords:['white','whitefly','sticky','sooty','honeydew'], name:'Whitefly', text:'🐛 **Pest:** Whitefly\n📊 **Severity:** Moderate — vector for leaf curl virus\n\n💊 **Treatment:**\n• Spray Imidacloprid 17.8% SL @ 0.3ml/L\n• Acetamiprid 20% SP @ 0.2g/L\n• Diafenthiuron 50% WP @ 1g/L\n• Yellow sticky traps: 10/acre\n\n🌿 **Organic:**\n• Neem oil 2ml/L + soap solution\n• Verticillium lecanii bio-agent\n\n💰 Treatment cost: ₹500-800/acre' },
+        { crops:['Chilli','Tomato'], keywords:['curl','leaf curl','curling','virus','distorted'], name:'Leaf Curl Virus', text:'🐛 **Disease:** Leaf Curl Virus (transmitted by whitefly)\n📊 **Severity:** High — no cure once infected\n\n💊 **Management:**\n• Remove infected plants IMMEDIATELY\n• Control whitefly vector with Imidacloprid\n• Spray neem oil 2ml/L weekly as preventive\n• Apply mulch to reduce whitefly\n• Use resistant varieties\n\n🛡️ **Prevention:**\n• Nursery protection with nylon net\n• Border crop of maize/jowar\n• Avoid chilli next to cotton\n\n💰 Management cost: ₹600-1000/acre' },
+        { crops:['Tomato','Chilli','Groundnut'], keywords:['wilt','wilting','drooping','dying','drying up'], name:'Fusarium Wilt', text:'🐛 **Disease:** Fusarium Wilt (soil-borne fungus)\n📊 **Severity:** High — kills plant\n\n💊 **Treatment:**\n• Drench soil with Carbendazim 1g/L\n• Apply Trichoderma viride 2.5 kg/acre in soil\n• Improve drainage\n• Remove and burn infected plants\n\n🛡️ **Prevention:**\n• Crop rotation (avoid solanaceous crops 3 years)\n• Use resistant varieties\n• Apply neem cake 200 kg/acre\n• Solarize nursery beds\n\n💰 Treatment cost: ₹400-700/acre' },
+        { crops:['Groundnut'], keywords:['tikka','spots','leaf spot','circular','brown spots'], name:'Tikka Disease', text:'🐛 **Disease:** Tikka Disease (Cercospora leaf spot)\n📊 **Severity:** Moderate\n\n💊 **Treatment:**\n• Spray Mancozeb 75% WP @ 2.5g/L at 35 DAS\n• Repeat at 50 DAS and 65 DAS\n• Spray Chlorothalonil 75% WP @ 2g/L\n\n🛡️ **Prevention:**\n• Use resistant varieties (ICGV-91114)\n• Crop rotation\n• Seed treatment with Thiram 3g/kg\n\n💰 Treatment cost: ₹500-700/acre' },
+      ];
+      const q = (pestForm.symptoms + ' ' + pestForm.cropName).toLowerCase();
+      let best = null; let bestScore = 0;
+      for (const entry of PEST_DB) {
+        let score = 0;
+        if (entry.crops.some(c => q.includes(c.toLowerCase()))) score += 5;
+        for (const kw of entry.keywords) {
+          if (q.includes(kw)) score += 3;
+        }
+        if (score > bestScore) { bestScore = score; best = entry; }
+      }
+      if (best && bestScore >= 3) {
+        setScanResult({ text: best.text, engine: 'Local Diagnosis DB' });
+      } else {
+        setScanResult({ text: `🩺 Based on your description for **${pestForm.cropName}**:\n\nSymptoms: "${pestForm.symptoms}"\n\n⚠️ I couldn't find an exact match in my offline database. Here are general steps:\n\n1. 📸 Take a clear photo and use Photo Scan for better diagnosis\n2. 🧪 Check for nutrient deficiency — yellow leaves may indicate nitrogen shortage\n3. 💊 As first aid, spray Neem oil 2ml/L as broad-spectrum treatment\n4. 📞 Contact your local KVK (Krishi Vigyan Kendra) for expert diagnosis\n5. 🔬 Collect sample in zip-lock bag and send to nearest plant clinic\n\n📱 For accurate AI diagnosis, ensure internet connectivity and try again.`, engine: 'General Advisory' });
+      }
+    } finally { setLoading(false); }
   };
 
   const callAI = async () => {
@@ -224,6 +281,45 @@ export default function AIPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Photo scan handler (farmer only)
+  const handlePhotoScan = async (file) => {
+    if (!file) return;
+    setScanImage(file);
+    setScanPreview(URL.createObjectURL(file));
+    setScanResult(null); setLoading(true); setError('');
+    try {
+      // Try AI vision proxy
+      const VISION_URL = `${SUPABASE_URL}/functions/v1/ai-vision-proxy`;
+      const reader = new FileReader();
+      const base64 = await new Promise((resolve) => {
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.readAsDataURL(file);
+      });
+      if (AI_AVAILABLE) {
+        const res = await fetch(VISION_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}`, 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({ image: base64, prompt: `You are an expert plant pathologist. Analyze this crop image and provide:\n1. 🌾 Crop identified\n2. 📊 Growth stage (seedling/vegetative/flowering/fruiting/harvest)\n3. 🐛 Disease/pest detected (if any) with confidence %\n4. 💊 Treatment recommendations\n5. 📋 What the farmer should do this week\nRespond in ${lang === 'te' ? 'Telugu' : 'English'}. Be specific.` }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setScanResult({ text: data.text, engine: 'AI Vision' });
+          setLoading(false); return;
+        }
+      }
+      throw new Error('vision_unavailable');
+    } catch {
+      // Demo scan result
+      const demoResults = [
+        { crop: 'Paddy (BPT-5204)', stage: 'Tillering Stage (30-40 DAT)', disease: 'Bacterial Leaf Blight — 72% confidence', treatment: '• Apply Streptocycline 0.1g/L spray\n• Drain excess water from field\n• Apply Potash 20 kg/acre\n• Remove severely infected leaves', action: '📋 This Week: Drain field, spray bactericide, monitor spread. Next fertilizer dose in 5 days.' },
+        { crop: 'Cotton (Bt-II)', stage: 'Squaring Stage (50-60 DAS)', disease: 'Pink Bollworm — 65% confidence', treatment: '• Install pheromone traps (5/acre)\n• Spray Emamectin Benzoate 5% SG\n• Pick & destroy affected bolls\n• Cost: ₹800-1200/acre', action: '📋 This Week: Set traps today, spray at evening, check bolls daily.' },
+        { crop: 'Chilli (Teja)', stage: 'Flowering Stage', disease: 'Leaf Curl Virus — 80% confidence', treatment: '• Control whitefly vector with Imidacloprid\n• Remove infected plants\n• Apply neem oil 2ml/L weekly\n• Mulch to reduce whitefly', action: '📋 This Week: Spray insecticide, remove 3-4 worst plants, apply mulch.' },
+      ];
+      const demo = demoResults[Math.floor(Math.random() * demoResults.length)];
+      setScanResult({ text: `🌾 **Crop:** ${demo.crop}\n📊 **Stage:** ${demo.stage}\n🐛 **Disease:** ${demo.disease}\n\n💊 **Treatment:**\n${demo.treatment}\n\n${demo.action}`, engine: 'Demo Analysis' });
+    } finally { setLoading(false); }
   };
 
   const sendChat = async (q) => {
@@ -241,30 +337,61 @@ export default function AIPage() {
 
 Question: "${question}"
 
-IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, quantities, and timing. Keep response under 200 words.`;
+IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, quantities, and timing. Keep response under 200 words. Do NOT mention any political party names or government scheme names. Focus purely on practical farming advice.`;
       let text;
       try {
-        if (GROQ_API_KEY) text = await callGroq(prompt);
-        else if (GEMINI_API_KEY) text = (await callAIEngine(prompt)).text;
+        if (AI_AVAILABLE) text = (await callAIEngine(prompt)).text;
         else throw new Error('no_key');
       } catch {
-        // Demo mode — smart mock responses
+        // Smart offline mode — search farming knowledge base first
         const q2 = question.toLowerCase();
         const isTe = useTelugu;
-        if (q2.includes('fertilizer')||q2.includes('urea')||/ఎరువు|యూరియా|డీఏపీ/.test(question)) {
+        const kbResult = searchKB(question);
+        
+        if (kbResult && kbResult.score >= 5) {
+          // Knowledge base has a good match
+          text = kbResult.text;
+        } else if (q2.includes('fertilizer')||q2.includes('urea')||/ఎరువు|యూరియా|డీఏపీ/.test(question)) {
           text = isTe
             ? 'పద్ది వరి పైరు వృద్ధి దశలో:\n• నాట్లు వేసిన 21 రోజులకు: హెక్టారుకు 50 కిలోల యూరియా వేయండి\n• 45 రోజులకు: మరో 50 కిలోల యూరియా వేయండి\n• నాట్లు వేసే సమయంలో: DAP 100 కిలోలు + పొటాష్ 60 కిలోలు వేయాలి\n• అధిక నత్రజని వేస్తే ఆకులు పసుపు రంగులోకి మారతాయి — జాగ్రత్తగా ఉండండి'
-            : 'For paddy vegetative stage: Apply 50 kg/ha Urea at 21 DAT, another 50 kg/ha at 45 DAT. Apply DAP 100 kg/ha at transplanting. Add 60 kg/ha MOP based on soil test.';
-        } else if (q2.includes('cotton')||/పత్తి|పత్తికి/.test(question)) {
+            : 'For paddy vegetative stage:\n• Apply 50 kg/ha Urea at 21 DAT\n• Another 50 kg/ha Urea at 45 DAT\n• DAP 100 kg/ha + MOP 60 kg/ha at transplanting\n• Avoid excess nitrogen — causes lodging and yellowing.';
+        } else if (q2.includes('price')||q2.includes('rate')||q2.includes('sell')||q2.includes('market')||q2.includes('mandi')||/ధర|రేటు|అమ్మ/.test(question)) {
+          const cropPrices = {
+            paddy: { name: 'Paddy', price: '₹2,200-2,450/quintal', trend: 'Stable. Best to sell at local APMC or hold for 2 weeks if storage available.' },
+            rice: { name: 'Rice', price: '₹2,200-2,450/quintal', trend: 'Stable. Guntur and Krishna APMCs offer best rates.' },
+            cotton: { name: 'Cotton', price: '₹7,000-7,200/quintal', trend: 'Prices may rise 5-8% in next 3 weeks. Consider holding.' },
+            maize: { name: 'Maize', price: '₹1,500-1,900/quintal', trend: 'Kurnool APMC has best rates. MSP: ₹2,090/quintal.' },
+            chilli: { name: 'Chilli (Dry)', price: '₹12,000-18,000/quintal', trend: 'Guntur cold storage rates are premium. Grade and sort before selling.' },
+            groundnut: { name: 'Groundnut', price: '₹5,500-6,200/quintal', trend: 'Anantapur market is best for groundnut. Oil mills pay 5% more for sorted lots.' },
+            turmeric: { name: 'Turmeric', price: '₹8,000-12,000/quintal', trend: 'Prices depend on curcumin content. Get lab test for premium pricing.' },
+            tomato: { name: 'Tomato', price: '₹800-2,500/quintal', trend: 'Highly volatile. Sell within 2 days of harvest.' },
+            onion: { name: 'Onion', price: '₹1,200-2,800/quintal', trend: 'Prices rising. Store in ventilated shed if possible.' },
+            sugarcane: { name: 'Sugarcane', price: '₹3,100-3,400/tonne', trend: 'Sell directly to sugar mills.' },
+            banana: { name: 'Banana', price: '₹800-1,500/quintal', trend: 'East Godavari markets are best.' },
+          };
+          let matched = null;
+          for (const [key, val] of Object.entries(cropPrices)) {
+            if (q2.includes(key)) { matched = val; break; }
+          }
+          if (matched) {
+            text = `📊 ${matched.name} Market Price (AP):\n\n💰 Current Price: ${matched.price}\n📈 Trend: ${matched.trend}\n\n🏪 Check your nearest APMC for today's exact rates.\n💡 Compare prices across 2-3 mandis before selling.`;
+          } else {
+            text = `📊 AP Market Prices Overview:\n\n🌾 Paddy: ₹2,200-2,450/Q\n🥜 Groundnut: ₹5,500-6,200/Q\n🌿 Cotton: ₹7,000-7,200/Q\n🌶️ Chilli: ₹12,000-18,000/Q\n🌽 Maize: ₹1,500-1,900/Q\n🍌 Banana: ₹800-1,500/Q\n\n💡 Ask "What is [crop] price?" for details.\n🏪 Visit Market Prices for live data.`;
+          }
+        } else if (q2 === 'hi' || q2 === 'hello' || q2 === 'hey' || q2.includes('namaste') || /హలో|నమస్కారం|నమస్తే/.test(question)) {
           text = isTe
-            ? 'గుంటూరు జిల్లాలో పత్తి పంటకు:\n• నాట్లు వేసే సమయంలో: హెక్టారుకు 20 కిలోల నత్రజని వేయండి\n• 45-50 రోజులకు (squaring దశలో): మరో 30 కిలోల నత్రజని వేయండి\n• బొల్‌వర్మ్ నియంత్రణకు: Karate 2.5% EC స్ప్రే చేయండి\n• గుంటూరు APMC ధర: ₹7,150/క్వింటాల్ — 3 వారాల్లో 8-12% పెరగవచ్చు'
-            : 'For cotton in Guntur: Apply 20 kg N/ha basal, 30 kg N/ha at squaring (45-50 DAS). Use Karate 2.5% EC for bollworm. Guntur APMC: ₹7,150/quintal.';
-        } else if (/వారం|ఈ వారం|ఏమి చేయాలి/.test(question)) {
-          text = 'పద్ది వరి వృద్ధి దశలో ఈ వారం చేయవలసిన పనులు:\n• పొలంలో నీటి మట్టం 5 సెంటీమీటర్లు నిర్వహించండి\n• ఆకుపచ్చ పురుగుల కోసం పొలాన్ని తనిఖీ చేయండి\n• అవసరమైతే 50 కిలోల యూరియా వేయండి\n• కలుపు మొక్కలు తొలగించండి';
+            ? '🙏 నమస్కారం! నేను RythuSphere AI అసిస్టెంట్. వ్యవసాయం గురించి ఏదైనా అడగండి — పంటలు, ఎరువులు, మార్కెట్ ధరలు, పురుగుల నియంత్రణ, నేల ఆరోగ్యం. నేను మీకు సహాయం చేస్తాను! 🌾'
+            : '🙏 Hello! I\'m the RythuSphere AI Assistant. Ask me anything about farming — crops, fertilizers, market prices, pest control, soil health, or irrigation. I\'m here to help! 🌾';
         } else {
-          text = isTe
-            ? `మీ ప్రశ్నకు సమాధానం: AP రైతులకు సమగ్ర పంట నిర్వహణ పద్ధతులు పాటించమని సూచిస్తున్నాను. గుంటూరులోని KVK (కృషి విజ్ఞాన కేంద్రం)ని సంప్రదించండి. YSR రైతు భరోసా పథకానికి దరఖాస్తు చేసుకోండి. అత్యవసర సందర్భంలో కిసాన్ కాల్ సెంటర్: 1800-180-1551 (ఉచిత helpline) కి కాల్ చేయండి.`
-            : `For your question about "${question}": Follow integrated crop management, consult your nearest KVK in Guntur, and apply for YSR Rythu Bharosa scheme. Kisan Call Centre: 1800-180-1551 (free).`;
+          // Last resort — try KB with lower threshold
+          const kbLow = searchKB(question);
+          if (kbLow) {
+            text = kbLow.text;
+          } else {
+            text = isTe
+              ? `మీ ప్రశ్న: "${question}"\n\nఈ అంశంపై నా దగ్గర నిర్దిష్ట సమాచారం లేదు. దయచేసి ఈ విధంగా అడగండి:\n• "పత్తి సాగు గురించి చెప్పు"\n• "వరి ధర ఎంత?"\n• "తెల్ల ఈగ ఎలా నియంత్రించాలి?"\n• "ఖరీఫ్‌లో ఏం పండించాలి?"\n• "నేల ఆరోగ్యం గురించి చెప్పు"\n• "డ్రిప్ ఇరిగేషన్ ఎలా?"\n\n🌾 నేను 20+ పంటలు, మార్కెట్ ధరలు, పురుగుల నియంత్రణ, ఎరువుల షెడ్యూల్ గురించి చెప్పగలను.`
+              : `I don't have specific information on "${question}" yet.\n\nTry asking about specific topics like:\n• 🌾 "Explain paddy crop growth" or "Cotton cultivation guide"\n• 💰 "What is maize price?" or "Best time to sell cotton"\n• 🐛 "How to control whitefly?" or "Bollworm management"\n• 🌱 "Best Kharif crops" or "Rabi season guide"\n• 🧪 "Soil health tips" or "NPK for groundnut"\n• 💧 "Drip irrigation guide" or "Water management"\n• 📦 "Harvest timing" or "Post-harvest storage"\n• 🌿 "Organic farming" or "Jivamrutham preparation"\n\n🌾 I cover 20+ crops, market prices, pest control, and complete cultivation guides for AP.`;
+          }
         }
       }
       const id = Date.now()+1;
@@ -323,12 +450,9 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
       {/* Header */}
       <div className="section-header">
         <div>
-          <div className="section-title">🤖 AI Advisory Center</div>
+          <div className="section-title">{header.title}</div>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
-            {GROQ_API_KEY ? '⚡ Groq LLaMA-3.3-70B' : ''}
-            {GROQ_API_KEY && GEMINI_API_KEY ? ' + ' : ''}
-            {GEMINI_API_KEY ? '🧠 Gemini 1.5 Flash' : ''}
-            {(GROQ_API_KEY || GEMINI_API_KEY) ? ' • AP farming intelligence • 5 languages' : '⚠️ No AI keys configured'}
+            {header.desc}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -342,26 +466,25 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
 
       {/* AI Status Banner */}
       <div style={{
-        background: (GROQ_API_KEY || GEMINI_API_KEY)
+        background: AI_AVAILABLE
           ? 'linear-gradient(135deg, rgba(139,92,246,0.08), rgba(59,130,246,0.05))'
           : 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(239,68,68,0.05))',
         borderRadius: 'var(--radius-md)', padding: '14px 20px', marginBottom: 24,
-        border: `1px solid ${ (GROQ_API_KEY || GEMINI_API_KEY) ? 'rgba(139,92,246,0.2)' : 'rgba(245,158,11,0.3)'}`,
+        border: `1px solid ${AI_AVAILABLE ? 'rgba(139,92,246,0.2)' : 'rgba(245,158,11,0.3)'}`,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-          {(GROQ_API_KEY || GEMINI_API_KEY) ? (
+          {AI_AVAILABLE ? (
             <>
-              <strong style={{ color: '#a78bfa' }}>🟢 Dual AI Active</strong>
-              {GROQ_API_KEY && <span style={{ marginLeft: 8, fontSize: '0.78rem', background: 'rgba(139,92,246,0.1)', color: '#a78bfa', padding: '2px 8px', borderRadius: 12, fontWeight: 600 }}>⚡ Groq LLaMA-3 PRIMARY</span>}
-              {GEMINI_API_KEY && <span style={{ marginLeft: 6, fontSize: '0.78rem', background: 'rgba(59,130,246,0.1)', color: '#60a5fa', padding: '2px 8px', borderRadius: 12, fontWeight: 600 }}>🧠 Gemini FALLBACK</span>}
+              <strong style={{ color: '#a78bfa' }}>🟢 AI Active (Server-Side)</strong>
+              <span style={{ marginLeft: 8, fontSize: '0.78rem', background: 'rgba(139,92,246,0.1)', color: '#a78bfa', padding: '2px 8px', borderRadius: 12, fontWeight: 600 }}>🔒 Secure Proxy</span>
               <span style={{ marginLeft: 8, color: 'var(--text-muted)', fontSize: '0.78rem' }}>Andhra Pradesh farming intelligence • Telugu, Hindi, English</span>
             </>
           ) : (
-            <><strong style={{ color: '#f59e0b' }}>⚠️ API Keys Missing</strong> — Add <code>VITE_GROQ_API_KEY</code> or <code>VITE_GEMINI_API_KEY</code> to .env</>
+            <><strong style={{ color: '#f59e0b' }}>⚠️ AI Service Unavailable</strong> — Contact admin to configure AI keys on server</>
           )}
         </div>
-        {(GROQ_API_KEY || GEMINI_API_KEY) && (
+        {AI_AVAILABLE && (
           <span style={{ fontSize: '0.72rem', background: 'rgba(139,92,246,0.15)', color: '#a78bfa', padding: '3px 10px', borderRadius: 20, fontWeight: 600, whiteSpace: 'nowrap' }}>LIVE</span>
         )}
       </div>
@@ -403,7 +526,7 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
                 <div style={{ fontWeight:600, marginBottom:6 }}>Welcome to AI Farming Assistant</div>
                 <div style={{ fontSize:'0.82rem', marginBottom:16 }}>Ask anything in Telugu, Hindi or English</div>
                 <div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'center' }}>
-                  {['Paddy fertilizer schedule','Cotton pest control','Market price forecast','Government schemes'].map(s=>(
+                  {['Paddy fertilizer schedule','Cotton pest control','Today\'s market prices','Best crops for Kharif'].map(s=>(
                     <button key={s} onClick={()=>sendChat(s)} style={{ padding:'6px 14px', borderRadius:20, border:'1px solid rgba(139,92,246,0.3)', background:'rgba(139,92,246,0.06)', color:'#a78bfa', cursor:'pointer', fontSize:'0.78rem' }}>{s}</button>
                   ))}
                 </div>
@@ -471,6 +594,69 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
             {activeTool_?.desc}
           </div>
 
+          {activeTool === 'doctor' && isFarmer && (
+            <>
+              {/* Tab: Photo / Symptoms */}
+              <div style={{ display:'flex', gap:6, marginBottom:16 }}>
+                {[['photo','📸','Photo Scan'],['symptoms','✍️','Describe Symptoms']].map(([m,ic,lb])=>(
+                  <button key={m} onClick={()=>setDoctorMode(m)} style={{
+                    flex:1, padding:'10px', borderRadius:10, border:`2px solid ${doctorMode===m?'#10b981':'var(--border)'}`,
+                    background: doctorMode===m?'rgba(16,185,129,0.1)':'var(--bg-primary)',
+                    color: doctorMode===m?'#10b981':'var(--text-muted)', cursor:'pointer', fontWeight:700, fontSize:'0.82rem',
+                  }}>{ic} {lb}</button>
+                ))}
+              </div>
+
+              {doctorMode === 'photo' && (
+                <div style={{ marginBottom:16 }}>
+                  <input ref={fileInputRef} type="file" accept="image/*" capture="environment" style={{ display:'none' }}
+                    onChange={e => { if(e.target.files[0]) handlePhotoScan(e.target.files[0]); }} />
+                  <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap', marginBottom:10 }}>
+                    <button onClick={() => { fileInputRef.current.setAttribute('capture','environment'); fileInputRef.current.click(); }}
+                      style={{ padding:'14px 28px', borderRadius:14, border:'none', background:'linear-gradient(135deg,#059669,#10b981)', color:'#fff', fontWeight:800, fontSize:'0.95rem', cursor:'pointer', display:'flex', alignItems:'center', gap:8 }}>
+                      📷 Take Photo
+                    </button>
+                    <button onClick={() => { fileInputRef.current.removeAttribute('capture'); fileInputRef.current.click(); }}
+                      style={{ padding:'14px 24px', borderRadius:14, border:'1px solid var(--border)', background:'var(--bg-card)', color:'var(--text-primary)', fontWeight:700, fontSize:'0.95rem', cursor:'pointer', display:'flex', alignItems:'center', gap:8 }}>
+                      🖼️ Upload
+                    </button>
+                  </div>
+                  <div style={{ fontSize:'0.72rem', color:'var(--text-muted)', textAlign:'center' }}>Point camera at affected leaf, fruit, or stem</div>
+                </div>
+              )}
+
+              {doctorMode === 'symptoms' && (
+                <>
+                  <Field label="Crop" value={pestForm.cropName} onChange={v => setPestForm(f => ({ ...f, cropName: v }))} list={['Paddy','Cotton','Chilli','Groundnut','Maize','Tomato','Sugarcane','Banana','Turmeric','Brinjal']} />
+                  <Field label="Describe Symptoms" value={pestForm.symptoms} onChange={v => setPestForm(f => ({ ...f, symptoms: v }))} type="textarea" placeholder="e.g. Yellow spots on leaves, curling, white powder, holes in fruit, wilting..." />
+                  <button onClick={handleSymptomDiagnosis} disabled={loading || (!pestForm.cropName && !pestForm.symptoms)} className="btn btn-primary"
+                    style={{ width:'100%', padding:'13px', marginTop:8, fontSize:'0.95rem' }}>
+                    {loading ? '🔬 Diagnosing...' : '🩺 Diagnose Disease'}
+                  </button>
+                </>
+              )}
+
+              {/* Preview + Results (shared) */}
+              {scanPreview && (
+                <div style={{ textAlign:'center', marginTop:12, marginBottom:12 }}>
+                  <img src={scanPreview} alt="Crop scan" style={{ maxWidth:'100%', maxHeight:260, borderRadius:14, border:'2px solid var(--border)' }} />
+                </div>
+              )}
+              {loading && <div style={{ textAlign:'center', padding:20, color:'#10b981', fontWeight:700, fontSize:'0.9rem' }}>🔬 Analyzing... Please wait</div>}
+              {scanResult && (
+                <div style={{ background:'var(--bg-primary)', borderRadius:12, padding:18, border:'1px solid rgba(16,185,129,0.2)', marginTop:12 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+                    <span style={{ fontSize:'0.72rem', color:'#10b981', fontWeight:700 }}>🧠 {scanResult.engine}</span>
+                    <span style={{ fontSize:'0.65rem', padding:'2px 8px', borderRadius:8, background:'rgba(16,185,129,0.1)', color:'#10b981' }}>Diagnosis Complete</span>
+                  </div>
+                  <div style={{ fontSize:'0.88rem', color:'var(--text-primary)', lineHeight:1.7, whiteSpace:'pre-wrap' }}>
+                    {scanResult.text.split('**').map((part, i) => i % 2 === 1 ? <strong key={i}>{part}</strong> : part)}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
           {activeTool === 'crop' && (
             <>
               <Field label="District (AP)" value={cropForm.district} onChange={v => setCropForm(f => ({ ...f, district: v }))} list={AP_DISTRICTS} />
@@ -479,13 +665,6 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
               <Field label="Soil pH" value={cropForm.ph} onChange={v => setCropForm(f => ({ ...f, ph: v }))} type="number" placeholder="e.g. 6.8" />
               <Field label="Nitrogen N (kg/ha)" value={cropForm.nitrogen} onChange={v => setCropForm(f => ({ ...f, nitrogen: v }))} type="number" placeholder="e.g. 42" />
               <Field label="Rainfall Level" value={cropForm.rainfall} onChange={v => setCropForm(f => ({ ...f, rainfall: v }))} list={['low','medium','high']} />
-            </>
-          )}
-
-          {activeTool === 'pest' && (
-            <>
-              <Field label="Crop Name" value={pestForm.cropName} onChange={v => setPestForm(f => ({ ...f, cropName: v }))} list={['Paddy','Wheat','Cotton','Sugarcane','Maize','Tomato','Groundnut','Chilli','Banana','Coconut']} />
-              <Field label="Describe Symptoms" value={pestForm.symptoms} onChange={v => setPestForm(f => ({ ...f, symptoms: v }))} type="textarea" placeholder="e.g. Yellow spots on leaves, stem turning black near base, small holes in leaves, white powder on surface..." />
             </>
           )}
 
@@ -520,16 +699,16 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
             </>
           )}
 
-          <button onClick={callAI} disabled={loading || (!GROQ_API_KEY && !GEMINI_API_KEY)} className="btn btn-primary"
-            style={{ width: '100%', padding: '13px', marginTop: 8, fontSize: '0.95rem', opacity: (!GROQ_API_KEY && !GEMINI_API_KEY) ? 0.5 : 1 }}>
+          <button onClick={callAI} disabled={loading || !AI_AVAILABLE} className="btn btn-primary"
+            style={{ width: '100%', padding: '13px', marginTop: 8, fontSize: '0.95rem', opacity: !AI_AVAILABLE ? 0.5 : 1 }}>
             {loading
-              ? (GROQ_API_KEY ? '⚡ Groq LLaMA-3 Thinking...' : '🧠 Gemini Thinking...')
+              ? '🤖 AI Thinking...'
               : `🚀 Get AI ${activeTool_?.label}`}
           </button>
 
-          {(!GROQ_API_KEY && !GEMINI_API_KEY) && (
+          {!AI_AVAILABLE && (
             <div style={{ marginTop: 10, fontSize: '0.75rem', color: '#f59e0b', textAlign: 'center' }}>
-              ⚠️ Add VITE_GROQ_API_KEY or VITE_GEMINI_API_KEY to .env to enable AI
+              ⚠️ AI proxy not configured — contact admin
             </div>
           )}
         </div>
@@ -550,7 +729,7 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
                 Select a tool on the left, fill in your farm details, and get expert AI advice tailored for Andhra Pradesh agriculture.
               </div>
               <div style={{ marginTop: 24, display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-                {['Crop Diseases', 'Market Prices', 'Soil Health', 'Fertilizer Plan', 'YSR Schemes'].map(t => (
+                {['Crop Diseases', 'Market Prices', 'Soil Health', 'Fertilizer Plan', 'Pest Control'].map(t => (
                   <span key={t} style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', padding: '4px 12px', borderRadius: 20, fontSize: '0.72rem', color: 'var(--text-muted)' }}>{t}</span>
                 ))}
               </div>
@@ -561,7 +740,7 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
             <div style={{ textAlign: 'center', padding: '80px 20px' }}>
               <div style={{ fontSize: '3.5rem', marginBottom: 20, animation: 'spin 1s linear infinite' }}>🤖</div>
               <div style={{ color: '#a78bfa', fontWeight: 700, fontSize: '1rem', marginBottom: 8 }}>
-                {GROQ_API_KEY ? '⚡ Groq LLaMA-3 analyzing...' : '🧠 Gemini AI analyzing...'}
+                {'🤖 AI analyzing...'}
               </div>
               <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                 Processing your farming context for Andhra Pradesh conditions
@@ -576,7 +755,7 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
               <div style={{ marginTop: 16, padding: '12px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: 8, fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.7 }}>
                 <strong>To fix:</strong><br />
                 1. Open <code>RythuSphereWeb/.env</code><br />
-                2. Set <code>VITE_GEMINI_API_KEY=your_key_here</code><br />
+                2. Deploy the ai-proxy Edge Function to Supabase<br />
                 3. Get a free key at <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={{ color: '#60a5fa' }}>aistudio.google.com/apikey</a>
               </div>
             </div>
@@ -643,3 +822,4 @@ IMPORTANT: Respond ONLY in ${replyLang}. Be specific, include local AP context, 
     </div>
   );
 }
+

@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useBugReports } from '../lib/hooks/useBugReports';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const SEV_COLORS = { critical:'#FF1744', high:'#FF6D00', medium:'#FFD600', low:'#4CAF50' };
 const STATUS_COLORS = { new:'#FF1744', acknowledged:'#40C4FF', in_progress:'#FF9800', resolved:'#00e676', wont_fix:'#607D8B', duplicate:'#9E9E9E' };

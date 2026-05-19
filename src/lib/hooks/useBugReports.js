@@ -51,11 +51,11 @@ export function useBugReports() {
         setDbBugs(data);
         setStats(calcStats([...data, ...DEMO_BUGS]));
       } else {
-        console.warn('Bug fetch error:', error);
+        /* warn removed */
         setStats(calcStats(DEMO_BUGS));
       }
     } catch (e) {
-      console.warn('Bug fetch exception:', e);
+      /* warn removed */
       setStats(calcStats(DEMO_BUGS));
     }
     setLoading(false);
@@ -102,14 +102,15 @@ export function useBugReports() {
     try {
       const { data, error } = await supabase.from('bug_reports').insert(record).select().single();
       if (!error && data) {
-        console.log('✅ Bug inserted to DB:', data.id);
+
+
         setDbBugs(prev => [data, ...prev]);
         setStats(prev => ({ ...prev, new: (prev.new||0) + 1, total: (prev.total||0) + 1 }));
         return { success: true, bug: data };
       }
-      console.error('❌ Bug insert error:', JSON.stringify(error));
+      /* error log removed */
     } catch (e) {
-      console.error('❌ Bug insert exception:', e.message);
+      /* error log removed */
     }
     // Optimistic local fallback — still shows in current session
     const fakeBug = { id: 'local-' + Date.now(), ...record, reported_at: new Date().toISOString(), updated_at: new Date().toISOString() };
@@ -145,7 +146,7 @@ export function useBugReports() {
         new_status: newStatus,
         note
       });
-    } catch (e) { console.warn('Status update error:', e); }
+    } catch (e) { /* warn removed */ }
   }, [farmerProfile]);
 
   // Add comment
@@ -197,7 +198,7 @@ export function useBugReports() {
         })
         .subscribe();
     } catch (e) {
-      console.warn('Bug realtime subscription error (non-fatal):', e);
+      /* warn removed */
     }
 
     return () => {

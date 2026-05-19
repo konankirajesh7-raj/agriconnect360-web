@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../lib/hooks/useAuth';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const REPORTS = [
   { id: 1, field: 'North Paddy Field', date: '2025-03-15', area: '5.2 acres', drone: 'DJI Agras T40', status: 'completed', ndvi: 0.72, health: 'Good', stress_zones: 1, recommendations: ['Apply nitrogen fertilizer in NW corner', 'Increase irrigation by 15%'], pest_detected: false },
@@ -15,8 +18,44 @@ const SPRAY_LOGS = [
 const healthColor = h => h === 'Excellent' ? '#22c55e' : h === 'Good' ? '#3b82f6' : h === 'Moderate' ? '#f59e0b' : '#ef4444';
 
 export default function DronePage() {
+  const { t, tx } = useLanguage();
+  const { user, farmerProfile } = useAuth();
   const [tab, setTab] = useState('reports');
+  const [reports, setReports] = useState(REPORTS);
+  const [bookForm, setBookForm] = useState({ field: '', type: 'NDVI Health Map', date: '', notes: '' });
+  const [bookSuccess, setBookSuccess] = useState(false);
   const tabs = [{ id: 'reports', icon: '📊', label: 'Survey Reports' }, { id: 'spray', icon: '💨', label: 'Spray Logs' }, { id: 'book', icon: '📅', label: 'Book Survey' }];
+
+  // Fetch drone services from Supabase
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      try {
+        const { data } = await supabase.from('drone_services').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+        if (data?.length) {
+          const dbReports = data.map(d => ({
+            id: d.id, field: d.title, date: (d.created_at||'').split('T')[0], area: '-',
+            drone: d.drone_model || 'DJI', status: d.status || 'processing', ndvi: null, health: null,
+            stress_zones: null, recommendations: [], pest_detected: false,
+          }));
+          setReports([...dbReports, ...REPORTS]);
+        }
+      } catch {}
+    })();
+  }, [user?.id]);
+
+  const bookSurvey = async () => {
+    if (!bookForm.field || !bookForm.date) return;
+    setBookSuccess(true);
+    if (user?.id) {
+      await supabase.from('drone_services').insert({
+        user_id: user.id, title: bookForm.field, service_type: bookForm.type,
+        description: bookForm.notes, district: farmerProfile?.district || '',
+        status: 'booked', operator_name: 'Auto-assigned',
+      });
+    }
+    setTimeout(() => setBookSuccess(false), 3000);
+  };
 
   return (
     <div className="animated">
@@ -34,7 +73,7 @@ export default function DronePage() {
       </div>
 
       {tab === 'reports' && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-        {REPORTS.map(r => (
+        {reports.map(r => (
           <div key={r.id} className="card" style={{ padding: '20px', transition: 'transform 0.2s' }} onMouseEnter={ev => { ev.currentTarget.style.transform = 'translateY(-2px)'; }} onMouseLeave={ev => { ev.currentTarget.style.transform = ''; }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
               <div><div style={{ fontWeight: 700, fontSize: '0.95rem' }}>🛸 {r.field}</div><div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{r.date} • {r.area} • {r.drone}</div></div>
@@ -69,10 +108,29 @@ export default function DronePage() {
 
       {tab === 'book' && <div className="card" style={{ padding: '24px', maxWidth: 500 }}>
         <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 16 }}>📅 Book Drone Survey</div>
-        {[{ l: 'Field', t: 'select', o: ['North Paddy Field', 'Cotton Plot B', 'Sugarcane East', 'Wheat West'] }, { l: 'Survey Type', t: 'select', o: ['NDVI Health Map', 'Pest Detection', 'Spray Mission', 'Full Analysis'] }, { l: 'Preferred Date', t: 'date' }, { l: 'Special Instructions', t: 'text', p: 'Any specific areas to focus on...' }].map(f =>
-          <div key={f.l} style={{ marginBottom: 14 }}><label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 5 }}>{f.l}</label>{f.t === 'select' ? <select style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>{f.o.map(o => <option key={o}>{o}</option>)}</select> : <input type={f.t === 'date' ? 'date' : 'text'} placeholder={f.p || ''} style={{ width: '100%', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg-primary)', color: 'var(--text-primary)', boxSizing: 'border-box' }} />}</div>
-        )}
-        <button className="btn btn-primary" style={{ width: '100%', padding: '12px' }}>🛸 Book Survey — ₹2,500</button>
+        {bookSuccess && <div style={{ padding:12, borderRadius:10, background:'rgba(16,185,129,0.12)', border:'1px solid rgba(16,185,129,0.25)', color:'#34d399', fontWeight:600, fontSize:'0.85rem', marginBottom:14, textAlign:'center' }}>✅ Survey booked successfully! We'll assign an operator shortly.</div>}
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ display:'block', fontSize:'0.78rem', color:'var(--text-muted)', marginBottom:5 }}>Field</label>
+          <select value={bookForm.field} onChange={e => setBookForm(p=>({...p,field:e.target.value}))} style={{ width:'100%', padding:'8px 12px', borderRadius:'var(--radius-sm)', border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)' }}>
+            <option value="">Select field...</option>
+            {['North Paddy Field','Cotton Plot B','Sugarcane East','Wheat West'].map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ display:'block', fontSize:'0.78rem', color:'var(--text-muted)', marginBottom:5 }}>Survey Type</label>
+          <select value={bookForm.type} onChange={e => setBookForm(p=>({...p,type:e.target.value}))} style={{ width:'100%', padding:'8px 12px', borderRadius:'var(--radius-sm)', border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)' }}>
+            {['NDVI Health Map','Pest Detection','Spray Mission','Full Analysis'].map(o => <option key={o} value={o}>{o}</option>)}
+          </select>
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ display:'block', fontSize:'0.78rem', color:'var(--text-muted)', marginBottom:5 }}>Preferred Date</label>
+          <input type="date" value={bookForm.date} onChange={e => setBookForm(p=>({...p,date:e.target.value}))} style={{ width:'100%', padding:'8px 12px', borderRadius:'var(--radius-sm)', border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', boxSizing:'border-box' }} />
+        </div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ display:'block', fontSize:'0.78rem', color:'var(--text-muted)', marginBottom:5 }}>Special Instructions</label>
+          <input type="text" value={bookForm.notes} onChange={e => setBookForm(p=>({...p,notes:e.target.value}))} placeholder="Any specific areas to focus on..." style={{ width:'100%', padding:'8px 12px', borderRadius:'var(--radius-sm)', border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', boxSizing:'border-box' }} />
+        </div>
+        <button onClick={bookSurvey} className="btn btn-primary" style={{ width:'100%', padding:'12px', opacity:bookForm.field&&bookForm.date?1:0.5 }}>🛸 Book Survey — ₹2,500</button>
       </div>}
     </div>
   );

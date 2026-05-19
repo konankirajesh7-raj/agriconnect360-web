@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
+import { getMapEmbedUrl, getSoilRecommendation, GOOGLE_KEYS } from '../lib/googleApis';
 import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const IRRIGATION_SCHEDULE = [
   { id: 1, field: 'Field A1', crop: 'Cotton', method: 'Drip', frequency: 'Every 2 days', duration: '45 min', nextRun: '2024-11-14 06:00', status: 'scheduled' },
@@ -61,20 +63,28 @@ const HealthScoreGauge = ({ score }) => {
 };
 
 export default function SoilPage() {
+  const { t, tx } = useLanguage();
   const { data: tests, loading, isLive } = useSupabaseQuery('soil_tests', { orderBy: { column: 'test_date', ascending: false }, limit: 200 }, MOCK_SOIL);
+  const { data: dbSchedules } = useSupabaseQuery('irrigation_schedules', { orderBy: { column: 'created_at', ascending: false }, limit: 50 }, IRRIGATION_SCHEDULE);
+  const { data: dbLogs } = useSupabaseQuery('irrigation_logs', { orderBy: { column: 'date', ascending: false }, limit: 50 }, IRRIGATION_LOG);
+  const { data: ndviData } = useSupabaseQuery('ndvi_readings', { orderBy: { column: 'date', ascending: true }, limit: 30 }, NDVI_DATA);
   const [activeTab, setActiveTab] = useState('health-card');
   const [selectedTest, setSelectedTest] = useState(0);
   const [showTestForm, setShowTestForm] = useState(false);
   const [testForm, setTestForm] = useState({ fieldName: '', soilType: 'Black Cotton', nitrogen: '', phosphorus: '', potassium: '', ph: '', organicCarbon: '', labName: '' });
   const [uploadedReports, setUploadedReports] = useState([]);
   const [irrigSubTab, setIrrigSubTab] = useState('schedule');
-  const [schedules, setSchedules] = useState(IRRIGATION_SCHEDULE);
-  const [logs, setLogs] = useState(IRRIGATION_LOG);
+  const [schedules, setSchedules] = useState(dbSchedules);
+  const [logs, setLogs] = useState(dbLogs);
   const [showAddSchedule, setShowAddSchedule] = useState(false);
   const [showAddLog, setShowAddLog] = useState(false);
   const [schedForm, setSchedForm] = useState({ field: 'Field A1', crop: 'Paddy', method: 'Drip', frequency: 'Every 3 days', duration: '2 hours' });
   const [logForm, setLogForm] = useState({ field: 'Field A1', date: new Date().toISOString().split('T')[0], duration: '1.5 hrs', volume: '500', method: 'Drip', notes: '' });
   const fileInputRef = useRef(null);
+
+  // Sync DB data into local state for add/edit
+  useEffect(() => { if (dbSchedules?.length) setSchedules(dbSchedules); }, [dbSchedules]);
+  useEffect(() => { if (dbLogs?.length) setLogs(dbLogs); }, [dbLogs]);
 
   const selected = tests[selectedTest] || tests[0];
 
@@ -503,10 +513,18 @@ export default function SoilPage() {
                   <div style={{ color: '#94a3b8', fontSize: '0.7rem', marginTop: 4 }}>15.36°N, 75.12°E • Dharwad</div>
                 </div>
               </div>
+              {/* Google Maps Satellite Overlay */}
+              {GOOGLE_KEYS.maps && (
+                <iframe
+                  src={`https://www.google.com/maps/embed/v1/view?key=${GOOGLE_KEYS.maps}&center=15.36,75.12&zoom=15&maptype=satellite`}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', opacity: 0.5 }}
+                  loading="lazy" title="Satellite Field View"
+                />
+              )}
             </div>
             <div>
               <div style={{ fontSize: '0.85rem', fontWeight: 600, marginBottom: 12 }}>📊 NDVI Timeline</div>
-              {NDVI_DATA.map((d, i) => (
+              {ndviData.map((d, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                   <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', width: 50 }}>{d.date}</span>
                   <div style={{ flex: 1, height: 8, background: 'var(--bg-primary)', borderRadius: 4, overflow: 'hidden' }}>

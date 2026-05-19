@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const REPORTS = [
   { id: 'QL-001', crop: 'Paddy', sample: 'North Field, Plot 1', date: '2026-04-20', grade: 'A', status: 'completed', params: { 'Moisture': '13.2%', 'Foreign Matter': '0.8%', 'Broken Grain': '3.1%', 'Discolored': '1.2%', 'Dehusked': '95.8%' } },
@@ -10,6 +11,7 @@ const REPORTS = [
 const gradeStyle = { A: { bg: 'rgba(16,185,129,0.12)', c: '#34d399' }, B: { bg: 'rgba(245,158,11,0.12)', c: '#fbbf24' }, C: { bg: 'rgba(239,68,68,0.12)', c: '#f87171' }, Premium: { bg: 'rgba(139,92,246,0.12)', c: '#a78bfa' } };
 
 export default function QualityLabPage() {
+  const { t, tx } = useLanguage();
   const [selected, setSelected] = useState(null);
 
   return (

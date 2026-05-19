@@ -1,15 +1,8 @@
-import React, { useState } from 'react';
-
-const COIN_HISTORY = [
-  { id:1, type:'earn', amount:50, desc:'Referred Ramesh Kumar', date:'2026-04-28', icon:'👨‍🌾' },
-  { id:2, type:'earn', amount:50, desc:'Referred Lakshmi Devi', date:'2026-04-22', icon:'👨‍🌾' },
-  { id:3, type:'earn', amount:30, desc:'Posted farming video on Knowledge', date:'2026-04-18', icon:'🎬' },
-  { id:4, type:'spend', amount:-200, desc:'Converted to ₹200 wallet balance', date:'2026-04-15', icon:'💸' },
-  { id:5, type:'earn', amount:30, desc:'Posted paddy tutorial video', date:'2026-04-10', icon:'🎬' },
-  { id:6, type:'earn', amount:50, desc:'Referred Suresh Reddy', date:'2026-04-05', icon:'👨‍🌾' },
-  { id:7, type:'spend', amount:-500, desc:'Purchased Pro Plan (1 Month)', date:'2026-03-28', icon:'💎' },
-  { id:8, type:'earn', amount:30, desc:'Posted cotton harvest video', date:'2026-03-20', icon:'🎬' },
-];
+import React, { useState, useEffect } from 'react';
+import { useLanguage } from '../lib/i18n/LanguageContext';
+import { useAuth } from '../lib/hooks/useAuth';
+import { supabase } from '../lib/supabase';
+import { useSupabaseQuery } from '../lib/hooks/useSupabaseQuery';
 
 const REWARDS = [
   { id:1, name:'Convert to ₹100', cost:100, icon:'💸', desc:'Convert 100 coins to ₹100 in your bank account' },
@@ -20,18 +13,50 @@ const REWARDS = [
   { id:6, name:'Free Soil Test', cost:300, icon:'🧪', desc:'Redeem for 1 free soil testing at any partnered lab' },
 ];
 
-// ONLY 2 ways to earn — referral and posting knowledge videos
 const EARN_WAYS = [
   { action:'Refer a new farmer (verified signup)', coins:'+50 🪙', icon:'👨‍🌾', difficulty:'🟡 Medium', desc:'Referred farmer must complete profile and use the app for 7 days' },
   { action:'Post a farming video on Knowledge hub', coins:'+30 🪙', icon:'🎬', difficulty:'🟡 Medium', desc:'Video must be original, 30sec+, and approved by moderators (24-48hr review)' },
 ];
 
 export default function WalletPage() {
+  const { t, tx } = useLanguage();
+  const { uid } = useAuth();
+  const { data: dbRewards } = useSupabaseQuery('wallet_rewards', { select:'*', orderBy:{ column:'cost', ascending:true }, limit:20 }, REWARDS);
+  const rewards = (dbRewards || REWARDS).map(r => ({ ...r, icon: r.icon || '🎁', desc: r.desc || r.description || '' }));
   const [tab, setTab] = useState('overview');
-  const [balance] = useState(90);
-  const [totalEarned] = useState(270);
+  const [coinHistory, setCoinHistory] = useState([]);
+  const [balance, setBalance] = useState(0);
+  const [totalEarned, setTotalEarned] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [redeemModal, setRedeemModal] = useState(null);
   const [referralCode] = useState('AGRI-' + Math.random().toString(36).substring(2,6).toUpperCase());
+
+  // Fetch wallet transactions from Supabase
+  useEffect(() => {
+    if (!uid) { setLoading(false); return; }
+    (async () => {
+      setLoading(true);
+      try {
+        const { data } = await supabase.from('wallet_transactions').select('*').eq('user_id', uid).order('created_at', { ascending: false }).limit(100);
+        if (data?.length) {
+          const history = data.map((t, i) => ({
+            id: t.id || i,
+            type: t.amount >= 0 ? 'earn' : 'spend',
+            amount: t.amount || 0,
+            desc: t.description || t.title || 'Transaction',
+            date: t.created_at?.split('T')[0] || '',
+            icon: t.amount >= 0 ? (t.description?.includes('Refer') ? '👨‍🌾' : '🎬') : (t.description?.includes('Pro') ? '💎' : '💸'),
+          }));
+          setCoinHistory(history);
+          const earned = history.filter(h => h.amount > 0).reduce((s, h) => s + h.amount, 0);
+          const spent = Math.abs(history.filter(h => h.amount < 0).reduce((s, h) => s + h.amount, 0));
+          setTotalEarned(earned);
+          setBalance(earned - spent);
+        }
+      } catch {}
+      setLoading(false);
+    })();
+  }, [uid]);
 
   const tabs = [
     { id:'overview', label:'🪙 My Coins' },
@@ -39,6 +64,27 @@ export default function WalletPage() {
     { id:'rewards', label:'🎁 Spend Coins' },
     { id:'history', label:'📋 History' },
   ];
+
+  const HistoryItem = ({ h }) => (
+    <div className="card" style={{ padding:'10px 14px', marginBottom:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+      <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+        <span style={{ fontSize:'1.3rem' }}>{h.icon}</span>
+        <div>
+          <div style={{ fontWeight:600, fontSize:'0.82rem' }}>{h.desc}</div>
+          <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{h.date ? new Date(h.date).toLocaleDateString('en-IN') : '—'}</div>
+        </div>
+      </div>
+      <span style={{ fontWeight:800, fontSize:'0.9rem', color: h.amount > 0 ? '#34d399' : '#f87171' }}>{h.amount > 0 ? '+' : ''}{h.amount} 🪙</span>
+    </div>
+  );
+
+  const EmptyHistory = () => (
+    <div className="card" style={{ padding:40, textAlign:'center', color:'var(--text-muted)' }}>
+      <div style={{ fontSize:'2.5rem', marginBottom:10 }}>🪙</div>
+      <div style={{ fontWeight:700, fontSize:'0.95rem', color:'var(--text-primary)', marginBottom:4 }}>No transactions yet</div>
+      <div style={{ fontSize:'0.8rem' }}>Earn coins by referring farmers or posting knowledge videos!</div>
+    </div>
+  );
 
   return (
     <div className="animated">
@@ -53,7 +99,7 @@ export default function WalletPage() {
       <div style={{ background:'linear-gradient(135deg, #065f46, #0369a1)', borderRadius:14, padding:'24px 20px', marginBottom:16, position:'relative', overflow:'hidden' }}>
         <div style={{ position:'absolute', top:-20, right:-20, width:120, height:120, borderRadius:'50%', background:'rgba(255,255,255,0.08)' }} />
         <div style={{ fontSize:'0.82rem', color:'rgba(255,255,255,0.7)' }}>Available Balance</div>
-        <div style={{ fontSize:'2.8rem', fontWeight:900, color:'#fbbf24', marginTop:4 }}>🪙 {balance}</div>
+        <div style={{ fontSize:'2.8rem', fontWeight:900, color:'#fbbf24', marginTop:4 }}>🪙 {loading ? '...' : balance}</div>
         <div style={{ display:'flex', gap:20, marginTop:12 }}>
           <div>
             <div style={{ fontSize:'0.72rem', color:'rgba(255,255,255,0.6)' }}>Total Earned</div>
@@ -111,18 +157,7 @@ export default function WalletPage() {
           </div>
 
           <div style={{ fontWeight:700, fontSize:'0.9rem', marginBottom:10 }}>📋 Recent Activity</div>
-          {COIN_HISTORY.slice(0, 5).map(h => (
-            <div key={h.id} className="card" style={{ padding:'10px 14px', marginBottom:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-                <span style={{ fontSize:'1.3rem' }}>{h.icon}</span>
-                <div>
-                  <div style={{ fontWeight:600, fontSize:'0.82rem' }}>{h.desc}</div>
-                  <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{new Date(h.date).toLocaleDateString('en-IN')}</div>
-                </div>
-              </div>
-              <span style={{ fontWeight:800, fontSize:'0.9rem', color: h.amount > 0 ? '#34d399' : '#f87171' }}>{h.amount > 0 ? '+' : ''}{h.amount} 🪙</span>
-            </div>
-          ))}
+          {coinHistory.length === 0 ? <EmptyHistory /> : coinHistory.slice(0, 5).map(h => <HistoryItem key={h.id} h={h} />)}
         </div>
       )}
 
@@ -135,7 +170,6 @@ export default function WalletPage() {
               Kisan Coins are not easy to earn. There are only <strong style={{ color:'#fbbf24' }}>2 ways</strong> to get them — by referring new farmers to the platform, or by posting original farming knowledge videos. This makes coins truly valuable.
             </div>
           </div>
-
           <div style={{ fontWeight:700, fontSize:'0.9rem', marginBottom:10 }}>💰 Ways to Earn Kisan Coins</div>
           {EARN_WAYS.map((e, i) => (
             <div key={i} className="card" style={{ padding:18, marginBottom:12 }}>
@@ -184,18 +218,7 @@ export default function WalletPage() {
       {tab === 'history' && (
         <div>
           <div style={{ fontWeight:700, fontSize:'0.9rem', marginBottom:10 }}>📋 Full Transaction History</div>
-          {COIN_HISTORY.map(h => (
-            <div key={h.id} className="card" style={{ padding:'10px 14px', marginBottom:8, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
-              <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-                <span style={{ fontSize:'1.3rem' }}>{h.icon}</span>
-                <div>
-                  <div style={{ fontWeight:600, fontSize:'0.82rem' }}>{h.desc}</div>
-                  <div style={{ fontSize:'0.7rem', color:'var(--text-muted)' }}>{new Date(h.date).toLocaleDateString('en-IN')}</div>
-                </div>
-              </div>
-              <span style={{ fontWeight:800, fontSize:'0.9rem', color: h.amount > 0 ? '#34d399' : '#f87171' }}>{h.amount > 0 ? '+' : ''}{h.amount} 🪙</span>
-            </div>
-          ))}
+          {coinHistory.length === 0 ? <EmptyHistory /> : coinHistory.map(h => <HistoryItem key={h.id} h={h} />)}
         </div>
       )}
 
@@ -208,7 +231,14 @@ export default function WalletPage() {
             <div style={{ fontSize:'0.82rem', color:'var(--text-muted)', marginBottom:12 }}>{redeemModal.desc}</div>
             <div style={{ fontSize:'1.2rem', fontWeight:800, color:'#fbbf24', marginBottom:16 }}>{redeemModal.cost} 🪙</div>
             <div style={{ display:'flex', gap:8 }}>
-              <button onClick={() => { alert('✅ Reward redeemed! Check your notifications.'); setRedeemModal(null); }} style={{ flex:1, padding:10, borderRadius:8, border:'none', background:'linear-gradient(135deg,#f59e0b,#d97706)', color:'#fff', fontWeight:700, cursor:'pointer' }}>✅ Confirm</button>
+              <button onClick={async () => {
+                try {
+                  await supabase.from('wallet_transactions').insert({ user_id: uid, amount: -redeemModal.cost, description: 'Redeemed: ' + redeemModal.name });
+                } catch {}
+                setBalance(prev => prev - redeemModal.cost);
+                setCoinHistory(prev => [{ id: Date.now(), type:'spend', amount: -redeemModal.cost, desc:'Redeemed: '+redeemModal.name, date: new Date().toISOString().split('T')[0], icon: redeemModal.icon }, ...prev]);
+                setRedeemModal(null);
+              }} style={{ flex:1, padding:10, borderRadius:8, border:'none', background:'linear-gradient(135deg,#f59e0b,#d97706)', color:'#fff', fontWeight:700, cursor:'pointer' }}>✅ Confirm</button>
               <button onClick={() => setRedeemModal(null)} style={{ flex:1, padding:10, borderRadius:8, border:'1px solid var(--border)', background:'transparent', color:'var(--text-primary)', cursor:'pointer' }}>Cancel</button>
             </div>
           </div>

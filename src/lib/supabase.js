@@ -4,26 +4,28 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.warn('⚠️ Supabase credentials not found — running in offline mock mode');
+  console.error('[FATAL] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY environment variables.');
 }
 
 export const supabase = createClient(
-  SUPABASE_URL || 'https://gwetaesjkkrtmhnxuekc.supabase.co',
-  SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd3ZXRhZXNqa2tydG1obnh1ZWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQxMDgyMDUsImV4cCI6MjA4OTY4NDIwNX0.hFNMO_V_E3Ua2nf33ZijgFx_1J6jrO-GANm5XjqBhmY',
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
   {
     auth: {
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: true,
-      flowType: 'implicit',
+      flowType: 'pkce',
       storageKey: 'ac360-auth',
-      lock: false,
     },
     realtime: {
       params: { eventsPerSecond: 10 },
     },
   }
 );
+
+// adminSupabase removed — used same anon key as supabase, provided no extra privileges.
+// Use the regular `supabase` client everywhere.
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 export const DEFAULT_STATE = import.meta.env.VITE_DEFAULT_STATE || 'Andhra Pradesh';
@@ -38,8 +40,16 @@ export const AP_DISTRICTS = [
 ];
 
 // ── Auth Helpers ──────────────────────────────────────────────────────────────
-export const signInWithOTP = (phone) =>
-  supabase.auth.signInWithOtp({ phone });
+// Phone OTP via Supabase built-in phone auth (uses Twilio free trial)
+export const signInWithOTP = (phone) => {
+  const p = phone.startsWith('+') ? phone : `+91${phone}`;
+  return supabase.auth.signInWithOtp({ phone: p });
+};
+
+export const verifyOTP = (phone, token) => {
+  const p = phone.startsWith('+') ? phone : `+91${phone}`;
+  return supabase.auth.verifyOtp({ phone: p, token, type: 'sms' });
+};
 
 export const signInWithPassword = (email, password) =>
   supabase.auth.signInWithPassword({ email, password });
@@ -138,11 +148,7 @@ export const transportDB = {
   getBookings: (farmerId) => supabase.from('transport_bookings').select('*').eq('farmer_id', farmerId),
 };
 
-// Insurance
-export const insuranceDB = {
-  getAll: (farmerId) => supabase.from('insurance_policies').select('*').eq('farmer_id', farmerId),
-  create: (data) => supabase.from('insurance_policies').insert(data).select().single(),
-};
+// Insurance removed
 
 // Wallet
 export const walletDB = {
@@ -171,10 +177,7 @@ export const schemesDB = {
   getApplications: (farmerId) => supabase.from('scheme_applications').select('*').eq('farmer_id', farmerId).order('created_at', { ascending: false }),
 };
 
-// Knowledge articles — static data (no DB table, served from frontend)
-export const knowledgeDB = {
-  // Knowledge articles are served statically from the KnowledgePage component
-};
+// Knowledge articles served statically from KnowledgePage — no DB table needed.
 
 // Disputes
 export const disputesDB = {
@@ -187,10 +190,8 @@ export const disputesDB = {
 export const networkDB = {
   getPosts: () => supabase.from('community_posts').select('*').order('created_at', { ascending: false }).limit(50),
   createPost: (data) => supabase.from('community_posts').insert(data).select().single(),
-  likePost: async (id) => {
-    const { data: post } = await supabase.from('community_posts').select('likes').eq('id', id).single();
-    if (post) return supabase.from('community_posts').update({ likes: (post.likes || 0) + 1 }).eq('id', id);
-  },
+  // Atomic increment via Postgres function — prevents race condition on concurrent likes
+  likePost: (id) => supabase.rpc('increment_post_likes', { post_id: id }),
 };
 
 // Drone reports
@@ -341,16 +342,8 @@ export const premiumDB = {
       () => premiumApiRequest('/analytics/snapshots')
     ),
   },
-  iot: {
-    getSensors: (farmerId) => withPremiumFallback(
-      () => supabase.from('iot_sensor_data').select('*').eq('farmer_id', farmerId).order('recorded_at', { ascending: false }).limit(200),
-      () => premiumApiRequest('/iot/sensors')
-    ),
-    insertSensorData: (data) => withPremiumFallback(
-      () => supabase.from('iot_sensor_data').insert(data).select().single(),
-      () => premiumApiRequest('/iot/sensors', { method: 'POST', body: data })
-    ),
-  },
+  // IoT removed
+  // Gamification removed
   finance: {
     getKcc: (farmerId) => withPremiumFallback(
       () => supabase.from('kcc_trackers').select('*').eq('farmer_id', farmerId).maybeSingle(),
@@ -363,20 +356,6 @@ export const premiumDB = {
     getLoanMarketplace: () => withPremiumFallback(
       () => supabase.from('loan_marketplace').select('*').order('interest_rate', { ascending: true }),
       () => premiumApiRequest('/finance/loans')
-    ),
-  },
-  gamification: {
-    getProfile: (farmerId) => withPremiumFallback(
-      () => supabase.from('gamification_profiles').select('*').eq('farmer_id', farmerId).maybeSingle(),
-      () => premiumApiRequest('/gamification/profile')
-    ),
-    upsertProfile: (data) => withPremiumFallback(
-      () => supabase.from('gamification_profiles').upsert(data, { onConflict: 'farmer_id' }).select().single(),
-      () => premiumApiRequest('/gamification/profile', { method: 'PUT', body: data })
-    ),
-    getLeaderboard: () => withPremiumFallback(
-      () => supabase.from('gamification_profiles').select('*').order('agri_coins', { ascending: false }).limit(50),
-      () => premiumApiRequest('/gamification/leaderboard')
     ),
   },
 };

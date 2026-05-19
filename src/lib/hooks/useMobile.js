@@ -31,7 +31,7 @@ export function usePullToRefresh(onRefresh) {
         triggerHaptic();
         try {
           await onRefresh?.();
-        } catch (e) { console.error(e); }
+        } catch (e) { /* error log removed */ }
         setIsRefreshing(false);
       }
       setIsPulling(false);

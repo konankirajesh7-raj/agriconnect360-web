@@ -87,7 +87,7 @@ export default function AdminDashboardPage(){
     for(const tp of TEST_PHOTOS){
       const{error}=await supabase.from('background_photos').insert(tp);
       if(!error)success++;
-      else console.warn('Seed error:',error.message);
+      else { /* seed error silently handled */ }
     }
     addAudit(`Seeded ${success} test photos`);
     flash(`📸 ${success}/4 test photos seeded!`);
@@ -211,21 +211,26 @@ export default function AdminDashboardPage(){
         </div>))}
       </div>)}
 
-      {tab==='analytics'&&(<div className="card" style={{padding:22}}>
+      {tab==='analytics'&&(()=>{
+        const roleCounts={};
+        users.forEach(u=>{const r=(u.role||'farmer').charAt(0).toUpperCase()+(u.role||'farmer').slice(1)+'s';roleCounts[r]=(roleCounts[r]||0)+1;});
+        const totalU=users.length||1;
+        const roleBreakdown=Object.entries(roleCounts).sort((a,b)=>b[1]-a[1]).map(([role,count])=>({role,count,pct:Math.round(count/totalU*100)}));
+        return(<div className="card" style={{padding:22}}>
         <div className="role-section-title">📈 Platform Analytics</div>
         <div className="role-grid-3">
-          {[{i:'👥',v:userCount||'5,000+',l:'Total Users'},{i:'📈',v:'1,247',l:'Daily Active'},{i:'🔄',v:'68%',l:'7-Day Retention'},{i:'💰',v:'₹12.4L',l:'Revenue MTD'},{i:'🌤️',v:'Weather',l:'Most Used Feature'},{i:'🗺️',v:'13',l:'Districts Active'}].map(m=>(<div key={m.l} className="role-metric-card"><div className="metric-icon">{m.i}</div><div className="metric-value">{m.v}</div><div className="metric-label">{m.l}</div></div>))}
+          {[{i:'👥',v:userCount||users.length||0,l:'Total Users'},{i:'📢',v:ads.length,l:'Total Ads'},{i:'📝',v:posts.length,l:'Community Posts'},{i:'💳',v:payments.length,l:'Payments'},{i:'⚖️',v:disputesList.length,l:'Disputes'},{i:'🗺️',v:new Set(users.map(u=>u.district).filter(Boolean)).size||0,l:'Districts Active'}].map(m=>(<div key={m.l} className="role-metric-card"><div className="metric-icon">{m.i}</div><div className="metric-value">{m.v}</div><div className="metric-label">{m.l}</div></div>))}
         </div>
         <div className="role-grid-2" style={{marginTop:14}}>
           <div className="role-panel"><div className="panel-title">Users by Role</div>
-            {[{role:'Farmers',count:4823,pct:89},{role:'Suppliers',count:234,pct:4},{role:'Brokers',count:178,pct:3},{role:'Industrial',count:89,pct:2},{role:'Labour',count:67,pct:1}].map(r=>(<div key={r.role} style={{marginBottom:8}}><div style={{display:'flex',justifyContent:'space-between',fontSize:'0.82rem',marginBottom:3}}><span>{r.role}</span><b>{r.count} ({r.pct}%)</b></div><div className="role-progress-bar"><div className="fill ok" style={{width:r.pct+'%'}}/></div></div>))}
+            {roleBreakdown.length>0?roleBreakdown.map(r=>(<div key={r.role} style={{marginBottom:8}}><div style={{display:'flex',justifyContent:'space-between',fontSize:'0.82rem',marginBottom:3}}><span>{r.role}</span><b>{r.count} ({r.pct}%)</b></div><div className="role-progress-bar"><div className="fill ok" style={{width:r.pct+'%'}}/></div></div>)):<div style={{padding:20,textAlign:'center',color:'var(--text-muted)',fontSize:'0.82rem'}}>No user data loaded yet. Open the Users tab first.</div>}
           </div>
-          <div className="role-panel"><div className="panel-title">Top Features</div>
-            {[{f:'Weather Forecast',h:12450},{f:'Market Prices',h:9870},{f:'AI Advisory',h:6230},{f:'Crop Tracking',h:5100},{f:'Expense Tracker',h:4320}].map(x=>(<div key={x.f} className="role-stat-row"><span>{x.f}</span><b>{x.h.toLocaleString()} hits</b></div>))}
-            <button className="btn btn-outline" onClick={()=>{const b=new Blob(['RythuSphere Analytics Report\n\nTotal Users: '+(userCount||5000)+'\nDAU: 1,247\nRetention: 68%\nRevenue: ₹12.4L'],{type:'application/pdf'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='analytics_report.pdf';a.click();flash('📥 Report exported')}} style={{marginTop:10,padding:'8px 14px',fontSize:'0.78rem',width:'100%'}}>📥 Export Analytics Report</button>
+          <div className="role-panel"><div className="panel-title">Quick Stats</div>
+            {[{f:'Support Tickets',h:tickets.length},{f:'Open Disputes',h:disputesList.filter(d=>d.status==='Open').length},{f:'Unread Messages',h:messages.filter(m=>m.status==='unread').length},{f:'Pending Moderation',h:modItems.filter(m=>m.status==='Pending').length},{f:'Active Ads',h:ads.filter(a=>a.status==='approved'||a.status==='active').length}].map(x=>(<div key={x.f} className="role-stat-row"><span>{x.f}</span><b>{x.h}</b></div>))}
+            <button className="btn btn-outline" onClick={()=>{const b=new Blob(['RythuSphere Analytics Report\n\nTotal Users: '+(userCount||users.length)+'\\nAds: '+ads.length+'\\nPosts: '+posts.length+'\\nPayments: '+payments.length],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='analytics_report.txt';a.click();flash('📥 Report exported')}} style={{marginTop:10,padding:'8px 14px',fontSize:'0.78rem',width:'100%'}}>📥 Export Analytics Report</button>
           </div>
         </div>
-      </div>)}
+      </div>);})()}
 
       {tab==='support'&&(<div className="card" style={{padding:22}}>
         <div className="role-section-title">🎧 Support Tickets</div>

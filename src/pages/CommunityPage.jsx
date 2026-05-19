@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const INITIAL_POSTS = [
   { id: 1, type: 'question', crop: 'Paddy', author: 'Ravi Kumar', avatar: '👨‍🌾', village: 'Guntur', time: '2h ago', content: 'My paddy nursery is showing yellowing leaves. Anyone experienced this in Kharif season? Using NPK 20:20:20.', likes: 14, helpful: 6, bookmarked: false, replies: [
@@ -29,6 +30,7 @@ const S = {
 };
 
 export default function CommunityPage() {
+  const { t, tx } = useLanguage();
   const [posts, setPosts] = useState(INITIAL_POSTS);
   const [newPost, setNewPost] = useState('');
   const [postType, setPostType] = useState('question');

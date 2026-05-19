@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useCommunityFeed, ROLE_COLORS, ROLE_ICONS, timeAgo } from '../lib/hooks/useCommunityFeed';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const STATUS_COLORS = { pending:'#f59e0b', approved:'#22c55e', featured:'#eab308', rejected:'#ef4444' };
 
 export default function AdminFeedModeration() {
+  const { t, tx } = useLanguage();
   const feed = useCommunityFeed();
   const [filter, setFilter] = useState('all');
   const [selected, setSelected] = useState(null);

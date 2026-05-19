@@ -11,6 +11,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../lib/hooks/useAuth';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const DEFAULT_PLANS = {
   customer:   { price: 50, trial_days: 365, billing:'1 year',   label: 'Customer',  free_forever: false, desc: '₹50 per year —buy produce, suppliers & machinery' },
@@ -30,6 +31,7 @@ const ROLE_ICONS = {
 const INP = { width:'100%', padding:'10px 14px', borderRadius:8, border:'1px solid var(--border)', background:'var(--bg-primary)', color:'var(--text-primary)', fontSize:'0.88rem', boxSizing:'border-box' };
 
 export default function SubscriptionPage() {
+  const { t, tx } = useLanguage();
   const { farmerProfile, userRole } = useAuth();
   const isAdmin = userRole === 'admin';
   const [plans, setPlans] = useState(DEFAULT_PLANS);
@@ -53,14 +55,36 @@ export default function SubscriptionPage() {
     }).catch(() => {});
 
     if (isAdmin) {
-      supabase.from('subscriptions').select('*, farmers(name, mobile, district)').order('created_at', { ascending: false }).limit(100)
+      // Try subscriptions table first (joined with profiles, not farmers)
+      supabase.from('subscriptions').select('*, profiles(name, mobile, district, role)').order('created_at', { ascending: false }).limit(100)
         .then(({ data }) => {
-          if (data) {
-            setSubscribers(data);
+          if (data?.length) {
+            setSubscribers(data.map(s => ({ ...s, user_name: s.profiles?.name, user_role: s.profiles?.role || s.role, user_district: s.profiles?.district })));
             const active = data.filter(s => s.status === 'active').length;
             const total = data.reduce((sum, s) => sum + (s.amount_paid || 0), 0);
             const pending = data.filter(s => s.status === 'pending').reduce((sum, s) => sum + (s.amount_due || 0), 0);
             setRevenue({ total, pending, active });
+          } else {
+            // Fallback: use subscription_payments as subscriber tracker for ALL roles
+            supabase.from('subscription_payments').select('*').order('created_at', { ascending: false }).limit(200)
+              .then(({ data: payments }) => {
+                if (payments?.length) {
+                  const mapped = payments.map(p => ({
+                    id: p.id, user_id: p.user_id, role: p.role || 'farmer',
+                    user_name: p.user_name || p.user_id?.slice(0, 8),
+                    user_role: p.role || 'farmer', user_district: p.district || '—',
+                    status: p.status === 'verified' ? 'active' : p.status,
+                    amount_paid: p.status === 'verified' ? (p.amount || 0) : 0,
+                    amount_due: p.status !== 'verified' ? (p.amount || 0) : 0,
+                    created_at: p.created_at,
+                  }));
+                  setSubscribers(mapped);
+                  const active = mapped.filter(s => s.status === 'active').length;
+                  const total = mapped.reduce((sum, s) => sum + (s.amount_paid || 0), 0);
+                  const pending = mapped.filter(s => s.status !== 'active').reduce((sum, s) => sum + (s.amount_due || 0), 0);
+                  setRevenue({ total, pending, active });
+                }
+              }).catch(() => {});
           }
         }).catch(() => {});
     }
@@ -287,11 +311,11 @@ export default function SubscriptionPage() {
                 <tbody>
                   {subscribers.map(s => (
                     <tr key={s.id}>
-                      <td style={{ fontWeight:600 }}>{s.farmers?.name || s.farmer_id}</td>
-                      <td><span style={{ padding:'2px 8px', borderRadius:6, background:'rgba(99,102,241,0.1)', color:'#818cf8', fontSize:'0.72rem' }}>{s.role}</span></td>
-                      <td style={{ fontSize:'0.78rem', color:'var(--text-muted)' }}>{s.farmers?.district || ''}</td>
+                      <td style={{ fontWeight:600 }}>{s.user_name || s.user_id?.slice(0,8) || '—'}</td>
+                      <td><span style={{ padding:'2px 8px', borderRadius:6, background:'rgba(99,102,241,0.1)', color:'#818cf8', fontSize:'0.72rem' }}>{s.user_role || s.role || '—'}</span></td>
+                      <td style={{ fontSize:'0.78rem', color:'var(--text-muted)' }}>{s.user_district || '—'}</td>
                       <td><span style={{ padding:'2px 8px', borderRadius:6, fontSize:'0.72rem', fontWeight:700, background: s.status==='active' ? 'rgba(34,197,94,0.1)' : s.status==='trial' ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)', color: s.status==='active' ? '#22c55e' : s.status==='trial' ? '#f59e0b' : '#ef4444' }}>{s.status}</span></td>
-                      <td style={{ fontSize:'0.78rem' }}>{s.created_at?.split('T')[0] || ''}</td>
+                      <td style={{ fontSize:'0.78rem' }}>{s.created_at?.split('T')[0] || '—'}</td>
                       <td style={{ fontWeight:700, color:'#22c55e' }}>₹{(s.amount_paid||0).toLocaleString()}</td>
                       <td style={{ fontWeight:700, color: (s.amount_due||0) > 0 ? '#f59e0b' : 'var(--text-muted)' }}>₹{(s.amount_due||0).toLocaleString()}</td>
                     </tr>

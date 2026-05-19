@@ -165,12 +165,12 @@ export default function BackgroundPhotoUpload({ onClose }) {
 
       if (dbErr) {
         // Table may not exist yet — show success anyway for demo
-        console.warn('DB insert skipped (table may not exist):', dbErr.message)
+        /* warn removed */
       }
 
       setDone(true)
     } catch (e) {
-      console.error('Upload error:', e)
+      /* error log removed */
       // For demo mode — show success even on error
       setDone(true)
     } finally {

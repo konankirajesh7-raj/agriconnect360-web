@@ -1345,470 +1345,90 @@
    PHASE 11C — FPO Mode Styles
    ═══════════════════════════════════════════════════════════════════ */
 
-.fpo-page { animation: fadeInUp 0.4s ease forwards; }
 
 /* ── FPO Header Card ───────────────────────────────────────────────── */
-.fpo-header-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  background: linear-gradient(135deg, rgba(34,197,94,0.1) 0%, rgba(59,130,246,0.06) 100%);
-  border: 1px solid rgba(34,197,94,0.2);
-  border-radius: 16px;
-  padding: 24px 28px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
 
-.fpo-header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
 
-.fpo-logo {
-  width: 56px; height: 56px;
-  background: linear-gradient(135deg, var(--green-primary), var(--green-dark));
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-  flex-shrink: 0;
-  box-shadow: 0 0 24px rgba(34,197,94,0.25);
-}
 
-.fpo-title {
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
 
-.fpo-subtitle {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
 
-.fpo-header-stats {
-  display: flex;
-  gap: 20px;
-}
 
-.fpo-hstat {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
 
-.fpo-hstat-val {
-  font-family: var(--font-display);
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: var(--green-primary);
-}
 
-.fpo-hstat span:last-child {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  font-weight: 600;
-}
 
 /* ── FPO Tabs ──────────────────────────────────────────────────────── */
-.fpo-tabs {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  margin-bottom: 20px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 4px;
-  flex-wrap: wrap;
-}
 
-.fpo-tab {
-  padding: 10px 16px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
 
-.fpo-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
 
-.fpo-tab.active {
-  background: rgba(34,197,94,0.12);
-  color: var(--green-primary);
-  box-shadow: 0 0 12px rgba(34,197,94,0.08);
-}
 
-.fpo-export-btn {
-  margin-left: auto;
-  padding: 8px 16px !important;
-  font-size: 0.78rem !important;
-  white-space: nowrap;
-}
 
 /* ── FPO Dashboard ─────────────────────────────────────────────────── */
-.fpo-dashboard {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
 
 /* ── Performance Comparison ────────────────────────────────────────── */
-.fpo-perf-card h4,
-.fpo-heatmap-card h4 {
-  font-family: var(--font-display);
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 18px;
-}
 
-.fpo-perf-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
 
-.fpo-perf-item { }
 
-.fpo-perf-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-}
 
-.fpo-perf-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
 
-.fpo-perf-bar-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
-.fpo-perf-bar-label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  width: 28px;
-  text-align: right;
-}
 
-.fpo-perf-bar-track {
-  flex: 1;
-  height: 8px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 4px;
-  overflow: hidden;
-}
 
-.fpo-perf-bar-fill {
-  height: 100%;
-  border-radius: 4px;
-  transition: width 0.8s ease;
-}
 
-.fpo-perf-bar-fill.green { background: linear-gradient(90deg, #22c55e, #4ade80); }
-.fpo-perf-bar-fill.muted { background: rgba(255,255,255,0.15); }
 
-.fpo-perf-val {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  width: 50px;
-  text-align: right;
-}
 
 /* ── Activity Heatmap ──────────────────────────────────────────────── */
-.fpo-heatmap-grid {
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
-  height: 200px;
-  padding: 0 4px;
-}
 
-.fpo-heatmap-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  height: 100%;
-  justify-content: flex-end;
-}
 
-.fpo-heatmap-bar {
-  width: 100%;
-  border-radius: 6px 6px 0 0;
-  min-height: 8px;
-  transition: height 0.6s ease;
-}
 
-.fpo-heatmap-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-}
 
-.fpo-heatmap-village {
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  white-space: nowrap;
-}
 
-.fpo-heatmap-count {
-  font-size: 0.6rem;
-  color: var(--text-muted);
-}
 
-.fpo-heatmap-score {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--green-primary);
-}
 
 /* ── Members Section ───────────────────────────────────────────────── */
-.fpo-members-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
 
-.fpo-member-count {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  font-weight: 600;
-  white-space: nowrap;
-}
 
-.fpo-members-table {
-  overflow-x: auto;
-  padding: 0;
-}
 
-.fpo-members-table .data-table td,
-.fpo-members-table .data-table th {
-  white-space: nowrap;
-}
 
 /* ── FPO Modal Overlay ─────────────────────────────────────────────── */
-.fpo-modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-  animation: onbFadeIn 0.2s ease;
-}
 
-.fpo-modal {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px 28px;
-  max-width: 480px;
-  width: 100%;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  animation: onbModalIn 0.3s ease;
-}
 
-.fpo-modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
 
-.fpo-modal-header h3 {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
 
-.fpo-modal-body { }
 
-.fpo-modal-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
 
-.fpo-modal-grid > div {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 10px 12px;
-  background: rgba(255,255,255,0.03);
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
 
-.fpo-modal-label {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  font-weight: 600;
-}
 
-.fpo-modal-grid > div > span:last-child {
-  font-size: 0.85rem;
-  color: var(--text-primary);
-  font-weight: 500;
-}
 
 /* ── Collective Bargaining ─────────────────────────────────────────── */
-.fpo-deals-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
 
-.fpo-deal-card {
-  transition: all 0.25s;
-}
 
-.fpo-deal-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 28px rgba(0,0,0,0.3);
-}
 
-.fpo-deal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
-}
 
-.fpo-deal-crop {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: var(--text-primary);
-}
 
-.fpo-deal-details {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 
-.fpo-deal-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.82rem;
-}
 
-.fpo-deal-row span { color: var(--text-muted); }
-.fpo-deal-row strong { color: var(--text-primary); }
 
 /* ── Expense Summary ───────────────────────────────────────────────── */
-.fpo-expense-summary {
-  display: flex;
-  gap: 16px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-}
 
-.fpo-expense-total {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  text-align: center;
-  padding: 12px;
-  background: rgba(255,255,255,0.03);
-  border-radius: 10px;
-  border: 1px solid var(--border);
-}
 
-.fpo-expense-total span {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-}
 
-.fpo-expense-total strong {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: var(--green-primary);
-}
 
 /* ── SMS Section ───────────────────────────────────────────────────── */
-.fpo-sms-section .card { max-width: 600px; }
 
-.fpo-sms-form select,
-.fpo-sms-form textarea {
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.04);
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  font-family: var(--font-body);
-  outline: none;
-  transition: all 0.2s;
-  box-sizing: border-box;
-}
 
-.fpo-sms-form select:focus,
-.fpo-sms-form textarea:focus {
-  border-color: rgba(34,197,94,0.5);
-  box-shadow: 0 0 0 3px rgba(34,197,94,0.1);
-}
 
-.fpo-sms-form textarea { resize: vertical; }
 
 /* ── Responsive ────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .fpo-dashboard { grid-template-columns: 1fr; }
-  .fpo-deals-grid { grid-template-columns: 1fr; }
-  .fpo-header-card { padding: 18px; }
-  .fpo-header-stats { gap: 14px; }
 }
 
 @media (max-width: 640px) {
-  .fpo-tabs { gap: 2px; padding: 3px; }
-  .fpo-tab { padding: 8px 12px; font-size: 0.75rem; }
-  .fpo-heatmap-grid { height: 150px; gap: 4px; }
-  .fpo-heatmap-village { font-size: 0.58rem; }
-  .fpo-modal-grid { grid-template-columns: 1fr; }
-  .fpo-header-stats { flex-wrap: wrap; gap: 10px; }
-  .fpo-export-btn { margin-left: 0; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
    PHASE 12 — Premium Upgrades Styles
    ═══════════════════════════════════════════════════════════════════ */
 
-.premium-page { animation: fadeInUp 0.4s ease forwards; }
 
 /* ── Premium Tab Grid ──────────────────────────────────────────────── */
 .prem-tabs {
@@ -2703,32 +2323,10 @@
 .role-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 
 /* ── Cards ──────────────────────────────────────────────────────── */
-.role-card {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  transition: all 0.2s;
-}
 
-.role-card:hover {
-  border-color: rgba(255,255,255,0.12);
-  transform: translateY(-1px);
-}
 
-.role-card.danger-border { border-color: rgba(239,68,68,0.35); }
 
-.role-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
 
-.role-card-title {
-  font-weight: 700;
-  font-size: 0.88rem;
-}
 
 /* ── Stat Rows ──────────────────────────────────────────────────── */
 .role-stat-row {
@@ -3314,13 +2912,6 @@
 .fin-badge.blue { background: rgba(59,130,246,0.15); color: #60a5fa; }
 
 /* ── Empty State ───────────────────────────────────────────────── */
-.fin-empty {
-  text-align: center;
-  padding: 48px 24px;
-  color: var(--text-secondary, #94a3b8);
-}
-.fin-empty-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.5; }
-.fin-empty-text { font-size: 0.9rem; }
 
 /* ── Phase 12H Responsive ──────────────────────────────────────── */
 @media (max-width: 900px) {
@@ -3554,7 +3145,6 @@
   50% { transform: scale(1.15); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
-.gam-badge-unlocked { animation: gamConfetti 0.5s ease; }
 
 /* Challenge progress card hover */
 .gam-page .fin-compare-card:hover {
@@ -3785,8 +3375,6 @@
 .text-blue-500   { color: #3b82f6 !important; }
 .text-yellow-500 { color: #f59e0b !important; }
 .text-red-500    { color: #ef4444 !important; }
-.text-purple-500 { color: #8b5cf6 !important; }
-.text-cyan-500   { color: #06b6d4 !important; }
 
 /* ── Fin Page — ensure the wrapper behaves correctly ──────────── */
 .fin-page { min-height: 0; }

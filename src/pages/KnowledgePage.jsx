@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../lib/i18n/LanguageContext';
 
 const ARTICLES = [
   { id: 1, title: 'Complete Guide to Paddy Cultivation', category: 'Crop Guide', duration: '8 min', icon: '🌾', author: 'Dr. Rajesh K', date: '2025-03-10', views: 2340, tags: ['Paddy', 'Kharif'], content: 'Learn the complete A-Z of paddy farming from nursery preparation to harvest...' },
@@ -37,6 +38,7 @@ const VIDEOS = [
 const CATS = [...new Set(ARTICLES.map(a => a.category))];
 
 export default function KnowledgePage() {
+  const { t, tx } = useLanguage();
   const [catFilter, setCatFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('articles');

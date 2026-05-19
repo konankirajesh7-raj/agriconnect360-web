@@ -65,7 +65,7 @@ export function useSupabaseQuery(table, options = {}, mockData = []) {
       setData(single ? result : (result || []));
       setIsLive(true);
     } catch (err) {
-      console.warn(`Supabase query failed for '${table}', using mock data:`, err.message);
+      /* warn removed */
       setData(mockData);
       setIsLive(false);
       setError(err.message);
