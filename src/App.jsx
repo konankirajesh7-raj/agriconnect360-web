@@ -43,16 +43,16 @@ const QAPage = lazy(() => import('./pages/QAPage'));
 const NetworkPage = lazy(() => import('./pages/NetworkPage'));
 const WeatherPage = lazy(() => import('./pages/WeatherPage'));
 const AIPage = lazy(() => import('./pages/AIPage'));
-// WalletPage removed
-// InsurancePage removed — route redirects to dashboard
+const WalletPage = lazy(() => import('./pages/WalletPage'));
+const InsurancePage = lazy(() => import('./pages/InsurancePage'));
 const DronePage = lazy(() => import('./pages/DronePage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
-// PremiumUpgradesPage removed — route redirects to dashboard
+const PremiumUpgradesPage = lazy(() => import('./pages/PremiumUpgradesPage'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
-// FPOPage removed
+const FPOPage = lazy(() => import('./pages/FPOPage'));
 const PublicLayout = lazy(() => import('./layouts/PublicLayout'));
 const HomePage = lazy(() => import('./pages/public/HomePage'));
 const FeaturesPage = lazy(() => import('./pages/public/FeaturesPage'));
@@ -63,8 +63,8 @@ const PublicStorePage = lazy(() => import('./pages/public/PublicStorePage'));
 const PublicPricesPage = lazy(() => import('./pages/public/PublicPricesPage'));
 const PublicWeatherPage = lazy(() => import('./pages/public/PublicWeatherPage'));
 const BlogPage = lazy(() => import('./pages/public/BlogPage'));
-// FinancialServicesPage removed
-// GamificationPage removed
+const FinancialServicesPage = lazy(() => import('./pages/FinancialServicesPage'));
+const GamificationPage = lazy(() => import('./pages/GamificationPage'));
 const IndustrialDashboardPage = lazy(() => import('./pages/IndustrialDashboardPage'));
 const BrokerDashboardPage = lazy(() => import('./pages/BrokerDashboardPage'));
 const SupplierDashboardPage = lazy(() => import('./pages/SupplierDashboardPage'));
@@ -74,9 +74,9 @@ const MarketplacePage = lazy(() => import('./pages/MarketplacePage'));
 const CommunityPage = lazy(() => import('./pages/CommunityPage'));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 const TaskManagerPage = lazy(() => import('./pages/TaskManagerPage'));
-// IoTDashboardPage removed
+const IoTDashboardPage = lazy(() => import('./pages/IoTDashboardPage'));
 const F2CStorePage = lazy(() => import('./pages/F2CStorePage'));
-// QualityLabPage removed
+const QualityLabPage = lazy(() => import('./pages/QualityLabPage'));
 const AgriTourismPage = lazy(() => import('./pages/AgriTourismPage'));
 const ColdStoragePage = lazy(() => import('./pages/ColdStoragePage'));
 const ReportsPage = lazy(() => import('./pages/ReportsPage'));
@@ -784,18 +784,18 @@ export default function App() {
             <Route path="/network" element={<ProtectedRoute><NetworkPage /></ProtectedRoute>} />
             <Route path="/weather" element={<ProtectedRoute><WeatherPage /></ProtectedRoute>} />
             <Route path="/ai" element={<ProtectedRoute><AIPage /></ProtectedRoute>} />
-            <Route path="/wallet" element={<Navigate to="/my-money" replace />} />
-            <Route path="/insurance" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/financial-services" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/gamification" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/wallet" element={<ProtectedRoute><WalletPage /></ProtectedRoute>} />
+            <Route path="/insurance" element={<ProtectedRoute><InsurancePage /></ProtectedRoute>} />
+            <Route path="/financial-services" element={<ProtectedRoute><FinancialServicesPage /></ProtectedRoute>} />
+            <Route path="/gamification" element={<ProtectedRoute><GamificationPage /></ProtectedRoute>} />
             <Route path="/drones" element={<ProtectedRoute><RoleRoute roles={['farmer','supplier']}><DronePage /></RoleRoute></ProtectedRoute>} />
             <Route path="/marketplace" element={<ProtectedRoute><MarketplacePage /></ProtectedRoute>} />
             <Route path="/community" element={<Navigate to="/feed" replace />} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
             <Route path="/tasks" element={<ProtectedRoute><TaskManagerPage /></ProtectedRoute>} />
-            <Route path="/iot" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/f2c-store" element={<Navigate to="/marketplace" replace />} />
-            <Route path="/quality-lab" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/iot" element={<ProtectedRoute><IoTDashboardPage /></ProtectedRoute>} />
+            <Route path="/f2c-store" element={<ProtectedRoute><F2CStorePage /></ProtectedRoute>} />
+            <Route path="/quality-lab" element={<ProtectedRoute><QualityLabPage /></ProtectedRoute>} />
             <Route path="/agri-tourism" element={<ProtectedRoute><AgriTourismPage /></ProtectedRoute>} />
             <Route path="/cold-storage" element={<ProtectedRoute><RoleRoute roles={['farmer','broker','supplier','industrial']}><ColdStoragePage /></RoleRoute></ProtectedRoute>} />
             <Route path="/reports" element={<Navigate to="/my-money" replace />} />
@@ -806,8 +806,8 @@ export default function App() {
             <Route path="/admin/bugs" element={<ProtectedRoute><RoleRoute roles={['admin']}><AdminBugDashboard /></RoleRoute></ProtectedRoute>} />
             <Route path="/contact" element={<Navigate to="/disputes" replace />} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="/fpo" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/premium" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/fpo" element={<ProtectedRoute><FPOPage /></ProtectedRoute>} />
+            <Route path="/premium" element={<ProtectedRoute><PremiumUpgradesPage /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
             {/* Phase 13 — Role-Based Dashboard Routes */}
             <Route path="/customer-dashboard" element={<ProtectedRoute><RoleRoute roles={['customer','admin']}><CustomerDashboardPage /></RoleRoute></ProtectedRoute>} />
