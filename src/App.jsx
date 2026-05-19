@@ -6,7 +6,9 @@ import { triggerHaptic } from './lib/hooks/useMobile';
 import { isOnboardingComplete } from './lib/phase11Persistence';
 import { CookieConsentBanner } from './lib/consent.jsx';
 // Gamification removed
+import ErrorBoundary from './components/ErrorBoundary';
 import DownloadAppPrompt from './components/DownloadAppPrompt';
+
 const FarmBackground3D = lazy(() => import('./components/FarmBackground3D'));
 import BugReportButton from './components/BugReportButton';
 import VoiceAgent from './components/VoiceAgent';
@@ -65,8 +67,10 @@ const PublicWeatherPage = lazy(() => import('./pages/public/PublicWeatherPage'))
 const BlogPage = lazy(() => import('./pages/public/BlogPage'));
 // FinancialServicesPage removed
 // GamificationPage removed
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const IndustrialDashboardPage = lazy(() => import('./pages/IndustrialDashboardPage'));
 const BrokerDashboardPage = lazy(() => import('./pages/BrokerDashboardPage'));
+
 const SupplierDashboardPage = lazy(() => import('./pages/SupplierDashboardPage'));
 const LabourDashboardPage = lazy(() => import('./pages/LabourDashboardPage'));
 const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
@@ -831,19 +835,8 @@ export default function App() {
               <Route path="/public-weather" element={<PublicWeatherPage />} />
               <Route path="/blog" element={<BlogPage />} />
             </Route>
-            <Route path="*" element={
-              <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minHeight:'60vh',textAlign:'center',padding:40}}>
-                <div style={{fontSize:'6rem',marginBottom:16}}>🌾</div>
-                <h1 style={{fontSize:'3rem',fontWeight:800,color:'var(--text-primary)',marginBottom:8}}>404</h1>
-                <p style={{fontSize:'1.2rem',color:'var(--text-muted)',marginBottom:8}}>Oops! This field doesn't exist.</p>
-                <p style={{fontSize:'0.9rem',color:'var(--text-muted)',marginBottom:24}}>The page you're looking for might have been moved or harvested.</p>
-                <div style={{display:'flex',gap:12}}>
-                  <button className="btn btn-primary" onClick={()=>window.location.href='/'} style={{padding:'12px 28px',fontSize:'0.95rem'}}>🏠 Go Home</button>
-                  <button className="btn btn-outline" onClick={()=>window.location.href='/dashboard'} style={{padding:'12px 28px',fontSize:'0.95rem'}}>📊 Dashboard</button>
-                </div>
-                <div style={{marginTop:32,fontSize:'0.78rem',color:'var(--text-muted)'}}>Need help? <a href="/contact" style={{color:'var(--accent)'}}>Contact Support</a></div>
-              </div>
-            } />
+            <Route path="*" element={<NotFoundPage />} />
+
           </Routes>
         </Suspense>
       </main>
